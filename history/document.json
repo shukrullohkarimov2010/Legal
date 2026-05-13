@@ -1,0 +1,41 @@
+{
+  "activity_log": [
+    {
+      "timestamp": "YYYY-MM-DD HH:MM:SS",
+      "user": "user_id_or_name",
+      "action_type": "login/logout/create_contract/analyze_document/etc.",
+      "ip_address": "192.168.1.1",
+      "details": "Описание действия"
+    }
+  ],
+  "generation_history": [
+    {
+      "generation_id": "gen_12345",
+      "input_prompt": "Текст промпта для генерации",
+      "model_version": "GPT-4",
+      "result_link": "/path/to/generated_document.pdf",
+      "status": "completed",
+      "created_at": "YYYY-MM-DD HH:MM:SS"
+    }
+  ],
+  "contract_registry": [
+    {
+      "contract_id": "cont_67890",
+      "contract_type": "Договор купли-продажи",
+      "counterparties": ["Компания А", "Компания Б"],
+      "status": "active",
+      "created_at": "YYYY-MM-DD HH:MM:SS",
+      "signed_at": "YYYY-MM-DD HH:MM:SS",
+      "file_path": "/path/to/contract_file.pdf"
+    }
+  ],
+  "summary": {
+    "total_records": {
+      "activity_log": 0,
+      "generation_history": 0,
+      "contract_registry": 0
+    },
+    "last_update": "YYYY-MM-DD HH:MM:SS",
+    "notes": "Этот файл предназначен для хранения истории действий и данных приложения."
+  }
+}
