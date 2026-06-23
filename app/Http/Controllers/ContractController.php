@@ -38,5 +38,9 @@ class ContractController extends Controller
     {
         return view('contract.codex');
     }
+    public function compare()
+    {
+        return view('contract.compare');
+    }
 
 }

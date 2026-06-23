@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html lang="ru" class="scroll-smooth">
+<html lang="ru" class="scroll-smooth" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="AI Конструктор Договоров — создавайте юридические документы за минуты с помощью искусственного интеллекта">
     <title>AI Конструктор Договоров PRO | Современный генератор документов</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -22,64 +23,130 @@
 
     <style>
         :root {
-            /* Colors */
+            /* Default Dark Theme */
             --color-bg: #0a0a0f;
             --color-surface: #12121a;
             --color-surface-elevated: #1a1a25;
             --color-border: rgba(255, 255, 255, 0.08);
             --color-border-hover: rgba(139, 92, 246, 0.3);
-
-            /* Text */
             --text-primary: #ffffff;
             --text-secondary: #a1a1aa;
             --text-muted: #71717a;
-
-            /* Brand */
             --brand-primary: #8b5cf6;
             --brand-secondary: #06b6d4;
             --brand-accent: #f59e0b;
             --brand-success: #10b981;
             --brand-error: #ef4444;
-
-            /* Gradients */
             --gradient-brand: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #06b6d4 100%);
             --gradient-glow: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.25) 0%, transparent 70%);
             --gradient-surface: linear-gradient(145deg, rgba(26, 27, 46, 0.9), rgba(19, 20, 31, 0.95));
-
-            /* Shadows */
             --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
             --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
             --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
             --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.3);
             --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-
-            /* Radius */
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
             --radius-xl: 24px;
             --radius-full: 9999px;
-
-            /* Spacing */
-            --space-1: 4px;
-            --space-2: 8px;
-            --space-3: 12px;
-            --space-4: 16px;
-            --space-5: 24px;
-            --space-6: 32px;
-            --space-8: 48px;
-
-            /* Transitions */
             --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
             --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
             --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+            --bg-pattern: none;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ===== THEME: STARTUP (неон) ===== */
+        [data-theme="startup"] {
+            --color-bg: #0c0618;
+            --color-surface: #150a28;
+            --color-surface-elevated: #1e0f3a;
+            --color-border: rgba(236, 72, 153, 0.15);
+            --color-border-hover: rgba(236, 72, 153, 0.4);
+            --text-primary: #ffffff;
+            --text-secondary: #d8b4fe;
+            --text-muted: #a78bfa;
+            --brand-primary: #ec4899;
+            --brand-secondary: #8b5cf6;
+            --brand-accent: #06b6d4;
+            --brand-success: #10b981;
+            --brand-error: #f43f5e;
+            --gradient-brand: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #06b6d4 100%);
+            --gradient-glow: radial-gradient(ellipse at center, rgba(236, 72, 153, 0.3) 0%, transparent 70%);
+            --gradient-surface: linear-gradient(145deg, rgba(30, 15, 58, 0.95), rgba(21, 10, 40, 0.98));
+            --shadow-glow: 0 0 60px rgba(236, 72, 153, 0.35);
         }
+
+        /* ===== THEME: AURORA (сияние) ===== */
+        [data-theme="aurora"] {
+            --color-bg: #030712;
+            --color-surface: #0a0f1e;
+            --color-surface-elevated: #111827;
+            --color-border: rgba(34, 211, 238, 0.12);
+            --color-border-hover: rgba(34, 211, 238, 0.3);
+            --text-primary: #f0f9ff;
+            --text-secondary: #bae6fd;
+            --text-muted: #7dd3fc;
+            --brand-primary: #22d3ee;
+            --brand-secondary: #10b981;
+            --brand-accent: #a78bfa;
+            --brand-success: #34d399;
+            --brand-error: #fb7185;
+            --gradient-brand: linear-gradient(135deg, #22d3ee 0%, #10b981 50%, #a78bfa 100%);
+            --gradient-glow: radial-gradient(ellipse at center, rgba(34, 211, 238, 0.25) 0%, transparent 70%);
+            --gradient-surface: linear-gradient(145deg, rgba(17, 24, 39, 0.9), rgba(10, 15, 30, 0.95));
+            --shadow-glow: 0 0 50px rgba(34, 211, 238, 0.3);
+        }
+
+        /* ===== THEME: GRID (футуризм) ===== */
+        [data-theme="grid"] {
+            --color-bg: #000000;
+            --color-surface: #0a0a0a;
+            --color-surface-elevated: #141414;
+            --color-border: rgba(34, 197, 94, 0.15);
+            --color-border-hover: rgba(34, 197, 94, 0.4);
+            --text-primary: #ecfccb;
+            --text-secondary: #bef264;
+            --text-muted: #84cc16;
+            --brand-primary: #22c55e;
+            --brand-secondary: #eab308;
+            --brand-accent: #06b6d4;
+            --brand-success: #10b981;
+            --brand-error: #f43f5e;
+            --gradient-brand: linear-gradient(135deg, #22c55e 0%, #eab308 50%, #06b6d4 100%);
+            --gradient-glow: radial-gradient(ellipse at center, rgba(34, 197, 94, 0.2) 0%, transparent 70%);
+            --gradient-surface: linear-gradient(145deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98));
+            --shadow-glow: 0 0 40px rgba(34, 197, 94, 0.25);
+            --bg-pattern:
+                linear-gradient(rgba(34, 197, 94, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 197, 94, 0.06) 1px, transparent 1px);
+        }
+
+        /* ===== THEME: LIGHT (светлая) ===== */
+        [data-theme="light"] {
+            --color-bg: #f8fafc;
+            --color-surface: #ffffff;
+            --color-surface-elevated: #f1f5f9;
+            --color-border: rgba(15, 23, 42, 0.08);
+            --color-border-hover: rgba(99, 102, 241, 0.3);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --brand-primary: #6366f1;
+            --brand-secondary: #0891b2;
+            --brand-accent: #d97706;
+            --brand-success: #059669;
+            --brand-error: #dc2626;
+            --gradient-brand: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #0891b2 100%);
+            --gradient-glow: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            --gradient-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html {
             scroll-behavior: smooth;
@@ -94,6 +161,7 @@
             min-height: 100vh;
             line-height: 1.6;
             overflow-x: hidden;
+            transition: background var(--transition-base), color var(--transition-base);
         }
 
         /* Animated Background */
@@ -101,11 +169,41 @@
             position: fixed;
             inset: 0;
             z-index: -1;
-            background:
-                radial-gradient(ellipse at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 70%),
-                var(--color-bg);
+            background-image: var(--bg-pattern),
+            radial-gradient(ellipse at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+            var(--color-bg);
+            background-size: 40px 40px, auto, auto, auto;
+            transition: background-image var(--transition-base), background var(--transition-base);
+        }
+
+        [data-theme="startup"] .bg-gradient {
+            background-image: var(--bg-pattern),
+            radial-gradient(ellipse at 20% 80%, rgba(236, 72, 153, 0.18) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 70%),
+            var(--color-bg);
+        }
+
+        [data-theme="aurora"] .bg-gradient {
+            background-image: var(--bg-pattern),
+            radial-gradient(ellipse at 20% 30%, rgba(34, 211, 238, 0.18) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 70%, rgba(167, 139, 250, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 70%),
+            var(--color-bg);
+            animation: auroraShift 15s ease-in-out infinite;
+        }
+
+        @keyframes auroraShift {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(20deg); }
+        }
+
+        [data-theme="light"] .bg-gradient {
+            background-image: var(--bg-pattern),
+            radial-gradient(ellipse at 20% 80%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 20%, rgba(8, 145, 178, 0.12) 0%, transparent 50%),
+            var(--color-bg);
         }
 
         .bg-orb {
@@ -118,18 +216,18 @@
             z-index: -1;
         }
 
-        .bg-orb:nth-child(1) {
+        .bg-orb:nth-child(2) {
             width: 600px;
             height: 600px;
-            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
             top: -200px;
             right: -200px;
         }
 
-        .bg-orb:nth-child(2) {
+        .bg-orb:nth-child(3) {
             width: 400px;
             height: 400px;
-            background: linear-gradient(135deg, #06b6d4, #22c55e);
+            background: linear-gradient(135deg, var(--brand-secondary), var(--brand-accent));
             bottom: -100px;
             left: -100px;
             animation-delay: -7s;
@@ -143,7 +241,7 @@
 
         /* Header */
         .header {
-            background: rgba(18, 18, 26, 0.8);
+            background: rgba(18, 18, 26, 0.7);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid var(--color-border);
@@ -157,6 +255,10 @@
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
+        }
+
+        [data-theme="light"] .header {
+            background: rgba(255, 255, 255, 0.8);
         }
 
         .header-brand {
@@ -186,7 +288,7 @@
         .header-title {
             font-size: 1.25rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -202,12 +304,13 @@
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
+            margin-left: 8px;
         }
 
         .header-nav {
             display: flex;
             align-items: center;
-            gap: 32px;
+            gap: 20px;
             margin-left: auto;
         }
 
@@ -220,9 +323,7 @@
             position: relative;
         }
 
-        .header-link:hover {
-            color: var(--text-primary);
-        }
+        .header-link:hover { color: var(--text-primary); }
 
         .header-link::after {
             content: '';
@@ -235,14 +336,124 @@
             transition: width var(--transition-base);
         }
 
-        .header-link:hover::after {
-            width: 100%;
+        .header-link:hover::after { width: 100%; }
+
+        /* ===== Theme Switcher ===== */
+        .theme-switcher {
+            position: relative;
+        }
+
+        .theme-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-full);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+
+        .theme-btn:hover {
+            border-color: var(--brand-primary);
+            background: var(--color-surface-elevated);
+            transform: translateY(-1px);
+        }
+
+        .theme-btn i {
+            font-size: 1rem;
+            background: var(--gradient-brand);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .theme-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 260px;
+            background: var(--color-surface-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px) scale(0.95);
+            transition: all var(--transition-base);
+            z-index: 1000;
+        }
+
+        .theme-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .theme-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .theme-option:hover {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .theme-option.active {
+            background: var(--gradient-brand);
+            color: white;
+        }
+
+        .theme-preview {
+            width: 36px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid var(--color-border);
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-option.active .theme-preview {
+            border-color: white;
+        }
+
+        .theme-preview.dark {
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+        }
+        .theme-preview.startup {
+            background: linear-gradient(135deg, #ec4899, #8b5cf6, #06b6d4);
+        }
+        .theme-preview.aurora {
+            background: linear-gradient(135deg, #22d3ee, #10b981, #a78bfa);
+        }
+        .theme-preview.grid {
+            background:
+                linear-gradient(rgba(34, 197, 94, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 197, 94, 0.3) 1px, transparent 1px),
+                linear-gradient(135deg, #000, #1a1a1a);
+            background-size: 6px 6px, 6px 6px, auto;
+        }
+        .theme-preview.light {
+            background: linear-gradient(135deg, #f8fafc, #6366f1, #0891b2);
         }
 
         /* Profile */
-        .profile-wrapper {
-            position: relative;
-        }
+        .profile-wrapper { position: relative; }
 
         .profile-btn {
             display: flex;
@@ -308,7 +519,6 @@
             transform: rotate(180deg);
         }
 
-        /* Profile Dropdown */
         .profile-dropdown {
             display: none;
             position: absolute;
@@ -324,19 +534,11 @@
             animation: dropdownIn 0.2s ease-out;
         }
 
-        .profile-dropdown.show {
-            display: block;
-        }
+        .profile-dropdown.show { display: block; }
 
         @keyframes dropdownIn {
-            from {
-                opacity: 0;
-                transform: translateY(-8px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            from { opacity: 0; transform: translateY(-8px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .profile-dropdown-header {
@@ -362,18 +564,12 @@
             box-shadow: var(--shadow-glow);
         }
 
-        .profile-dropdown-info {
-            flex: 1;
-            min-width: 0;
-        }
+        .profile-dropdown-info { flex: 1; min-width: 0; }
 
         .profile-dropdown-name {
             font-size: 0.9375rem;
             font-weight: 700;
             color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .profile-dropdown-email {
@@ -385,14 +581,7 @@
             margin-top: 4px;
         }
 
-        .profile-dropdown-email i {
-            width: 14px;
-            height: 14px;
-        }
-
-        .profile-dropdown-menu {
-            padding: 8px 0;
-        }
+        .profile-dropdown-menu { padding: 8px 0; }
 
         .profile-dropdown-item {
             display: flex;
@@ -421,11 +610,6 @@
             width: 18px;
             height: 18px;
             color: var(--text-muted);
-            transition: color var(--transition-fast);
-        }
-
-        .profile-dropdown-item:hover i {
-            color: var(--brand-primary);
         }
 
         .profile-dropdown-item.logout {
@@ -437,11 +621,6 @@
 
         .profile-dropdown-item.logout:hover {
             background: rgba(239, 68, 68, 0.1);
-            color: var(--brand-error);
-        }
-
-        .profile-dropdown-item.logout i {
-            color: var(--brand-error);
         }
 
         /* Progress Bar */
@@ -462,12 +641,9 @@
             gap: 8px;
             cursor: pointer;
             transition: transform var(--transition-fast);
-            position: relative;
         }
 
-        .step:hover {
-            transform: translateY(-2px);
-        }
+        .step:hover { transform: translateY(-2px); }
 
         .step-dot {
             width: 40px;
@@ -501,9 +677,7 @@
             box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3), var(--shadow-glow);
         }
 
-        .step.active .step-dot::before {
-            opacity: 1;
-        }
+        .step.active .step-dot::before { opacity: 1; }
 
         .step.done .step-dot {
             border-color: var(--brand-success);
@@ -525,22 +699,15 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            transition: color var(--transition-fast);
         }
 
-        .step.active .step-label {
-            color: var(--brand-primary);
-        }
-
-        .step.done .step-label {
-            color: var(--brand-success);
-        }
+        .step.active .step-label { color: var(--brand-primary); }
+        .step.done .step-label { color: var(--brand-success); }
 
         .step-line {
             width: 60px;
             height: 2px;
             background: var(--color-border);
-            transition: all var(--transition-base);
             position: relative;
             margin-top: 18px;
         }
@@ -555,18 +722,14 @@
             transition: transform var(--transition-base);
         }
 
-        .step-line.done::before {
-            transform: scaleX(1);
-        }
+        .step-line.done::before { transform: scaleX(1); }
 
-        /* Main Container */
         .main {
             max-width: 900px;
             margin: 32px auto;
             padding: 0 24px;
         }
 
-        /* Page */
         .page {
             display: none;
             background: var(--gradient-surface);
@@ -586,22 +749,15 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+            background: linear-gradient(90deg, transparent, var(--brand-primary), transparent);
+            opacity: 0.3;
         }
 
-        .page.active {
-            display: block;
-        }
+        .page.active { display: block; }
 
         @keyframes pageIn {
-            from {
-                opacity: 0;
-                transform: translateY(24px) scale(0.98);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            from { opacity: 0; transform: translateY(24px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .page-header {
@@ -627,7 +783,7 @@
         .page-title {
             font-size: 1.5rem;
             font-weight: 800;
-            color: white;
+            color: var(--text-primary);
             margin-bottom: 8px;
             letter-spacing: -0.02em;
         }
@@ -639,10 +795,7 @@
             max-width: 500px;
         }
 
-        /* Form Fields */
-        .field {
-            margin-bottom: 24px;
-        }
+        .field { margin-bottom: 24px; }
 
         .field-label {
             display: flex;
@@ -656,10 +809,7 @@
             text-transform: uppercase;
         }
 
-        .field-required {
-            color: var(--brand-error);
-            margin-left: 2px;
-        }
+        .field-required { color: var(--brand-error); margin-left: 2px; }
 
         .field-input,
         .field-textarea,
@@ -674,12 +824,6 @@
             font-family: inherit;
             transition: all var(--transition-fast);
             outline: none;
-        }
-
-        .field-input:hover,
-        .field-textarea:hover,
-        .field-select:hover {
-            border-color: var(--border-hover);
         }
 
         .field-input:focus,
@@ -728,7 +872,6 @@
             gap: 20px;
         }
 
-        /* Buttons */
         .nav {
             display: flex;
             justify-content: space-between;
@@ -754,22 +897,8 @@
             text-decoration: none;
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-            opacity: 0;
-            transition: opacity var(--transition-fast);
-        }
-
-        .btn:hover::before {
-            opacity: 1;
-        }
-
-        .btn:active {
-            transform: translateY(1px) scale(0.99);
-        }
+        .btn:hover::before { opacity: 1; }
+        .btn:active { transform: translateY(1px) scale(0.99); }
 
         .btn-back {
             background: var(--color-surface);
@@ -854,17 +983,13 @@
             border-color: #991b1b;
         }
 
-        /* Loader */
         .loader {
             display: none;
             text-align: center;
             padding: 64px 24px;
-            animation: fadeIn 0.3s ease-out;
         }
 
-        .loader.active {
-            display: block;
-        }
+        .loader.active { display: block; }
 
         .spinner {
             width: 64px;
@@ -887,14 +1012,7 @@
             animation: spin 1.2s linear infinite reverse;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .loader-text {
             color: var(--text-secondary);
@@ -907,19 +1025,15 @@
             font-size: 0.875rem;
             color: var(--text-muted);
             margin-top: 8px;
-            font-weight: 400;
         }
 
-        /* Result */
         .result {
             display: none;
             margin-top: 32px;
             animation: pageIn 0.4s ease-out;
         }
 
-        .result.active {
-            display: block;
-        }
+        .result.active { display: block; }
 
         .result-header {
             display: flex;
@@ -934,7 +1048,7 @@
 
         .result-title {
             font-size: 1.25rem;
-            color: white;
+            color: var(--text-primary);
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -947,101 +1061,586 @@
             flex-wrap: wrap;
         }
 
-        /* Contract Box */
+        /* ===== CONTRACT BOX - Стартап стиль ===== */
         .contract-box {
             background: #ffffff;
             color: #1e293b;
             border-radius: var(--radius-lg);
-            padding: 40px;
-            font-family: 'Times New Roman', Georgia, serif;
-            font-size: 0.875rem;
-            line-height: 1.8;
-            max-height: 700px;
+            padding: 0;
+            font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            max-height: 800px;
             overflow-y: auto;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
             border: 1px solid #e2e8f0;
         }
 
-        .contract-box::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .contract-box::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 4px;
-        }
-
+        .contract-box::-webkit-scrollbar { width: 10px; }
+        .contract-box::-webkit-scrollbar-track { background: #f1f5f9; }
         .contract-box::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+            border-radius: 5px;
         }
 
-        .contract-box::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+        /* Contract Header */
+        .contract-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            color: white;
+            padding: 40px 48px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .contract-box h1 {
-            text-align: center;
+        .contract-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(100px, -100px);
+        }
+
+        .contract-hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #fbbf24, #ec4899, #8b5cf6, #06b6d4);
+        }
+
+        .contract-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .contract-brand-logo {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .contract-brand-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .contract-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+            position: relative;
+            z-index: 2;
+        }
+
+        .contract-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 400;
+            position: relative;
+            z-index: 2;
+        }
+
+        .contract-meta {
+            display: flex;
+            gap: 24px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+
+        .contract-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .contract-meta-label {
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            font-weight: 500;
+        }
+
+        .contract-meta-value {
+            font-size: 0.9375rem;
+            font-weight: 600;
+        }
+
+        /* Contract Body */
+        .contract-body {
+            padding: 48px;
+        }
+
+        .contract-parties {
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 40px;
+            border: 1px solid #e0e7ff;
+            position: relative;
+        }
+
+        .contract-parties::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 24px;
+            right: 24px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .contract-parties-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #64748b;
+            font-weight: 700;
             margin-bottom: 16px;
-            color: #111;
+        }
+
+        .contract-parties-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .contract-party {
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .contract-party-role {
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8b5cf6;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .contract-party-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.4;
+        }
+
+        .contract-party-vs {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            font-weight: 600;
+            padding: 8px;
+        }
+
+        /* Deal Summary Card */
+        .contract-summary {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contract-summary::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 60%);
+            border-radius: 50%;
+        }
+
+        .contract-summary-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #94a3b8;
+            font-weight: 700;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .contract-summary-title::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #8b5cf6;
+        }
+
+        .contract-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .contract-summary-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .contract-summary-label {
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .contract-summary-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .contract-summary-value.highlight {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.25rem;
+        }
+
+        /* Section */
+        .contract-section {
+            margin-bottom: 36px;
+            position: relative;
+        }
+
+        .contract-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f1f5f9;
+            position: relative;
+        }
+
+        .contract-section-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+        }
+
+        .contract-section-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .contract-section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+
+        .contract-section-number {
+            font-size: 0.6875rem;
+            color: #8b5cf6;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
+            margin-right: auto;
+            margin-left: auto;
         }
 
-        .contract-box h2 {
-            text-align: center;
-            font-size: 1rem;
-            color: #64748b;
-            margin-bottom: 32px;
-            font-style: italic;
-        }
-
-        .contract-box h3 {
-            font-size: 1.125rem;
-            margin: 32px 0 12px;
-            color: #1e293b;
-            font-weight: 700;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .contract-box p {
-            text-indent: 30px;
-            text-align: justify;
+        .contract-text {
+            color: #334155;
             margin-bottom: 12px;
-            color: #334155;
+            line-height: 1.8;
         }
 
-        .contract-box ul {
-            margin: 12px 0 12px 48px;
+        .contract-clause {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-left: 3px solid #8b5cf6;
+            border-radius: 8px;
+            transition: all 0.2s;
         }
 
-        .contract-box li {
-            margin-bottom: 6px;
-            color: #334155;
+        .contract-clause:hover {
+            background: #f1f5f9;
+            transform: translateX(4px);
         }
 
-        .contract-box table {
-            width: 100%;
-            margin-top: 32px;
-            border-collapse: collapse;
+        .contract-clause-number {
+            font-weight: 700;
+            color: #8b5cf6;
+            flex-shrink: 0;
             font-size: 0.875rem;
+            min-width: 32px;
         }
 
+        .contract-clause-text {
+            color: #334155;
+            flex: 1;
+        }
+
+        /* Highlight Block */
+        .contract-highlight {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 24px 0;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .contract-highlight-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .contract-highlight-content {
+            flex: 1;
+        }
+
+        .contract-highlight-title {
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 4px;
+            font-size: 0.9375rem;
+        }
+
+        .contract-highlight-text {
+            color: #78350f;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        /* Info Block */
+        .contract-info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-left: 4px solid #3b82f6;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 24px 0;
+            display: flex;
+            gap: 16px;
+        }
+
+        .contract-info-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .contract-info-content { flex: 1; }
+        .contract-info-title {
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 4px;
+            font-size: 0.9375rem;
+        }
+
+        .contract-info-text {
+            color: #1e3a8a;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        /* Signatures */
+        .contract-signatures {
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 2px dashed #e2e8f0;
+        }
+
+        .contract-signatures-title {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            margin-bottom: 32px;
+        }
+
+        .contract-signatures-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .contract-signature {
+            text-align: center;
+        }
+
+        .contract-signature-party {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .contract-signature-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 24px;
+        }
+
+        .contract-signature-line {
+            border-top: 2px solid #0f172a;
+            margin-bottom: 8px;
+            padding-top: 8px;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        /* Requisites Table */
+        .contract-requisites {
+            margin-top: 24px;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .contract-requisites-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .contract-requisites-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .contract-requisites-col h5 {
+            font-size: 0.875rem;
+            color: #0f172a;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .contract-requisites-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.8125rem;
+            gap: 8px;
+        }
+
+        .contract-requisites-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .contract-requisites-value {
+            color: #0f172a;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        /* Contract Footer */
+        .contract-footer {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 24px 48px;
+            text-align: center;
+            font-size: 0.75rem;
+            line-height: 1.6;
+        }
+
+        .contract-footer-brand {
+            font-size: 0.875rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .contract-footer-text {
+            opacity: 0.8;
+        }
+
+        /* Legacy for markdown support */
+        .contract-box h1,
+        .contract-box h2,
+        .contract-box h3,
+        .contract-box p,
+        .contract-box ul,
+        .contract-box li,
+        .contract-box table,
         .contract-box td,
         .contract-box th {
-            border: 1px solid #cbd5e1;
-            padding: 12px;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        .contract-box th {
-            background: #f8fafc;
-            font-weight: 600;
-            color: #1e293b;
+            /* Reset if markdown renders */
         }
 
         /* Summary */
@@ -1073,7 +1672,6 @@
             font-weight: 700;
         }
 
-        /* AI Analysis */
         .ai-analysis {
             background: linear-gradient(145deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.05));
             border: 1px solid rgba(139, 92, 246, 0.3);
@@ -1115,7 +1713,6 @@
             font-weight: 600;
         }
 
-        /* Setup Box */
         .setup-box {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
@@ -1153,7 +1750,6 @@
             margin: 0;
             accent-color: var(--brand-primary);
             cursor: pointer;
-            border-radius: 4px;
         }
 
         .toggle-row label {
@@ -1163,7 +1759,6 @@
             font-size: 0.875rem;
         }
 
-        /* Legal Grid */
         .legal-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1199,9 +1794,7 @@
             transform: translateY(-2px);
         }
 
-        .legal-card:hover::before {
-            opacity: 1;
-        }
+        .legal-card:hover::before { opacity: 1; }
 
         .legal-card h4 {
             color: var(--text-muted);
@@ -1215,21 +1808,15 @@
             gap: 8px;
         }
 
-        .legal-card .field {
-            margin-bottom: 16px;
-        }
+        .legal-card .field { margin-bottom: 16px; }
+        .legal-card .field:last-child { margin-bottom: 0; }
 
-        .legal-card .field:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 24px;
             right: 24px;
             background: var(--color-surface-elevated);
-            color: white;
+            color: var(--text-primary);
             padding: 16px 24px;
             border-radius: var(--radius-lg);
             font-size: 0.875rem;
@@ -1254,11 +1841,13 @@
 
         .toast.success {
             background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
             border-color: rgba(16, 185, 129, 0.3);
         }
 
         .toast.error {
             background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
             border-color: rgba(239, 68, 68, 0.3);
         }
 
@@ -1268,7 +1857,6 @@
             border-color: rgba(245, 158, 11, 0.3);
         }
 
-        /* Modal */
         .modal {
             position: fixed;
             inset: 0;
@@ -1281,9 +1869,7 @@
             backdrop-filter: blur(8px);
         }
 
-        .modal.active {
-            display: flex;
-        }
+        .modal.active { display: flex; }
 
         .modal-content {
             background: var(--gradient-surface);
@@ -1300,14 +1886,8 @@
         }
 
         @keyframes modalIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         .modal-header {
@@ -1320,7 +1900,7 @@
         }
 
         .modal-title {
-            color: white;
+            color: var(--text-primary);
             margin: 0;
             font-size: 1.25rem;
             font-weight: 700;
@@ -1342,7 +1922,7 @@
         }
 
         .modal-close:hover {
-            color: white;
+            color: var(--text-primary);
             background: var(--color-surface-elevated);
         }
 
@@ -1414,7 +1994,6 @@
             flex-wrap: wrap;
         }
 
-        /* Chip */
         .chip {
             display: inline-flex;
             align-items: center;
@@ -1442,42 +2021,37 @@
                 gap: 12px;
             }
 
-            .header-nav {
-                display: none;
-            }
+            .header-nav { gap: 8px; }
+            .header-link { font-size: 0.75rem; }
 
             .grid-2,
             .legal-grid {
                 grid-template-columns: 1fr;
             }
 
-            .contract-box {
-                padding: 24px;
-                font-size: 0.8125rem;
-            }
+            .contract-hero { padding: 24px; }
+            .contract-title { font-size: 1.5rem; }
+            .contract-body { padding: 24px; }
+            .contract-parties-grid { grid-template-columns: 1fr; gap: 12px; }
+            .contract-signatures-grid { grid-template-columns: 1fr; gap: 32px; }
+            .contract-requisites-grid { grid-template-columns: 1fr; }
+            .contract-summary-grid { grid-template-columns: 1fr; }
+            .contract-footer { padding: 20px 24px; }
 
-            .page {
-                padding: 24px;
-            }
+            .page { padding: 24px; }
 
             .btn {
                 padding: 12px 20px;
                 font-size: 0.875rem;
             }
 
-            .step-label {
-                display: none;
-            }
-
+            .step-label { display: none; }
             .step-dot {
                 width: 36px;
                 height: 36px;
                 font-size: 0.75rem;
             }
-
-            .step-line {
-                width: 40px;
-            }
+            .step-line { width: 40px; }
 
             .result-header {
                 flex-direction: column;
@@ -1489,13 +2063,10 @@
                 justify-content: center;
             }
 
-            .profile-info {
-                display: none;
-            }
+            .profile-info { display: none; }
+            .profile-btn { padding: 6px; }
 
-            .profile-btn {
-                padding: 6px;
-            }
+            .theme-btn span { display: none; }
         }
 
         @media (max-width: 480px) {
@@ -1505,74 +2076,34 @@
                 font-size: 1.25rem;
             }
 
-            .header-title {
-                font-size: 1rem;
-            }
-
-            .page {
-                padding: 20px;
-            }
-
-            .page-title {
-                font-size: 1.25rem;
-            }
+            .header-title { font-size: 1rem; }
+            .page { padding: 20px; }
+            .page-title { font-size: 1.25rem; }
 
             .btn {
                 width: 100%;
                 justify-content: center;
             }
 
-            .btn-next {
-                margin-left: 0;
-            }
-
-            .nav {
-                flex-direction: column;
-            }
+            .btn-next { margin-left: 0; }
+            .nav { flex-direction: column; }
         }
 
-        /* Utilities */
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border-width: 0;
-        }
-
-        /* Focus visible */
         :focus-visible {
             outline: 2px solid var(--brand-primary);
             outline-offset: 2px;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--color-surface);
-        }
-
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--color-surface); }
         ::-webkit-scrollbar-thumb {
             background: var(--color-border);
             border-radius: 4px;
             border: 2px solid var(--color-surface);
         }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--brand-primary);
-        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--brand-primary); }
     </style>
 </head>
 <body>
@@ -1595,14 +2126,43 @@
     <div class="header-brand">
         <div class="header-logo">⚖️</div>
         <div>
-            <h1 class="header-title">AI Конструктор Договоров</h1>
-            <span class="header-badge">PRO v4.0</span>
+            <h1 class="header-title">AI Конструктор Договоров<span class="header-badge">PRO v5.0</span></h1>
         </div>
     </div>
 
     <nav class="header-nav">
         <a href="{{ route('welcome') }}" class="header-link">Главная</a>
-        <a href="{{ route('dashboard') }}" class="header-link">Возможности</a>
+        <a href="{{ route('dashboard') }}" class="header-link">Дашборд</a>
+
+        <!-- Theme Switcher -->
+        <div class="theme-switcher" id="themeSwitcher">
+            <button class="theme-btn" id="themeBtn" onclick="toggleThemeDropdown(event)">
+                <i class="fas fa-palette"></i>
+                <span>Тема</span>
+            </button>
+            <div class="theme-dropdown" id="themeDropdown">
+                <div class="theme-option active" data-theme="dark" onclick="setTheme('dark')">
+                    <div class="theme-preview dark"></div>
+                    <span>Dark Purple</span>
+                </div>
+                <div class="theme-option" data-theme="startup" onclick="setTheme('startup')">
+                    <div class="theme-preview startup"></div>
+                    <span>Startup Neon</span>
+                </div>
+                <div class="theme-option" data-theme="aurora" onclick="setTheme('aurora')">
+                    <div class="theme-preview aurora"></div>
+                    <span>Aurora Sky</span>
+                </div>
+                <div class="theme-option" data-theme="grid" onclick="setTheme('grid')">
+                    <div class="theme-preview grid"></div>
+                    <span>Cyber Grid</span>
+                </div>
+                <div class="theme-option" data-theme="light" onclick="setTheme('light')">
+                    <div class="theme-preview light"></div>
+                    <span>Light Mode</span>
+                </div>
+            </div>
+        </div>
     </nav>
 
     <!-- Profile -->
@@ -1901,7 +2461,7 @@
         <div class="summary" id="summary"></div>
 
         <div class="setup-box">
-            <strong>💡 Совет:</strong> После генерации вы сможете отредактировать текст вручную или создать новый черновик на основе этого договора.
+            <strong>💡 Совет:</strong> После генерации вы сможете отредактировать текст вручную или создать новый черновик на основе этого договора. Данные сохраняются в кэш браузера.
         </div>
 
         <button class="btn btn-generate" id="genBtn" onclick="generate()">
@@ -1993,33 +2553,181 @@
     // ===== Configuration =====
     const CONFIG = {
         OLLAMA_URL: 'http://localhost:11434/api/chat',
+        OLLAMA_TAGS_URL: 'http://localhost:11434/api/tags',
         HISTORY_KEY: 'contract_builder_history_v5',
+        API_CACHE_KEY: 'contract_builder_api_cache_v2',
+        FORM_CACHE_KEY: 'contract_builder_form_state_v1',
+        THEME_KEY: 'contract_builder_theme_v1',
         MAX_HISTORY: 10,
+        MAX_API_CACHE: 20,
+        API_CACHE_TTL: 24 * 60 * 60 * 1000,
         TOTAL_STEPS: 5
     };
+    const CABINET_ACTIVITY_URL = '{{ route('cabinet.activity.store') }}';
+
+    async function recordCabinetActivity(payload) {
+        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!token) return;
+
+        try {
+            await fetch(CABINET_ACTIVITY_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify(payload)
+            });
+        } catch (e) {
+            console.warn('Cabinet history error:', e);
+        }
+    }
 
     let currentStep = 1;
     let contractText = '';
-    const requestCache = new Map();
+    let contractHtml = '';
+    let requestCache = new Map();
+    let ollamaStatus = 'unknown';
+
+    // ===== Theme System =====
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem(CONFIG.THEME_KEY, theme);
+
+        document.querySelectorAll('.theme-option').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.theme === theme);
+        });
+
+        toast(`🎨 Тема "${getThemeName(theme)}" активирована`, 'success');
+    }
+
+    function getThemeName(theme) {
+        const names = {
+            dark: 'Dark Purple',
+            startup: 'Startup Neon',
+            aurora: 'Aurora Sky',
+            grid: 'Cyber Grid',
+            light: 'Light Mode'
+        };
+        return names[theme] || theme;
+    }
+
+    function toggleThemeDropdown(e) {
+        e?.stopPropagation();
+        const dropdown = document.getElementById('themeDropdown');
+        dropdown.classList.toggle('show');
+    }
+
+    function loadTheme() {
+        const saved = localStorage.getItem(CONFIG.THEME_KEY) || 'dark';
+        document.documentElement.setAttribute('data-theme', saved);
+        document.querySelectorAll('.theme-option').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.theme === saved);
+        });
+    }
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', (e) => {
+        const themeSwitcher = document.getElementById('themeSwitcher');
+        const themeDropdown = document.getElementById('themeDropdown');
+        if (themeSwitcher && themeDropdown && !themeSwitcher.contains(e.target)) {
+            themeDropdown.classList.remove('show');
+        }
+
+        const profileContainer = document.getElementById('profileContainer');
+        const profileDropdown = document.getElementById('profileDropdown');
+        if (profileContainer && profileDropdown && !profileContainer.contains(e.target)) {
+            profileDropdown.classList.remove('show');
+            document.getElementById('profileButton')?.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // ===== Simple Hash =====
+    function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return 'h_' + Math.abs(hash).toString(36);
+    }
+
+    // ===== API Cache =====
+    function loadApiCache() {
+        try {
+            const data = JSON.parse(localStorage.getItem(CONFIG.API_CACHE_KEY) || '{}');
+            const now = Date.now();
+            Object.entries(data).forEach(([key, val]) => {
+                if (now - val.ts < CONFIG.API_CACHE_TTL) {
+                    requestCache.set(key, val);
+                }
+            });
+        } catch (e) {
+            console.warn('API cache load error:', e);
+        }
+    }
+
+    function saveApiCache() {
+        try {
+            const entries = Array.from(requestCache.entries())
+                .sort((a, b) => b[1].ts - a[1].ts)
+                .slice(0, CONFIG.MAX_API_CACHE);
+            const obj = Object.fromEntries(entries);
+            localStorage.setItem(CONFIG.API_CACHE_KEY, JSON.stringify(obj));
+        } catch (e) {
+            localStorage.removeItem(CONFIG.API_CACHE_KEY);
+        }
+    }
+
+    // ===== Form Cache =====
+    const FORM_FIELDS = ['f_desc', 'f_type', 'f_p1', 'f_p2', 'f_role1', 'f_role2', 'f_amount', 'f_pay', 'f_vat', 'f_duration', 'f_date', 'f_city', 'f_extra', 'f_penalty', 'f_dispute', 'useOllama', 'aiModel', 'f_conf', 'f_subject'];
+
+    let saveFormTimeout;
+    function debounceSaveForm() {
+        clearTimeout(saveFormTimeout);
+        saveFormTimeout = setTimeout(saveFormState, 500);
+    }
+
+    function saveFormState() {
+        try {
+            const state = {};
+            FORM_FIELDS.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                state[id] = el.type === 'checkbox' ? el.checked : el.value;
+            });
+            localStorage.setItem(CONFIG.FORM_CACHE_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.warn('Form save error:', e);
+        }
+    }
+
+    function restoreFormState() {
+        try {
+            const state = JSON.parse(localStorage.getItem(CONFIG.FORM_CACHE_KEY));
+            if (!state) return false;
+            Object.entries(state).forEach(([id, val]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (el.type === 'checkbox') el.checked = val;
+                else if (val) el.value = val;
+            });
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
 
     // ===== Profile Toggle =====
     function toggleProfile() {
         const dropdown = document.getElementById('profileDropdown');
         const button = document.getElementById('profileButton');
         if (!dropdown || !button) return;
-
         const isOpen = dropdown.classList.toggle('show');
         button.setAttribute('aria-expanded', isOpen);
     }
-
-    document.addEventListener('click', (e) => {
-        const container = document.getElementById('profileContainer');
-        const dropdown = document.getElementById('profileDropdown');
-        if (container && dropdown && !container.contains(e.target)) {
-            dropdown.classList.remove('show');
-            document.getElementById('profileButton')?.setAttribute('aria-expanded', 'false');
-        }
-    });
 
     // ===== Progress Bar =====
     function buildProgress() {
@@ -2033,25 +2741,19 @@
 
         const bar = document.getElementById('progressBar');
         let html = '';
-
         steps.forEach((s, i) => {
             if (i > 0) html += `<div class="step-line" id="pline${i}"></div>`;
             html += `
-            <div class="step" id="pstep${s.n}" onclick="goStep(${s.n})">
-                <div class="step-dot" id="pdot${s.n}">${s.n}</div>
-                <div class="step-label">${s.l}</div>
-            </div>
-        `;
+                <div class="step" id="pstep${s.n}" onclick="goStep(${s.n})">
+                    <div class="step-dot" id="pdot${s.n}">${s.n}</div>
+                    <div class="step-label">${s.l}</div>
+                </div>
+            `;
         });
-
         bar.innerHTML = html;
     }
 
     buildProgress();
-
-    // Set today's date
-    const dateInput = document.getElementById('f_date');
-    if (dateInput) dateInput.valueAsDate = new Date();
 
     // ===== Navigation =====
     function goStep(n) {
@@ -2070,50 +2772,94 @@
 
         currentStep = n;
 
-        // Hide all pages
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-
-        // Show target page
         const targetPage = document.querySelector(`.page[data-step="${n}"]`);
         if (targetPage) targetPage.classList.add('active');
 
-        // Update progress
         for (let i = 1; i <= CONFIG.TOTAL_STEPS; i++) {
             const dot = document.getElementById(`pdot${i}`);
             const step = document.getElementById(`pstep${i}`);
-
             if (dot) {
                 dot.classList.remove('active', 'done');
                 if (i === n) dot.classList.add('active');
                 else if (i < n) dot.classList.add('done');
             }
-
             if (step) {
                 step.classList.remove('active', 'done');
                 if (i <= n) step.classList.add(i < n ? 'done' : 'active');
             }
         }
 
-        // Update lines
         for (let i = 1; i < CONFIG.TOTAL_STEPS; i++) {
             const line = document.getElementById(`pline${i}`);
             if (line) line.classList.toggle('done', i < n);
         }
 
-        // Build summary on step 4
         if (n === 4) buildSummary();
-
-        // Hide result on steps < 4
         if (n < 4) document.getElementById('result')?.classList.remove('active');
     }
 
-    // ===== Ollama API =====
+    // ===== Ollama =====
+    async function checkOllamaConnection() {
+        const modelSelect = document.getElementById('aiModel');
+
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+
+            const res = await fetch(CONFIG.OLLAMA_TAGS_URL, {
+                method: 'GET',
+                signal: controller.signal
+            });
+
+            clearTimeout(timeout);
+
+            if (!res.ok) throw new Error(`Status ${res.status}`);
+
+            const data = await res.json();
+            const models = data.models || [];
+
+            if (models.length === 0) {
+                ollamaStatus = 'no-model';
+                return false;
+            }
+
+            ollamaStatus = 'connected';
+
+            if (modelSelect) {
+                const currentVal = modelSelect.value;
+                modelSelect.innerHTML = '';
+
+                models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.name;
+                    const sizeGB = m.size ? ` (${(m.size / 1e9).toFixed(1)} GB)` : '';
+                    opt.textContent = `🟢 ${m.name}${sizeGB}`;
+                    modelSelect.appendChild(opt);
+                });
+
+                const matchOption = Array.from(modelSelect.options).find(o => o.value === currentVal);
+                if (matchOption) modelSelect.value = currentVal;
+                else if (models.length > 0) modelSelect.value = models[0].name;
+
+                debounceSaveForm();
+            }
+
+            return true;
+
+        } catch (e) {
+            ollamaStatus = 'disconnected';
+            return false;
+        }
+    }
+
     async function ollamaChat(system, user, model = 'llama3.1:8b') {
-        // Создаём безопасный ключ кэша без btoa
-        const cacheKey = `${model}:${system.slice(0, 50).replace(/\s/g, '')}${user.slice(0, 50).replace(/\s/g, '')}`;
+        if (!model) throw new Error('Модель не выбрана');
+
+        const cacheKey = simpleHash(`${model}:${system}:${user}`);
         const cached = requestCache.get(cacheKey);
 
-        if (cached && Date.now() - cached.ts < 5 * 60 * 1000) {
+        if (cached && Date.now() - cached.ts < CONFIG.API_CACHE_TTL) {
             return cached.data;
         }
 
@@ -2138,24 +2884,35 @@
 
             clearTimeout(timeout);
 
-            if (!res.ok) throw new Error(`API ошибка: ${res.status}`);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    throw new Error(`Модель "${model}" не найдена. Выполните: ollama pull ${model}`);
+                }
+                throw new Error(`API ошибка: ${res.status}`);
+            }
 
             const json = await res.json();
             const content = json.message?.content?.trim() || '';
 
+            if (!content) throw new Error('Пустой ответ от Ollama');
+
             requestCache.set(cacheKey, { data: content, ts: Date.now() });
-            if (requestCache.size > 50) {
-                const oldest = Array.from(requestCache.entries()).sort((a, b) => a[1].ts - b[1].ts)[0][0];
-                requestCache.delete(oldest);
-            }
+            saveApiCache();
 
             return content;
         } catch (e) {
             clearTimeout(timeout);
+
             if (e.name === 'AbortError') throw new Error('Таймаут запроса');
+
+            if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+                throw new Error('Не удалось подключиться к Ollama');
+            }
+
             throw e;
         }
     }
+
     // ===== Analysis =====
     async function analyzeAndNext() {
         const desc = document.getElementById('f_desc').value.trim();
@@ -2175,7 +2932,17 @@
             let data;
 
             if (useOllama) {
-                const prompt = `Ты — эксперт по анализу сделок в РФ. Извлеки данные для договора.
+                if (ollamaStatus === 'disconnected') await checkOllamaConnection();
+
+                if (ollamaStatus === 'disconnected') {
+                    throw new Error('Ollama недоступна');
+                }
+
+                if (ollamaStatus === 'no-model') {
+                    throw new Error('Нет установленных моделей Ollama');
+                }
+
+                const prompt = `Ты — эксперт по анализу сделок. Извлеки данные для договора.
 Верни ТОЛЬКО валидный JSON без пояснений:
 {
   "type": "оказания услуг|подряда|аренды|купли-продажи|поставки",
@@ -2217,7 +2984,7 @@
             party2: { name: 'Исполнитель', role: 'Исполнитель' },
             subject: '',
             amount: null,
-            city: 'г. Москва',
+            city: 'г. Душанбе',
             duration: '',
             payment: ''
         };
@@ -2229,7 +2996,7 @@
         else if (l.match(/подряд|ремонт|монтаж|строит/)) d.type = 'подряда';
         else if (l.match(/поставк|доставк/)) d.type = 'поставки';
 
-        const sumMatch = desc.match(/(\d[\d\s,.]*)\s*(?:тыс\.?|млн\.?|₽|руб)/i);
+        const sumMatch = desc.match(/(\d[\d\s,.]*)\s*(?:тыс\.?|млн\.?|₽|руб|сомон)/i);
         if (sumMatch) {
             let n = sumMatch[1].replace(/[\s,]/g, '').replace('.', '');
             let m = 1;
@@ -2291,6 +3058,8 @@
                 }).join('') :
                 '<em style="opacity: 0.8">Данные не распознаны — заполните вручную</em>';
         }
+
+        debounceSaveForm();
     }
 
     // ===== Summary =====
@@ -2300,24 +3069,24 @@
 
         const amountVal = g('f_amount');
         const amountDisplay = amountVal !== '—' ?
-            `${parseInt(amountVal).toLocaleString('ru-RU')} ₽` : '—';
+            `${parseInt(amountVal).toLocaleString('ru-RU')} сомон` : '—';
 
         const vatChip = gs('f_vat') !== 'не указано' ?
             `<span class="chip ${gs('f_vat').includes('НДС') ? 'success' : ''}">${gs('f_vat')}</span>` : '';
 
         document.getElementById('summary').innerHTML = `
-        <div><strong>Тип:</strong> ${gs('f_type')}</div>
-        <div><strong>${gs('f_role1')}:</strong> ${g('f_p1')}</div>
-        <div><strong>${gs('f_role2')}:</strong> ${g('f_p2')}</div>
-        <div><strong>Сумма:</strong> ${amountDisplay} ${vatChip}</div>
-        <div><strong>Оплата:</strong> ${g('f_pay')}</div>
-        <div><strong>Срок:</strong> ${g('f_duration')}</div>
-        ${g('f_subject') !== '—' ? `<div><strong>Предмет:</strong> ${g('f_subject')}</div>` : ''}
-        <div><strong>Неустойка:</strong> ${g('f_penalty')}</div>
-        <div><strong>Конфиденциальность:</strong> ${document.getElementById('f_conf')?.checked ? '✅ Да' : '❌ Нет'}</div>
-        <div><strong>Подсудность:</strong> ${gs('f_dispute')} | ${g('f_city')}</div>
-        ${g('f_extra') !== '—' ? `<div><strong>Доп.:</strong> ${g('f_extra')}</div>` : ''}
-    `;
+            <div><strong>Тип:</strong> ${gs('f_type')}</div>
+            <div><strong>${gs('f_role1')}:</strong> ${g('f_p1')}</div>
+            <div><strong>${gs('f_role2')}:</strong> ${g('f_p2')}</div>
+            <div><strong>Сумма:</strong> ${amountDisplay} ${vatChip}</div>
+            <div><strong>Оплата:</strong> ${g('f_pay')}</div>
+            <div><strong>Срок:</strong> ${g('f_duration')}</div>
+            ${g('f_subject') !== '—' ? `<div><strong>Предмет:</strong> ${g('f_subject')}</div>` : ''}
+            <div><strong>Неустойка:</strong> ${g('f_penalty')}</div>
+            <div><strong>Конфиденциальность:</strong> ${document.getElementById('f_conf')?.checked ? '✅ Да' : '❌ Нет'}</div>
+            <div><strong>Подсудность:</strong> ${gs('f_dispute')} | ${g('f_city')}</div>
+            ${g('f_extra') !== '—' ? `<div><strong>Доп.:</strong> ${g('f_extra')}</div>` : ''}
+        `;
     }
 
     // ===== Generate =====
@@ -2356,56 +3125,64 @@
         loader.classList.add('active');
 
         try {
-            let text;
+            let html;
 
             if (document.getElementById('useOllama').checked) {
-                const prompt = `Ты — корпоративный юрист РФ. Составь договор в формате Markdown.
-ТРЕБОВАНИЯ:
-1) Только текст договора
-2) Официально-деловой стиль, ссылки на ГК РФ
-3) Структура: # Заголовок, ## Раздел, 1.1. пункты, | таблицы
+                if (ollamaStatus === 'disconnected' || ollamaStatus === 'unknown') {
+                    await checkOllamaConnection();
+                }
 
+                if (ollamaStatus === 'disconnected') {
+                    throw new Error('Ollama недоступна');
+                }
+
+                const model = document.getElementById('aiModel').value;
+                const prompt = `Ты — корпоративный юрист Республики Таджикистан. Составь договор.
 Данные:
 • Тип: ${data.type}
 • ${data.role1}: ${data.p1}
 • ${data.role2}: ${data.p2}
-• Сумма: ${data.amount ? `${parseInt(data.amount).toLocaleString('ru')} ₽` : '[не указана]'} ${data.vat || ''}
+• Сумма: ${data.amount ? `${parseInt(data.amount).toLocaleString('ru')} сомон` : '[не указана]'} ${data.vat || ''}
 • Оплата: ${data.pay || 'По соглашению'}
 • Срок: ${data.duration || '[не указан]'}
 • Город: ${data.city || '__________'}
 • Неустойка: ${data.penalty || '0.1%/день'}
 • Конфиденциальность: ${data.conf ? 'Да' : 'Нет'}
 • Подсудность: ${data.dispute || 'Арбитражный суд'}
-• Предмет: ${data.subject || data.type}`;
+• Предмет: ${data.subject || data.type}
 
-                text = await ollamaChat(
-                    'Ты — корпоративный юрист РФ. Составь договор в формате Markdown с ссылками на ГК РФ.',
+Верни структурированный текст договора со всеми необходимыми пунктами.`;
+
+                const textContent = await ollamaChat(
+                    'Ты — корпоративный юрист Республики Таджикистан.',
                     prompt,
-                    document.getElementById('aiModel').value
+                    model
                 );
+                contractText = textContent;
+                html = buildStartupContract(data, textContent);
             } else {
                 await new Promise(r => setTimeout(r, 600));
-                text = buildMockContract(data);
+                html = buildStartupContract(data);
+                contractText = generateTextVersion(data);
             }
 
-            contractText = text;
+            contractHtml = html;
             loader.classList.remove('active');
 
             const output = document.getElementById('contractOutput');
             if (output) {
-                output.innerHTML = marked.parse(text);
+                output.innerHTML = html;
                 output.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
             document.getElementById('result')?.classList.add('active');
 
-            // Mark all steps as done
             for (let i = 1; i <= CONFIG.TOTAL_STEPS; i++) {
                 document.getElementById(`pdot${i}`)?.classList.add('done');
                 document.getElementById(`pstep${i}`)?.classList.remove('active');
             }
 
-            saveHistory(data, text);
+            saveHistory(data, contractText);
             toast('✅ Договор успешно создан!', 'success');
         } catch (e) {
             loader.classList.remove('active');
@@ -2418,68 +3195,485 @@
         }
     }
 
-    function buildMockContract(d) {
+    // ===== Красивый Стартап-шаблон договора =====
+    function buildStartupContract(d, aiContent = '') {
+        const dt = new Date(d.date || Date.now());
+        const dateStr = dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        const contractNumber = `№ ${Math.floor(Math.random() * 9000) + 1000}/${dt.getFullYear()}`;
+        const amt = d.amount ? parseInt(d.amount) : null;
+        const amtW = amt ? numWords(amt) : 'сумма прописью';
+        const amtF = amt ? amt.toLocaleString('ru-RU') : '—';
+        const typeUpper = (d.type || 'услуг').toUpperCase();
+        const typeIcon = getTypeIcon(d.type);
+         return `
+            <!-- HERO HEADER -->
+            <div class="contract-hero">
+                <div class="contract-brand">
+                    <div class="contract-brand-logo">⚖️</div>
+                    <div class="contract-brand-name">LEGAL PRO · CONTRACT</div>
+                </div>
+                <div class="contract-title">ДОГОВОР ${typeUpper}</div>
+                <div class="contract-subtitle">Юридически обязывающее соглашение между сторонами</div>
+                <div class="contract-meta">
+                    <div class="contract-meta-item">
+                        <span class="contract-meta-label">Номер</span>
+                        <span class="contract-meta-value">${contractNumber}</span>
+                    </div>
+                    <div class="contract-meta-item">
+                        <span class="contract-meta-label">Дата</span>
+                        <span class="contract-meta-value">${dateStr}</span>
+                    </div>
+                    <div class="contract-meta-item">
+                        <span class="contract-meta-label">Город</span>
+                        <span class="contract-meta-value">${d.city || 'г. __________'}</span>
+                    </div>
+                    <div class="contract-meta-item">
+                        <span class="contract-meta-label">Тип</span>
+                        <span class="contract-meta-value">${typeIcon} ${d.type || 'услуг'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTRACT BODY -->
+            <div class="contract-body">
+                <!-- PARTIES -->
+                <div class="contract-parties">
+                    <div class="contract-parties-title">🤝 Стороны договора</div>
+                    <div class="contract-parties-grid">
+                        <div class="contract-party">
+                            <div class="contract-party-role">${d.role1}</div>
+                            <div class="contract-party-name">${d.p1}</div>
+                        </div>
+                        <div class="contract-party-vs">⇄</div>
+                        <div class="contract-party">
+                            <div class="contract-party-role">${d.role2}</div>
+                            <div class="contract-party-name">${d.p2}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="contract-text" style="font-size: 1rem; margin-bottom: 32px; color: #475569;">
+                    <strong style="color: #0f172a;">${d.p1}</strong>, именуемый в дальнейшем «<strong>${d.role1}</strong>», с одной стороны, и
+                    <strong style="color: #0f172a;">${d.p2}</strong>, именуемый в дальнейшем «<strong>${d.role2}</strong>», с другой стороны,
+                    совместно именуемые «Стороны», а по отдельности — «Сторона», руководствуясь Гражданским кодексом Республики Таджикистан,
+                    заключили настоящий Договор о нижеследующем:
+                </p>
+
+                <!-- DEAL SUMMARY CARD -->
+                <div class="contract-summary">
+                    <div class="contract-summary-title">DEAL SUMMARY · Ключевые условия</div>
+                    <div class="contract-summary-grid">
+                        <div class="contract-summary-item">
+                            <div class="contract-summary-label">💰 Сумма</div>
+                            <div class="contract-summary-value highlight">${amtF}${amt ? ' сом.' : ''}</div>
+                        </div>
+                        <div class="contract-summary-item">
+                            <div class="contract-summary-label">📅 Срок</div>
+                            <div class="contract-summary-value">${d.duration || '30 дней'}</div>
+                        </div>
+                        <div class="contract-summary-item">
+                            <div class="contract-summary-label">💳 Оплата</div>
+                            <div class="contract-summary-value">${d.pay || 'По соглашению'}</div>
+                        </div>
+                        <div class="contract-summary-item">
+                            <div class="contract-summary-label">🏛️ НДС</div>
+                            <div class="contract-summary-value">${d.vat || 'не указан'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: SUBJECT -->
+                <div class="contract-section">
+                    <div class="contract-section-header">
+                        <div class="contract-section-icon"><i class="fas fa-bullseye"></i></div>
+                        <div>
+                            <div class="contract-section-title">Предмет договора</div>
+                            <div class="contract-section-number">§ 1</div>
+                        </div>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">1.1.</span>
+                        <span class="contract-clause-text">
+                            ${d.role2} обязуется по заданию ${d.role1} оказать услуги (выполнить работы) по предмету:
+                            <strong>${d.subject || d.type}</strong>, а ${d.role1} обязуется принять и оплатить результат.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">1.2.</span>
+                        <span class="contract-clause-text">
+                            Качество услуг должно соответствовать условиям договора и обычным требованиям делового оборота Республики Таджикистан.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">1.3.</span>
+                        <span class="contract-clause-text">
+                            Результат услуг передаётся ${d.role1} по Акту сдачи-приёмки, подписываемому обеими Сторонами.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: RIGHTS & DUTIES -->
+                <div class="contract-section">
+                    <div class="contract-section-header">
+                        <div class="contract-section-icon"><i class="fas fa-balance-scale"></i></div>
+                        <div>
+                            <div class="contract-section-title">Права и обязанности</div>
+                            <div class="contract-section-number">§ 2</div>
+                        </div>
+                    </div>
+                    <div class="contract-highlight">
+                        <div class="contract-highlight-icon">👤</div>
+                        <div class="contract-highlight-content">
+                            <div class="contract-highlight-title">Обязанности ${d.role2}:</div>
+                            <div class="contract-highlight-text">
+                                • Выполнить услуги лично, качественно и в установленный срок<br>
+                                • Предоставлять ${d.role1} отчёты о ходе исполнения<br>
+                                • Соблюдать режим конфиденциальности<br>
+                                • Немедленно уведомлять о невозможности исполнения
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contract-info">
+                        <div class="contract-info-icon">👤</div>
+                        <div class="contract-info-content">
+                            <div class="contract-info-title">Обязанности ${d.role1}:</div>
+                            <div class="contract-info-text">
+                                • Предоставить необходимую информацию и документацию<br>
+                                • Принять оказанные услуги по Акту в течение 5 рабочих дней<br>
+                                • Своевременно и в полном объёме оплатить услуги<br>
+                                • Обеспечить доступ к объекту/ресурсам при необходимости
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: PRICE & PAYMENT -->
+                <div class="contract-section">
+                    <div class="contract-section-header">
+                        <div class="contract-section-icon"><i class="fas fa-coins"></i></div>
+                        <div>
+                            <div class="contract-section-title">Стоимость и порядок расчётов</div>
+                            <div class="contract-section-number">§ 3</div>
+                        </div>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">3.1.</span>
+                        <span class="contract-clause-text">
+                            Общая стоимость услуг по настоящему Договору составляет
+                            <strong>${amtF} (${amtW}) сомони</strong>${d.vat !== 'не указано' ? `, ${d.vat}` : ''}.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">3.2.</span>
+                        <span class="contract-clause-text">
+                            Порядок оплаты: <strong>${d.pay || 'По соглашению Сторон'}</strong>.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">3.3.</span>
+                        <span class="contract-clause-text">
+                            Оплата производится в безналичном порядке путём перечисления денежных средств на расчётный счёт ${d.role2}.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: TERMS -->
+                <div class="contract-section">
+                    <div class="contract-section-header">
+                        <div class="contract-section-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <div>
+                            <div class="contract-section-title">Сроки исполнения</div>
+                            <div class="contract-section-number">§ 4</div>
+                        </div>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">4.1.</span>
+                        <span class="contract-clause-text">
+                            Срок оказания услуг: <strong>${d.duration || '30 календарных дней'}</strong> с момента подписания Договора.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">4.2.</span>
+                        <span class="contract-clause-text">
+                            Приёмка результатов: ${d.role1} обязан рассмотреть Акт в течение 5 рабочих дней. При отсутствии мотивированного отказа услуги считаются принятыми.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">4.3.</span>
+                        <span class="contract-clause-text">
+                            Сроки могут быть изменены по соглашению Сторон путём подписания дополнительного соглашения.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- SECTION 5: LIABILITY -->
+                <div class="contract-section">
+                    <div class="contract-section-header">
+                        <div class="contract-section-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div>
+                            <div class="contract-section-title">Ответственность сторон</div>
+                            <div class="contract-section-number">§ 5</div>
+                        </div>
+                    </div>
+                    <div class="contract-highlight">
+                        <div class="contract-highlight-icon">⚠️</div>
+                        <div class="contract-highlight-content">
+                            <div class="contract-highlight-title">Неустойка</div>
+                            <div class="contract-highlight-text">
+                                За нарушение сроков оплаты или исполнения обязательств Сторона уплачивает пеню в размере
+                                <strong>${d.penalty || '0,1%'}</strong> от суммы задолженности за каждый день просрочки.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">5.1.</span>
+                        <span class="contract-clause-text">
+                            Уплата неустойки не освобождает Сторону от исполнения основного обязательства.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">5.2.</span>
+                        <span class="contract-clause-text">
+                            Совокупная ответственность Сторон ограничивается суммой настоящего Договора, за исключением случаев умысла.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- SECTION 6: FORCE MAJEURE -->
+                <div class="contract-section">
+                    <div class="contract-section-header">
+                        <div class="contract-section-icon"><i class="fas fa-cloud-bolt"></i></div>
+                        <div>
+                            <div class="contract-section-title">Обстоятельства непреодолимой силы</div>
+                            <div class="contract-section-number">§ 6</div>
+                        </div>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">6.1.</span>
+                        <span class="contract-clause-text">
+                            Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств, если оно вызвано обстоятельствами непреодолимой силы (форс-мажор): стихийные бедствия, войны, акты государственных органов и др.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">6.2.</span>
+                        <span class="contract-clause-text">
+                            Сторона, для которой создалась невозможность исполнения, обязана уведомить другую Сторону в течение 3 (трёх) рабочих дней с момента наступления таких обстоятельств.
+                        </span>
+                    </div>
+                </div>
+
+                ${d.conf ? `
+                <!-- SECTION 7: CONFIDENTIALITY -->
+                <div class="contract-section">
+                    <div class="contract-section-header">
+                        <div class="contract-section-icon"><i class="fas fa-lock"></i></div>
+                        <div>
+                            <div class="contract-section-title">Конфиденциальность</div>
+                            <div class="contract-section-number">§ 7</div>
+                        </div>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">7.1.</span>
+                        <span class="contract-clause-text">
+                            Стороны обязуются сохранять конфиденциальность условий Договора, а также любой информации, полученной в ходе его исполнения.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">7.2.</span>
+                        <span class="contract-clause-text">
+                            Режим конфиденциальности действует в течение 3 (трёх) лет после прекращения Договора.
+                        </span>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- SECTION ${d.conf ? 8 : 7}: DISPUTES -->
+                <div class="contract-section">
+                    <div class="contract-section-header">
+                        <div class="contract-section-icon"><i class="fas fa-gavel"></i></div>
+                        <div>
+                            <div class="contract-section-title">Разрешение споров</div>
+                            <div class="contract-section-number">§ ${d.conf ? 8 : 7}</div>
+                        </div>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">${d.conf ? '8' : '7'}.1.</span>
+                        <span class="contract-clause-text">
+                            Все споры решаются путём переговоров. Претензионный порядок обязателен. Срок ответа на претензию — 30 календарных дней.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">${d.conf ? '8' : '7'}.2.</span>
+                        <span class="contract-clause-text">
+                            При недостижении согласия спор передаётся на рассмотрение в <strong>${d.dispute || 'арбитражный суд'}</strong> в соответствии с законодательством Республики Таджикистан.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- SECTION ${d.conf ? 9 : 8}: FINAL PROVISIONS -->
+                <div class="contract-section">
+                    <div class="contract-section-header">
+                        <div class="contract-section-icon"><i class="fas fa-file-signature"></i></div>
+                        <div>
+                            <div class="contract-section-title">Заключительные положения</div>
+                            <div class="contract-section-number">§ ${d.conf ? 9 : 8}</div>
+                        </div>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">${d.conf ? '9' : '8'}.1.</span>
+                        <span class="contract-clause-text">
+                            Договор вступает в силу с момента подписания и действует до полного исполнения Сторонами своих обязательств.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">${d.conf ? '9' : '8'}.2.</span>
+                        <span class="contract-clause-text">
+                            Любые изменения и дополнения действительны лишь при условии, что они совершены в письменной форме и подписаны уполномоченными представителями Сторон.
+                        </span>
+                    </div>
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">${d.conf ? '9' : '8'}.3.</span>
+                        <span class="contract-clause-text">
+                            Договор составлен в 2 (двух) экземплярах, имеющих равную юридическую силу, по одному для каждой из Сторон.
+                        </span>
+                    </div>
+                    ${d.extra ? `
+                    <div class="contract-clause">
+                        <span class="contract-clause-number">${d.conf ? '9' : '8'}.4.</span>
+                        <span class="contract-clause-text"><strong>Особые условия:</strong> ${d.extra}</span>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <!-- SIGNATURES -->
+                <div class="contract-signatures">
+                    <div class="contract-signatures-title">✒️ Подписи сторон</div>
+                    <div class="contract-signatures-grid">
+                        <div class="contract-signature">
+                            <div class="contract-signature-party">${d.role1}</div>
+                            <div class="contract-signature-name">${d.p1}</div>
+                            <div class="contract-signature-line">
+                                _________________________ / _________________ /
+                            </div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">(подпись / расшифровка)</div>
+                        </div>
+                        <div class="contract-signature">
+                            <div class="contract-signature-party">${d.role2}</div>
+                            <div class="contract-signature-name">${d.p2}</div>
+                            <div class="contract-signature-line">
+                                _________________________ / _________________ /
+                            </div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">(подпись / расшифровка)</div>
+                        </div>
+                    </div>
+
+                    <!-- Requisites -->
+                    <div class="contract-requisites">
+                        <div class="contract-requisites-title">📋 Банковские реквизиты</div>
+                        <div class="contract-requisites-grid">
+                            <div class="contract-requisites-col">
+                                <h5>${d.role1}: ${d.p1}</h5>
+                                <div class="contract-requisites-row">
+                                    <span class="contract-requisites-label">Адрес:</span>
+                                    <span class="contract-requisites-value">_________________</span>
+                                </div>
+                                <div class="contract-requisites-row">
+                                    <span class="contract-requisites-label">ИНН/ОГРН:</span>
+                                    <span class="contract-requisites-value">_________________</span>
+                                </div>
+                                <div class="contract-requisites-row">
+                                    <span class="contract-requisites-label">Р/счёт:</span>
+                                    <span class="contract-requisites-value">_________________</span>
+                                </div>
+                                <div class="contract-requisites-row">
+                                    <span class="contract-requisites-label">Банк:</span>
+                                    <span class="contract-requisites-value">_________________</span>
+                                </div>
+                            </div>
+                            <div class="contract-requisites-col">
+                                <h5>${d.role2}: ${d.p2}</h5>
+                                <div class="contract-requisites-row">
+                                    <span class="contract-requisites-label">Адрес:</span>
+                                    <span class="contract-requisites-value">_________________</span>
+                                </div>
+                                <div class="contract-requisites-row">
+                                    <span class="contract-requisites-label">ИНН/ОГРН:</span>
+                                    <span class="contract-requisites-value">_________________</span>
+                                </div>
+                                <div class="contract-requisites-row">
+                                    <span class="contract-requisites-label">Р/счёт:</span>
+                                    <span class="contract-requisites-value">_________________</span>
+                                </div>
+                                <div class="contract-requisites-row">
+                                    <span class="contract-requisites-label">Банк:</span>
+                                    <span class="contract-requisites-value">_________________</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="contract-footer">
+                <div class="contract-footer-brand">⚖️ LEGAL PRO · CONTRACT</div>
+                <div class="contract-footer-text">
+                    Документ сгенерирован с помощью AI Contract Builder PRO<br>
+                    ${dateStr} · Все права защищены · ${contractNumber}
+                </div>
+            </div>
+        `;
+    }
+
+    function getTypeIcon(type) {
+        const icons = {
+            'оказания услуг': '🤝',
+            'подряда': '🔨',
+            'аренды': '🏢',
+            'купли-продажи': '🛒',
+            'поставки': '📦',
+            'лицензионный': '📜'
+        };
+        return icons[type] || '📋';
+    }
+
+    function generateTextVersion(d) {
         const dt = new Date(d.date || Date.now());
         const dateStr = dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
         const amt = d.amount ? parseInt(d.amount) : null;
         const amtW = amt ? numWords(amt) : '[сумма прописью]';
         const amtF = amt ? amt.toLocaleString('ru-RU') : '[сумма]';
 
-        return `# ДОГОВОР ${d.type.toUpperCase()}
+        return `ДОГОВОР ${d.type.toUpperCase()}
 
-**${d.city || 'г. ____________'}** | **«${dateStr}»**
+${d.city || 'г. ____________'} | ${dateStr}
 
-**${d.p1}**, именуемый «${d.role1}», с одной стороны, и **${d.p2}**, именуемый «${d.role2}», с другой стороны, заключили настоящий договор:
+${d.p1}, именуемый «${d.role1}», и ${d.p2}, именуемый «${d.role2}», заключили настоящий договор:
 
-## 1. ПРЕДМЕТ ДОГОВОРА
-1.1. ${d.role2} обязуется оказать ${d.role1} услуги по: ${d.subject || d.type}, а ${d.role1} обязуется принять и оплатить их (ст. 432 ГК РФ).
+1. ПРЕДМЕТ ДОГОВОРА
+1.1. ${d.role2} обязуется оказать ${d.role1} услуги: ${d.subject || d.type}.
 
-## 2. ПРАВА И ОБЯЗАННОСТИ
-2.1. ${d.role2} обязан: выполнить работы качественно и в срок; предоставлять отчётность; соблюдать конфиденциальность.
-2.2. ${d.role1} обязан: предоставить информацию; принять результат по акту; оплатить услуги.
+2. СТОИМОСТЬ И ОПЛАТА
+2.1. Цена: ${amtF} (${amtW}) сомон ${d.vat !== 'не указано' ? d.vat : ''}.
+2.2. Оплата: ${d.pay || 'По соглашению'}.
 
-## 3. СТОИМОСТЬ И ОПЛАТА
-3.1. Цена договора: **${amtF} (${amtW}) рублей** ${d.vat !== 'не указано' ? d.vat : ''}.
-3.2. Оплата: ${d.pay || 'По соглашению сторон'} (ст. 314, 316 ГК РФ).
+3. СРОКИ
+3.1. Срок: ${d.duration || '30 календарных дней'}.
 
-## 4. СРОКИ И СДАЧА-ПРИЕМКА
-4.1. Срок исполнения: ${d.duration || '30 календарных дней'}.
-4.2. Приёмка по акту; претензии по качеству — в течение 10 рабочих дней.
+4. ОТВЕТСТВЕННОСТЬ
+4.1. Неустойка: ${d.penalty || '0.1%/день'}.
 
-## 5. ОТВЕТСТВЕННОСТЬ
-5.1. За просрочку оплаты/исполнения: неустойка ${d.penalty || '0.1%'} в день (ст. 330, 395 ГК РФ).
-5.2. Ограничение ответственности: в пределах суммы договора.
+5. ПОДСУДНОСТЬ
+5.1. ${d.dispute || 'Арбитражный суд'}.
 
-## 6. ФОРС-МАЖОР
-6.1. Освобождение от ответственности при обстоятельствах непреодолимой силы (ст. 401 ГК РФ).
-6.2. Уведомление: в течение 3 рабочих дней.
-
-${d.conf ? `## 7. КОНФИДЕНЦИАЛЬНОСТЬ
-7.1. Стороны обязуются не разглашать условия договора и коммерческую информацию.` : ''}
-
-## ${d.conf ? '8' : '7'}. РАЗРЕШЕНИЕ СПОРОВ
-${d.conf ? '8.1' : '7.1'}. Претензионный порядок: 30 календарных дней.
-${d.conf ? '8.2' : '7.2'}. Подсудность: ${d.dispute || 'Арбитражный суд по месту ответчика'}.
-
-## ${d.conf ? '9' : '8'}. ЗАКЛЮЧИТЕЛЬНЫЕ ПОЛОЖЕНИЯ
-${d.conf ? '9.1' : '8.1'}. Договор вступает в силу с момента подписания.
-${d.conf ? '9.2' : '8.2'}. Изменения — только в письменной форме.
-${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
-
-## ${d.conf ? '10' : '9'}. РЕКВИЗИТЫ И ПОДПИСИ
-| **${d.role1}** | **${d.role2}** |
-|----------------|----------------|
-| ${d.p1} | ${d.p2} |
-| Адрес: [__________] | Адрес: [__________] |
-| ИНН/КПП: [__________] | ИНН/КПП: [__________] |
-| Р/с: [__________] | Р/с: [__________] |
-| Подпись: __________ | Подпись: __________ |`;
+ПОДПИСИ:
+${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
     }
 
     function numWords(n) {
         if (!n) return '[сумма прописью]';
         n = Math.floor(n);
-        if (n === 0) return 'ноль рублей';
+        if (n === 0) return 'ноль сомони';
 
         const ones = ['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
         const teens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
@@ -2513,7 +3707,7 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
         let u = formatGroup(x % 1000);
         if (u || th === 0) result.push(u);
 
-        return result.filter(s => s).join(' ').trim() + ' рублей';
+        return result.filter(s => s).join(' ').trim() + ' сомони';
     }
 
     // ===== History =====
@@ -2530,6 +3724,22 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
             });
             if (h.length > CONFIG.MAX_HISTORY) h.splice(CONFIG.MAX_HISTORY);
             localStorage.setItem(CONFIG.HISTORY_KEY, JSON.stringify(h));
+            recordCabinetActivity({
+                type: 'generation',
+                title: 'Генерация договора',
+                details: `${data.type || 'Договор'} | ${data.p1 || 'Сторона 1'} - ${data.p2 || 'Сторона 2'}`,
+                file_name: `Договор_${new Date().toISOString().slice(0, 10)}.txt`,
+                summary: `${data.type || 'Договор'}: ${data.p1 || 'Сторона 1'} - ${data.p2 || 'Сторона 2'}`,
+                result: text || '',
+                status: 'completed',
+                contract_type: data.type || 'Договор',
+                metadata: {
+                    model: document.getElementById('useOllama')?.checked ? document.getElementById('aiModel')?.value : 'template',
+                    amount: data.amount,
+                    city: data.city,
+                    counterparties: [data.p1, data.p2].filter(Boolean)
+                }
+            });
         } catch (e) {
             console.warn('History error:', e);
         }
@@ -2563,8 +3773,9 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
 
         if (entry.contract) {
             contractText = entry.contract;
+            const html = buildStartupContract(d);
             const output = document.getElementById('contractOutput');
-            if (output) output.innerHTML = marked.parse(entry.contract);
+            if (output) output.innerHTML = html;
             document.getElementById('result')?.classList.add('active');
             goStep(4);
         } else {
@@ -2609,23 +3820,23 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
             const tm = dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
             return `
-            <div class="history-item" onclick="loadHistory(${e.id})">
-                <div class="history-item-header">
-                    <span class="history-item-title">${e.preview}</span>
-                    <span class="history-item-date">${ds} ${tm}</span>
+                <div class="history-item" onclick="loadHistory(${e.id})">
+                    <div class="history-item-header">
+                        <span class="history-item-title">${e.preview}</span>
+                        <span class="history-item-date">${ds} ${tm}</span>
+                    </div>
+                    ${e.amount ? `<div class="history-item-amount">💰 ${parseInt(e.amount).toLocaleString('ru-RU')} сом.</div>` : ''}
+                    <div class="history-item-actions" onclick="event.stopPropagation()">
+                        <button class="btn-sm" onclick="loadHistory(${e.id})">
+                            <i class="fas fa-download"></i>
+                            Загрузить
+                        </button>
+                        <button class="btn-sm btn-sm-danger" onclick="deleteHistory(${e.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
-                ${e.amount ? `<div class="history-item-amount">💰 ${parseInt(e.amount).toLocaleString('ru-RU')} ₽</div>` : ''}
-                <div class="history-item-actions" onclick="event.stopPropagation()">
-                    <button class="btn-sm" onclick="loadHistory(${e.id})">
-                        <i class="fas fa-download"></i>
-                        Загрузить
-                    </button>
-                    <button class="btn-sm btn-sm-danger" onclick="deleteHistory(${e.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `;
+            `;
         }).join('');
     }
 
@@ -2646,8 +3857,9 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
             closeHistoryModal();
-            const toast = document.getElementById('toast');
-            if (toast?.classList.contains('show')) toast.classList.remove('show');
+            const t = document.getElementById('toast');
+            if (t?.classList.contains('show')) t.classList.remove('show');
+            document.getElementById('themeDropdown')?.classList.remove('show');
         }
     });
 
@@ -2662,7 +3874,6 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
             toast('⚠️ Нечего копировать', 'warning');
             return;
         }
-
         navigator.clipboard.writeText(contractText)
             .then(() => toast('📋 Скопировано в буфер обмена', 'success'))
             .catch(() => toast('❌ Ошибка копирования', 'error'));
@@ -2670,7 +3881,6 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
 
     function downloadTxt() {
         if (!contractText) return;
-
         const blob = new Blob([contractText], { type: 'text/plain;charset=utf-8' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -2685,9 +3895,7 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
             toast('⚠️ Сначала сгенерируйте договор', 'warning');
             return;
         }
-
         toast('🔄 Создаю DOCX...', 'warning');
-
         try {
             const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } = window.docx;
             const lines = contractText.split('\n');
@@ -2697,36 +3905,26 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
                 const t = line.trim();
                 if (!t) continue;
 
-                if (t.startsWith('# ')) {
+                if (t.match(/^[А-Я0-9\s]{5,}$/)) {
                     children.push(new Paragraph({
-                        text: t.replace('# ', ''),
+                        text: t,
                         heading: HeadingLevel.HEADING_1,
                         alignment: AlignmentType.CENTER,
                         children: [new TextRun({ bold: true, size: 32, font: 'Times New Roman' })]
                     }));
-                } else if (t.startsWith('## ')) {
+                } else if (t.match(/^\d+\.\s[A-ZА-Я]/)) {
                     children.push(new Paragraph({
-                        text: t.replace('## ', ''),
+                        text: t,
                         heading: HeadingLevel.HEADING_2,
                         children: [new TextRun({ bold: true, size: 26, font: 'Times New Roman' })]
-                    }));
-                } else if (t.match(/^[-•*]\s/)) {
-                    children.push(new Paragraph({
-                        children: [new TextRun({
-                            text: '• ' + t.replace(/^[-•*]\s?/, ''),
-                            size: 22,
-                            font: 'Times New Roman'
-                        })],
-                        indent: { left: 720 }
                     }));
                 } else {
                     children.push(new Paragraph({
                         children: [new TextRun({
-                            text: t.replace(/\*\*/g, ''),
+                            text: t,
                             size: 22,
                             font: 'Times New Roman'
                         })],
-                        indent: t.match(/^\d+\./) ? { firstLine: 720 } : undefined,
                         spacing: { after: 60 }
                     }));
                 }
@@ -2739,15 +3937,7 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
                     properties: {
                         page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } }
                     },
-                    children: [
-                        new Paragraph({
-                            text: 'ДОГОВОР',
-                            heading: HeadingLevel.TITLE,
-                            alignment: AlignmentType.CENTER,
-                            children: [new TextRun({ bold: true, size: 36, font: 'Times New Roman' })]
-                        }),
-                        ...children
-                    ]
+                    children
                 }]
             });
 
@@ -2760,18 +3950,16 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
             toast('📄 DOCX файл скачан', 'success');
         } catch (e) {
             toast(`❌ DOCX: ${e.message}`, 'error');
-            console.error('DOCX export error:', e);
+            console.error('DOCX error:', e);
         }
     }
 
     async function exportToPdf() {
-        if (!contractText) {
+        if (!contractHtml && !contractText) {
             toast('⚠️ Сначала сгенерируйте договор', 'warning');
             return;
         }
-
         toast('🔄 Создаю PDF...', 'warning');
-
         try {
             const { jsPDF } = window.jspdf;
             const el = document.getElementById('contractOutput');
@@ -2792,7 +3980,6 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
 
             const img = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
-
             const pw = 210, ph = 297;
             const iw = pw, ih = canvas.height * iw / canvas.width;
             let h = ih, pos = 0;
@@ -2812,13 +3999,14 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
         } catch (e) {
             toast('⚠️ PDF: используем печать', 'warning');
             setTimeout(() => window.print(), 400);
-            console.error('PDF export error:', e);
+            console.error('PDF error:', e);
         }
     }
 
     // ===== Utilities =====
     function startOver() {
         contractText = '';
+        contractHtml = '';
         document.getElementById('result')?.classList.remove('active');
 
         document.querySelectorAll('input:not([type="checkbox"]), textarea, select').forEach(el => {
@@ -2830,11 +4018,16 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
             else if (el.id === 'f_vat') el.value = 'не указано';
             else if (el.id === 'f_dispute') el.value = 'арбитражный суд';
             else if (el.id === 'f_penalty') el.value = '0.1% в день';
-            else if (el.id === 'f_conf') el.checked = false;
             else el.value = '';
         });
 
-        document.getElementById('detectedInfo') && (document.getElementById('detectedInfo').innerHTML = '');
+        const confEl = document.getElementById('f_conf');
+        if (confEl) confEl.checked = false;
+
+        const detectedInfo = document.getElementById('detectedInfo');
+        if (detectedInfo) detectedInfo.innerHTML = '';
+
+        localStorage.removeItem(CONFIG.FORM_CACHE_KEY);
         goStep(1);
         toast('🔄 Начато заново', 'success');
     }
@@ -2842,54 +4035,53 @@ ${d.conf ? '9.3' : '8.3'}. Составлен в 2 экземплярах.
     function toast(msg, type = 'success') {
         const t = document.getElementById('toast');
         if (!t) return;
-
         t.textContent = msg;
         t.className = `toast ${type} show`;
-
-        setTimeout(() => t.classList.remove('show'), 3000);
+        setTimeout(() => t.classList.remove('show'), 4000);
     }
 
-    // ===== Initialization =====
+    // ===== Init =====
     document.addEventListener('DOMContentLoaded', () => {
-        if (document.getElementById('useOllama')?.checked) {
-            fetch(CONFIG.OLLAMA_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: 'llama3.1:8b', messages: [], stream: false })
-            }).catch(() => { });
+        loadTheme();
+        loadApiCache();
+
+        const isRestored = restoreFormState();
+        if (isRestored && document.getElementById('f_desc')?.value) {
+            toast('💾 Данные восстановлены из кэша', 'success');
         }
 
-        setTimeout(() => {
-            if (window.marked) marked.setOptions({ breaks: true, gfm: true });
-        }, 100);
+        if (!document.getElementById('f_date')?.value) {
+            const dateEl = document.getElementById('f_date');
+            if (dateEl) dateEl.valueAsDate = new Date();
+        }
+
+        FORM_FIELDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', debounceSaveForm);
+                el.addEventListener('change', debounceSaveForm);
+            }
+        });
+
+        if (document.getElementById('useOllama')?.checked) {
+            setTimeout(() => checkOllamaConnection(), 500);
+        }
+
+        const ollamaCheckbox = document.getElementById('useOllama');
+        if (ollamaCheckbox) {
+            ollamaCheckbox.addEventListener('change', () => {
+                if (ollamaCheckbox.checked) checkOllamaConnection();
+                debounceSaveForm();
+            });
+        }
     });
 
-    // Enter key navigation
     document.querySelectorAll('input[type="text"], input[type="number"]').forEach(inp => {
         inp.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && currentStep < 4) {
                 e.preventDefault();
                 if (currentStep === 1) analyzeAndNext();
                 else goStep(currentStep + 1);
-            }
-        });
-    });
-
-    // Warn before unload
-    window.addEventListener('beforeunload', e => {
-        if (contractText && !localStorage.getItem(CONFIG.HISTORY_KEY)) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
-
-    // Keyboard navigation for steps
-    document.querySelectorAll('.step').forEach(step => {
-        step.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                const stepNum = step.id.replace('pstep', '');
-                goStep(parseInt(stepNum));
             }
         });
     });

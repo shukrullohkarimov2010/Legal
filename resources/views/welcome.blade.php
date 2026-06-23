@@ -1546,7 +1546,7 @@
                 <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
-                <span class="text-xl font-bold glow-text">LegalAI Pro</span>
+                <span class="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400 drop-shadow-[0_0_25px_rgba(99,102,241,0.45)]">LegalAI Pro</span>
             </div>
 
             <div class="hidden md:flex items-center space-x-8">
@@ -1641,7 +1641,7 @@
                             {{ __('ui.welcome_badge_accuracy') }}
                         </div>
                         <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                            {{ __('ui.welcome_hero_title_1') }}
+                            {{ __('ui.welcome_hero_title_1') }}<br>
                             <span class="text-gradient">{{ __('ui.welcome_hero_title_2') }}</span>
                         </h1>
                         <p class="text-lg text-slate-400 mb-8 leading-relaxed">

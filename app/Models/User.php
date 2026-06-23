@@ -24,6 +24,7 @@ class User extends Authenticatable
         'provider',
         'provider_id',
         'email_verified_at',
+        'last_seen_at',
     ];
 
     /**
@@ -46,6 +47,15 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_seen_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Check if user is currently online (visited within last 5 minutes)
+     */
+    public function isOnline(): bool
+    {
+        return $this->last_seen_at && $this->last_seen_at->diffInMinutes(now()) < 5;
     }
 }

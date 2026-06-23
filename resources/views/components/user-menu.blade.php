@@ -11,6 +11,9 @@
             <a href="{{ route('profile.edit') }}" class="block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                 {{ __('ui.my_profile') ?? '👤 Профиль' }}
             </a>
+            <a href="{{ route('cabinet.index') }}" class="block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                Кабинет
+            </a>
             <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                 {{ __('ui.nav_dashboard') ?? '📊 Панель' }}
             </a>
