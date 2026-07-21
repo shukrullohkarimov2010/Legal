@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->timestamp('last_seen_at')->nullable()->after('updated_at');
+            if (! Schema::hasColumn('users', 'face_signature')) {
+                $table->json('face_signature')->nullable()->after('last_seen_at');
+            }
         });
     }
 
@@ -22,8 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('last_seen_at');
+            if (Schema::hasColumn('users', 'face_signature')) {
+                $table->dropColumn('face_signature');
+            }
         });
     }
 };
-

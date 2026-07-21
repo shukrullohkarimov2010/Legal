@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->timestamp('last_seen_at')->nullable(); // Добавлено для отслеживания визитов
             $table->rememberToken();
             $table->timestamps();
         });

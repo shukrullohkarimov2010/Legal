@@ -5,6 +5,7 @@ use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\EnsureFaceVerified;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SocialController;
 use Illuminate\Http\Request;
@@ -15,14 +16,14 @@ Route::get('/', function () {
 
 Route::get('dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', EnsureFaceVerified::class])->name('dashboard');
 
 Route::get('/lang/{locale}', function ($locale) {
     $allowed = ['ru', 'en', 'tj'];
     if (in_array($locale, $allowed)) {
         session(['app_locale' => $locale]);
     }
-    return redirect()->back();
+   return redirect()->back();
 })->name('lang.switch');
 Route::get('/language/{locale}', function ($locale) {
     $supported = ['en', 'ru', 'tg'];
@@ -32,17 +33,18 @@ Route::get('/language/{locale}', function ($locale) {
     }
     return redirect()->back();
 })->name('locale.switch');
+Route::get('/contract/form', [ContractController::class, 'showForm'])->name('contract.form');
 Route::get('/contract/generate', [ContractController::class, 'generate'])
-    ->name('contract.generate');
+    ->name('contract.generate');    
 Route::get('/contract/compare', [ContractController::class, 'compare'])
     ->name('contract.compare');
 Route::get('/contract/create', [ContractController::class, 'create'])
     ->name('contract.create');
-Route::get('/contract/analyze', [ContractController::class, 'index'])
-    ->name('contract.analyze');
+    Route::get('/contract/ugalov-kodex', [ContractController::class, 'kodex'])
+    ->name('contract.ugalov-kodex');
+Route::get('/contract/analyze', [ContractController::class, 'showForm'])->name('contract.analyze');
 Route::get('/contract/codex', [ContractController::class, 'codex'])
     ->name('contract.codex');
-Route::get('/contract/analyze', [ContractController::class, 'showForm'])->name('contract.form');
 Route::post('/contract/analyze', [ContractController::class, 'upload'])->name('contract.upload');
 Route::get('/contract/stream/{requestId}', [ContractController::class, 'streamProxy'])->name('contract.stream');
 Route::get('/tasks/chat', function () {return view('admin.pages.tasks.chat');

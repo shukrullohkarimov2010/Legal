@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\FaceVerificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -36,6 +37,22 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('face-permission', [FaceVerificationController::class, 'showPermission'])
+        ->name('face.permission');
+
+    Route::post('face-permission/yes', [FaceVerificationController::class, 'permissionYes'])
+        ->name('face.permission.yes');
+
+    Route::post('face-permission/no', [FaceVerificationController::class, 'permissionNo'])
+        ->name('face.permission.no');
+
+    Route::get('face-verification', [FaceVerificationController::class, 'show'])
+        ->name('face.verification');
+
+    Route::post('face-verification', [FaceVerificationController::class, 'confirm'])
+        ->middleware('throttle:5,1')
+        ->name('face.verification.confirm');
+
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

@@ -44,7 +44,13 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+        $request->session()->regenerate();
+        $request->session()->forget([
+            'face_verified_at',
+            'face_verified_user_id',
+        ]);
+        $request->session()->put('face_enrollment_user_id', $user->id);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('face.permission', absolute: false));
     }
 }

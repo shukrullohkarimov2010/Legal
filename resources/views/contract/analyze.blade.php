@@ -309,6 +309,10 @@
                                     </div>
                                 </div>
                             </div>
+                            <label class="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 cursor-pointer">
+                                <input id="generateRevisedContract" type="checkbox" class="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300">
+                                <span><span class="block text-sm font-semibold text-slate-800 dark:text-white">Создать доработанную редакцию договора</span><span class="block text-xs text-slate-500 mt-1">По завершении анализа будет подготовлен отдельный проект в исходном формате. Требуется финальная проверка юристом.</span></span>
+                            </label>
                             <button type="submit" id="submitBtn" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 group disabled:opacity-60 disabled:cursor-not-allowed"><span class="text-xl group-hover:scale-110 transition-transform">🚀</span><span>Запустить анализ</span><svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></button>
                         </form>
                     </div>
@@ -351,6 +355,7 @@
                                 <button onclick="downloadPDF()" class="dl-btn dl-pdf"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Скачать PDF</button>
                                 <button onclick="downloadDOCX()" class="dl-btn dl-docx"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Скачать DOCX</button>
                                 <button onclick="downloadHTML()" class="dl-btn dl-html"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Скачать HTML</button>
+                                <a id="revisedContractDownload" class="dl-btn dl-docx hidden" href="#" download>Скачать доработанный договор</a>
                                 <button id="newAnalysisBtn" class="dl-btn bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 ml-auto">🔁 Новый анализ</button>
                             </div>
                         </div>
@@ -418,11 +423,14 @@
 
 <script>
     const PYTHON_API = "{{ $pythonApiUrl ?? 'http://127.0.0.1:5000' }}";
+    const CONTRACT_RAG_SOURCE = '1918_ru_1.docx';
+    const CONTRACT_RAG_MIN_CHUNKS = 600;
     const MAX_FILE_SIZE = 50*1024*1024;
     const ALLOWED_TYPES = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','text/plain'];
-    const HISTORY_KEY = 'legalai_history';
+    const HISTORY_KEY = 'legalai_history_v3';
     const CABINET_ACTIVITY_URL = '{{ route('cabinet.activity.store') }}';
-    let eventSource=null,isAnalyzing=false,currentFilter='all',historyItems=[],currentModalReport=null,lastReportRisk='low',lastReportContent='';
+    let eventSource=null,isAnalyzing=false,currentFilter='all',historyItems=[],currentModalReport=null,lastReportRisk='low',lastReportContent='',lastStatusLogKey='',lastServerMetrics=null,reportSaved=false;
+    function setRevisedContractDownload(contract){const link=document.getElementById('revisedContractDownload');if(!contract?.url){link.classList.add('hidden');link.removeAttribute('href');return;}link.href=`${PYTHON_API}${contract.url}`;link.download=contract.filename||'contract_revised';link.textContent=`Скачать доработанный договор (${String(contract.format||'файл').toUpperCase()})`;link.classList.remove('hidden');}
 
     // ===== THEME =====
     function initTheme(){if(localStorage.theme==='dark'||(!('theme'in localStorage)&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}
@@ -435,6 +443,11 @@
     const escapeHtml=s=>{if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;};
     const getFileIcon=f=>{const e=(f||'').split('.').pop().toLowerCase();return{pdf:'📕',doc:'📘',docx:'📘',txt:'📄'}[e]||'📁';};
     async function recordCabinetActivity(payload){const token=document.querySelector('meta[name="csrf-token"]')?.content;if(!token)return;try{await fetch(CABINET_ACTIVITY_URL,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':token},body:JSON.stringify(payload)});}catch(e){console.warn('Cabinet history error:',e);}}
+    async function setRagSource(filename){try{const r=await fetch(`${PYTHON_API}/api/rag/set-source`,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({filename})});if(!r.ok)throw new Error(`HTTP ${r.status}`);const s=await r.json();if(s.success&&s.source===filename){log(`RAG источник установлен: ${s.source}`,'success');return true;}throw new Error(s.error||'Сервер выбрал другой RAG-источник');}catch(e){log(`Ошибка при установке RAG источника: ${e.message}`,'warning');return false;}}
+    async function getRagStatus(){const r=await fetch(`${PYTHON_API}/api/rag/status`,{headers:{'Accept':'application/json'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json();}
+    async function checkRagStatus(){try{const s=await getRagStatus();const correctSource=s.source===CONTRACT_RAG_SOURCE;const enoughChunks=Number(s.chunks)>=CONTRACT_RAG_MIN_CHUNKS;if(s.ready&&correctSource&&enoughChunks){log(`RAG база подключена: ${s.source} (${s.chunks} фрагментов)`,'success');return true;}log(`RAG должна использовать ${CONTRACT_RAG_SOURCE} и минимум ${CONTRACT_RAG_MIN_CHUNKS} фрагментов${s.source?`, сейчас: ${s.source} (${s.chunks||0})`:''}`,'warning');return false;}catch(e){log(`RAG статус недоступен: ${e.message}`,'warning');return false;}}
+    async function waitForRagReady(maxSeconds=3500){const deadline=Date.now()+maxSeconds*1000;while(Date.now()<deadline){try{const s=await getRagStatus();if(s.ready&&s.source===CONTRACT_RAG_SOURCE&&Number(s.chunks)>=CONTRACT_RAG_MIN_CHUNKS){log(`RAG готова: ${s.source} (${s.chunks} фрагментов)`,'success');return true;}if(s.error)log(`RAG не готова: ${s.error}`,'warning');}catch(e){log(`Ошибка проверки RAG: ${e.message}`,'warning');}await new Promise(r=>setTimeout(r,2000));}log(`RAG не стал готов за ${maxSeconds} секунд`,'error');return false;}
+    async function prepareContractRag(){if(!await setRagSource(CONTRACT_RAG_SOURCE))return false;try{const s=await getRagStatus();if(s.ready&&s.source===CONTRACT_RAG_SOURCE&&Number(s.chunks)>=CONTRACT_RAG_MIN_CHUNKS)return true;log(`Создаю детальный индекс RAG из ${CONTRACT_RAG_SOURCE}...`,'status');const re=await fetch(`${PYTHON_API}/api/rag/reindex`,{method:'POST'});if(!re.ok)throw new Error(`HTTP ${re.status}`);return await waitForRagReady();}catch(e){log(`Ошибка подготовки RAG: ${e.message}`,'error');return false;}}
     const getFileExtension=f=>{return (f||'').split('.').pop().toUpperCase();};
     const getTimeAgo=d=>{const n=new Date(),s=Math.floor((n-d)/1000);if(s<60)return'только что';if(s<3600)return`${Math.floor(s/60)} мин. назад`;if(s<86400)return`${Math.floor(s/3600)} ч. назад`;if(s<604800)return`${Math.floor(s/86400)} дн. назад`;return d.toLocaleDateString('ru-RU');};
     function log(m,t='info'){const lc=document.getElementById('logContainer');if(!lc)return;const c={info:{color:'#94a3b8',icon:'•'},status:{color:'#7dd3fc',icon:'📌'},success:{color:'#86efac',icon:'✅'},warning:{color:'#fcd34d',icon:'⚠️'},error:{color:'#f87171',icon:'❌'},chunk:{color:'#d8b4fe',icon:'📋'}};const{color,icon}=c[t]||c.info;const d=document.createElement('div');d.className='terminal-line py-1.5 px-2 rounded hover:bg-white/5';d.innerHTML=`<span class="text-slate-500">[${new Date().toLocaleTimeString('ru-RU')}]</span><span style="color:${color}" class="ml-2">${icon}</span><span style="color:${color}" class="ml-1.5">${m}</span>`;lc.appendChild(d);lc.scrollTop=lc.scrollHeight;}
@@ -444,10 +457,17 @@
     function getRiskGradient(r){return r==='critical'?'from-red-500 to-rose-600':r==='medium'?'from-amber-500 to-orange-600':'from-green-500 to-emerald-600';}
     function getRiskLabel(r){return r==='critical'?'Высокий риск':r==='medium'?'Средний риск':'Низкий риск';}
     function getRiskBadgeFull(r){return r==='critical'?'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400':r==='medium'?'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400':'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400';}
-    function scoreToLevel(s){return s>66?'critical':s>33?'medium':'low';}
+    function scoreToLevel(s){return s>=70?'critical':s>=40?'medium':'low';}
 
     // Получить балл из записи истории (реальный, не фейковый)
-    function getItemScore(item){return typeof item.riskScore==='number'?item.riskScore:(item.riskLevel==='critical'?75:item.riskLevel==='medium'?45:15);}
+    function getItemScore(item){
+        const storedScore = typeof item?.riskScore==='number' ? item.riskScore : null;
+        if(storedScore !== null && storedScore !== 96) return storedScore;
+        const legacyScore = item?.report ? estimateLegacyReportScore(item.report) : null;
+        if(legacyScore !== null) return legacyScore;
+        const explicitScore = item?.report ? extractExplicitRiskScore(item.report) : null;
+        return explicitScore !== null ? explicitScore : (storedScore !== null ? storedScore : (item.riskLevel==='critical'?75:item.riskLevel==='medium'?45:15));
+    }
 
     function buildGaugeSVG(score, size=130, strokeW=10){
         const r = (size/2) - strokeW - 4;
@@ -463,10 +483,106 @@
     //  REAL RISK ANALYSIS ENGINE — анализирует реальный контент отчёта
     // =================================================================
 
+    function extractExplicitRiskScore(content) {
+        const lines = content.split(/\r?\n/);
+        for (const line of lines) {
+            const lowerLine = line.toLowerCase();
+            const isScoreLine = (
+                (lowerLine.includes('балл') && lowerLine.includes('риск')) ||
+                lowerLine.includes('risk_score') ||
+                lowerLine.includes('risk score')
+            );
+            if (!isScoreLine) continue;
+
+            const cleaned = line.replace(/\([^)]*\)/g, ' ');
+            const fraction = cleaned.match(/(?<!\d)(\d{1,3})(?:[.,]\d+)?\s*\/\s*100(?!\d)/i);
+            if (fraction) {
+                const score = Math.round(parseFloat(fraction[1].replace(',', '.')));
+                if (score >= 0 && score <= 100) return score;
+            }
+
+            const numbers = [...cleaned.matchAll(/(?<!\d)(\d{1,3})(?:[.,]\d+)?(?!\d)/g)]
+                .map(match => parseFloat(match[0].replace(',', '.')))
+                .filter(value => Number.isFinite(value) && value >= 10 && value <= 100);
+
+            if (numbers.length > 0) {
+                return Math.round(numbers[0]);
+            }
+        }
+
+        const globalPatterns = [
+            /["']?risk_score["']?\s*[:=]\s*(\d{1,3})(?:[.,]\d+)?/i,
+            /итоговый\s+балл\s+риска[^\d]{0,30}(\d{1,3})(?:[.,]\d+)?/i,
+            /балл\s+риска[^\n\r\d]{0,40}(\d{1,3})(?:[.,]\d+)?\s*(?:\/|из)?\s*100?/i,
+            /risk\s*score[^\n\r\d]{0,40}(\d{1,3})(?:[.,]\d+)?\s*(?:\/|of)?\s*100?/i,
+        ];
+
+        for (const pattern of globalPatterns) {
+            const match = content.match(pattern);
+            if (!match) continue;
+            const score = Math.round(parseFloat(match[1].replace(',', '.')));
+            if (score >= 0 && score <= 100) return score;
+        }
+
+        return null;
+    }
+
+    function extractMetricCount(content, label){
+        const pattern = new RegExp(`${label}[^\\n\\r\\d]{0,40}(\\d{1,2})`, 'i');
+        const match = content.match(pattern);
+        return match ? Math.max(0, parseInt(match[1], 10)) : null;
+    }
+
+    function estimateLegacyReportScore(content){
+        if(!content || !content.includes('96/100')) return null;
+        let high = extractMetricCount(content, 'Количество\\s+высоких\\s+рисков');
+        let medium = extractMetricCount(content, 'Количество\\s+средних\\s+рисков');
+        let low = extractMetricCount(content, 'Количество\\s+низких\\s+рисков');
+        if(high===null || medium===null || low===null){
+            const f=countFindings(content);
+            high=f.critical;
+            medium=f.warning;
+            low=f.info;
+        }
+
+        const highWeights=[24,14,8,5,3], mediumWeights=[8,6,4,2,1], lowWeights=[1,1,1];
+        let score=0;
+        for(let i=0;i<high;i++) score+=highWeights[Math.min(i,highWeights.length-1)];
+        for(let i=0;i<medium;i++) score+=mediumWeights[Math.min(i,mediumWeights.length-1)];
+        for(let i=0;i<low;i++) score+=lowWeights[Math.min(i,lowWeights.length-1)];
+        if(high||medium||low) score+=Math.min(6,2+high+Math.floor(Math.max(0,medium-1)/2));
+
+        let cap=24;
+        if(high===0){
+            cap=medium?54:24;
+            if(medium) score=Math.max(score,18+Math.min(medium,4)*4);
+        }else if(high===1){
+            cap=64;
+            score=Math.max(score,38);
+        }else if(high===2){
+            cap=78;
+            score=Math.max(score,52);
+        }else if(high===3){
+            cap=84;
+            score=Math.max(score,62);
+        }else{
+            cap=88;
+            score=Math.max(score,68);
+        }
+
+        return Math.max(0,Math.min(cap,Math.round(score)));
+    }
+
     function analyzeReportRisk(content) {
         if (!content || !content.trim()) return { score: 0, level: 'low', findings: { critical: 0, warning: 0, info: 0 } };
 
         const lower = content.toLowerCase();
+
+        const explicitRiskScore = extractExplicitRiskScore(content);
+        if (explicitRiskScore !== null) {
+            log(`📊 Найден итоговый балл риска в отчёте: ${explicitRiskScore}/100`, 'status');
+            return { score: explicitRiskScore, level: scoreToLevel(explicitRiskScore), findings: countFindings(content) };
+        }
 
         // ===== 1. EXPLICIT NUMERIC SCORE (самый точный источник) =====
         const scorePatterns = [
@@ -624,20 +740,37 @@
     }
 
     function parseFindings(content){
-        const lines=content.split('\n').filter(l=>l.trim().match(/^[-*•]\s/)||l.trim().match(/^\d+[.)]\s/));
-        return lines.slice(0,8).map(f=>{
-            const text=f.replace(/^[-*•\d.)]\s*/,'').trim();
-            const tl=text.toLowerCase();
-            // Классификация — используем те же правила что и в countFindings
-            let type='info';
-            const isCritical=tl.match(/🔴/)||tl.match(/❗|‼️/)||tl.match(/критическ/)||tl.match(/существенн/)||tl.match(/серьёзн|серьезн/)||tl.match(/груб(?:ое|ая|ые|ым|ого|ыми)?\s*(?:нарушен|ошибк)/)||tl.match(/незаконн/)||tl.match(/срочно\s*(?:требу|исправлен|вниман|необходим)/)||tl.match(/влечёт?\s+(?:расторжен|признан)/)||tl.match(/(?:может\s+)?повлечь\s+(?:существенн|значительн|критич|серьёзн|серьезн)/);
-            const isWarning=tl.match(/🟡/)||tl.match(/⚠️/)||tl.match(/средн\s*(?:риск|степен|уровен)/)||tl.match(/рекоменду\w+\s*(?:исправлен|изменен|добавлен|уточнен|включен|предусмотр)/)||tl.match(/недостаточн\s*(?:защит|услов|гаранти|регламент)/)||tl.match(/не\s+(?:указан|определён|определен|прописан|предусмотрен|оговорён|оговорен|установлен|закреплён|закреплен|регламентирован)/)||tl.match(/отсутстви(?:е|и|ю|ем|я)\s*(?:услов|оговор|гаранти|ответственност|штраф|пен|санкц|компенсац|регламент)/)||tl.match(/размыт|неясн|неточн|двусмысленн|противоречив|сомнительн|неоднозначн/)||tl.match(/может\s+(?:повлечь|привести|стать|вызвать|создать)\s+(?:риск|проблем|недоразумени|спор)/)||tl.match(/рискованн|осторожн|внимательн/);
+        const findings=[];
+        const lines=content.split('\n');
+        const isDetailLine=line=>line.match(/^\s*[-*•]\s*(?:пункт\s+договора|фрагмент\s+договора|норма\s+рт|почему\s+риск|что\s+исправить|применение\s+к\s+договору)\s*:/i);
+        const isRiskLine=line=>line.match(/^\s*\d+[.)]\s+/)||line.match(/^\s*[-*•]\s*\[(?:высок|сред|низ)/i);
+        const cleanLine=line=>line.replace(/^\s*[-*•]?\s*/,'').replace(/^\d+[.)]\s*/,'').replace(/\*\*/g,'').trim();
 
-            if(isCritical) type='critical';
-            else if(isWarning) type='warning';
-            const icons={critical:'🔴',warning:'🟡',info:'🔵'};
-            return{text,type,icon:icons[type]};
-        });
+        for(const line of lines){
+            const trimmed=line.trim();
+            if(!trimmed) continue;
+
+            if(findings.length && isDetailLine(trimmed)){
+                const detail=cleanLine(trimmed);
+                findings[findings.length-1].text += ` ${detail}`;
+                continue;
+            }
+
+            if(isRiskLine(trimmed)){
+                const text=cleanLine(trimmed);
+                const tl=text.toLowerCase();
+                let type='info';
+                const isCritical=tl.match(/🔴/)||tl.match(/высок/)||tl.match(/критическ/)||tl.match(/существенн/)||tl.match(/серьёзн|серьезн/)||tl.match(/незаконн/)||tl.match(/недействительн/)||tl.match(/расторжен/)||tl.match(/убытк|штраф|пен/);
+                const isWarning=tl.match(/🟡/)||tl.match(/средн/)||tl.match(/неясн/)||tl.match(/недостаточн/)||tl.match(/не\s+(?:указан|определён|определен|предусмотрен|закрепл)/)||tl.match(/отсутств/)||tl.match(/размыт|двусмысленн|пробел/);
+                if(isCritical) type='critical';
+                else if(isWarning) type='warning';
+                const icons={critical:'🔴',warning:'🟡',info:'🔵'};
+                findings.push({text,type,icon:icons[type]});
+                continue;
+            }
+        }
+
+        return findings.slice(0,8);
     }
 
     function buildFindingsHTML(findings){
@@ -762,10 +895,9 @@
     function closeConfirmModal(){document.getElementById('confirmModal').classList.remove('active');}
 
     // ===== DOWNLOADS =====
-    function generateReportHTML(item){
+        function generateReportHTML(item){
         const score=getItemScore(item),findings=parseFindings(item.report||''),date=new Date(item.createdAt);
-        return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Отчёт LegalAI — ${escapeHtml(item.filename)}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,sans-serif;color:#1e293b;line-height:1.6;padding:40px;max-width:800px;margin:0 auto}.header{background:linear-gradient(135deg,${item.riskLevel==='critical'?'#ef4444,#dc2626':item.riskLevel==='medium'?'#f59e0b,#d97706':'#22c55e,#16a34a'});color:white;padding:32px;border-radius:``javascript
-        16px;margin-bottom:24px;display:flex;align-items:center;gap:20px}.header h1{font-size:24px;font-weight:700}.header p{opacity:0.85;font-size:14px}.score-box{background:rgba(255,255,255,0.2);border-radius:12px;padding:16px;text-align:center;min-width:100px}.score-box .num{font-size:36px;font-weight:800}.score-box .label{font-size:11px;opacity:0.9}.section{margin-bottom:24px}.section h2{font-size:18px;font-weight:700;color:#1e40af;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #dbeafe}.finding{padding:12px 16px;margin-bottom:8px;border-radius:8px;border-left:4px solid #3b82f6;background:#f8fafc}.finding.critical{border-color:#ef4444;background:#fef2f2}.finding.warning{border-color:#f59e0b;background:#fffbeb}.finding p{font-size:14px}.report-body{font-size:14px;line-height:1.8}.report-body h2{color:#1e40af;font-size:16px;margin-top:20px;margin-bottom:8px}.report-body ul{padding-left:20px;margin:8px 0}.report-body li{margin:4px 0}.footer{margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center}</style></head><body><div class="header"><div class="score-box"><div class="num">${score}</div><div class="label">БАЛЛОВ РИСКА</div></div><div><h1>Анализ завершён</h1><p>${escapeHtml(item.filename)} · ${date.toLocaleDateString('ru-RU')} · ${getRiskLabel(item.riskLevel)}</p></div></div><div class="section"><h2>Ключевые выявленные проблемы</h2>${findings.map(f=>`<div class="finding ${f.type}"><p>${f.icon} ${escapeHtml(f.text)}</p></div>`).join('')}</div><div class="section"><h2>Полный отчёт</h2><div class="report-body">${typeof marked!=='undefined'?marked.parse(item.report||''):`<p>${escapeHtml(item.report||'')}</p>`}</div></div><div class="footer">Сгенерировано LegalAI Pro · ${new Date().toLocaleString('ru-RU')} · Не заменяет юридическую консультацию</div></body></html>`;
+        return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Отчёт LegalAI — ${escapeHtml(item.filename)}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,sans-serif;color:#1e293b;line-height:1.6;padding:40px;max-width:800px;margin:0 auto}.header{background:linear-gradient(135deg,${item.riskLevel==='critical'?'#ef4444,#dc2626':item.riskLevel==='medium'?'#f59e0b,#d97706':'#22c55e,#16a34a'});color:white;padding:32px;border-radius:16px;margin-bottom:24px;display:flex;align-items:center;gap:20px}.header h1{font-size:24px;font-weight:700}.header p{opacity:0.85;font-size:14px}.score-box{background:rgba(255,255,255,0.2);border-radius:12px;padding:16px;text-align:center;min-width:100px}.score-box .num{font-size:36px;font-weight:800}.score-box .label{font-size:11px;opacity:0.9}.section{margin-bottom:24px}.section h2{font-size:18px;font-weight:700;color:#1e40af;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #dbeafe}.finding{padding:12px 16px;margin-bottom:8px;border-radius:8px;border-left:4px solid #3b82f6;background:#f8fafc}.finding.critical{border-color:#ef4444;background:#fef2f2}.finding.warning{border-color:#f59e0b;background:#fffbeb}.finding p{font-size:14px}.report-body{font-size:14px;line-height:1.8}.report-body h2{color:#1e40af;font-size:16px;margin-top:20px;margin-bottom:8px}.report-body ul{padding-left:20px;margin:8px 0}.report-body li{margin:4px 0}.footer{margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center}</style></head><body><div class="header"><div class="score-box"><div class="num">${score}</div><div class="label">БАЛЛОВ РИСКА</div></div><div><h1>Анализ завершён</h1><p>${escapeHtml(item.filename)} · ${date.toLocaleDateString('ru-RU')} · ${getRiskLabel(item.riskLevel)}</p></div></div><div class="section"><h2>Ключевые выявленные проблемы</h2>${findings.map(f=>`<div class="finding ${f.type}"><p>${f.icon} ${escapeHtml(f.text)}</p></div>`).join('')}</div><div class="section"><h2>Полный отчёт</h2><div class="report-body">${typeof marked!=='undefined'?marked.parse(item.report||''):`<p>${escapeHtml(item.report||'')}</p>`}</div></div><div class="footer">Сгенерировано LegalAI Pro · ${new Date().toLocaleString('ru-RU')} · Не заменяет юридическую консультацию</div></body></html>`;
     }
 
     async function downloadPDF(itemOrId){
@@ -802,7 +934,7 @@
 
     const doc=new Document({sections:[{properties:{},children}]});const blob=await docx.Packer.toBlob(doc);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`LegalAI-${item.filename.replace(/\.[^.]+$/,'')}-${Date.now()}.docx`;a.click();URL.revokeObjectURL(url);showToast('DOCX скачан','success');
     }catch(e){showToast('Ошибка генерации DOCX','error');console.error(e);}
-    }
+}
     function downloadItemDOCX(id){downloadDOCX(id);}
 
     function downloadHTML(itemOrId){
@@ -816,16 +948,90 @@
 
     function handleFile(file){if(!file)return;if(!ALLOWED_TYPES.includes(file.type)&&!file.name.match(/\.(pdf|doc|docx|txt)$/i)){showToast('Неподдерживаемый формат','error');return;}if(file.size>MAX_FILE_SIZE){showToast('Слишком большой файл','error');return;}document.getElementById('selectedFileName').textContent=file.name;document.getElementById('selectedFileSize').textContent=formatSize(file.size);document.getElementById('dropContent').classList.add('hidden');document.getElementById('fileSelected').classList.remove('hidden');log(`📎 Выбран: ${file.name}`,'info');}
 
-    async function uploadFile(file){const fd=new FormData();fd.append('file',file);const c=new AbortController(),t=setTimeout(()=>c.abort(),120000);try{const r=await fetch(`${PYTHON_API}/api/analyze`,{method:'POST',body:fd,signal:c.signal});clearTimeout(t);if(!r.ok)throw new Error(`HTTP ${r.status}`);return(await r.json()).request_id;}catch(e){clearTimeout(t);throw e;}}
+    async function uploadFile(file,generateRevisedContract=false){const fd=new FormData();fd.append('file',file);fd.append('generate_revised',generateRevisedContract?'1':'0');const c=new AbortController(),t=setTimeout(()=>c.abort(),1500000);try{const r=await fetch(`${PYTHON_API}/api/analyze`,{method:'POST',body:fd,signal:c.signal});clearTimeout(t);if(!r.ok)throw new Error(`HTTP ${r.status}`);return(await r.json()).request_id;}catch(e){clearTimeout(t);throw e;}}
 
-    function connectSSE(rid,fname,fsize){cName=fname;cSize=fsize;eventSource=new EventSource(`${PYTHON_API}/api/stream/${rid}`);eventSource.onmessage=(e)=>{try{const v=JSON.parse(e.data);switch(v.type){case'status':log(v.step||'Обработка...','status');break;case'progress':updateProgress(v.progress_percent);break;case'chunk_result':log(v.preview,'chunk');break;case'summary_complete':processSummary(v.content);break;case'complete':log('🎉 Завершено!','success');finalizeReport();break;case'error':log(`❌ ${v.message}`,'error');showToast(v.message||'Ошибка','error');eventSource.close();resetSubmitBtn();break;}}catch(err){console.error(err);}};eventSource.onerror=()=>{log('🔴 Ошибка соединения','error');showToast('Потеряно соединение','error');eventSource.close();resetSubmitBtn();};}
+    function connectSSE(rid,fname,fsize){
+        cName=fname;
+        cSize=fsize;
+        lastStatusLogKey='';
+        lastServerMetrics=null;
+        reportSaved=false;
+        eventSource=new EventSource(`${PYTHON_API}/api/stream/${rid}`);
+        eventSource.onmessage=(e)=>{
+            try{
+                const v=JSON.parse(e.data);
+                switch(v.type){
+                    case'status':{
+                        if(typeof v.progress_percent==='number')updateProgress(v.progress_percent);
+                        const message=v.message||v.step||'Обработка...';
+                        const key=v.step==='analyzing'?`${v.step}:${v.processed}/${v.total}`:`${v.step}:${message}`;
+                        if(key!==lastStatusLogKey){
+                            log(message,'status');
+                            lastStatusLogKey=key;
+                        }
+                        break;
+                    }
+                    case'progress':
+                        if(typeof v.progress_percent==='number')updateProgress(v.progress_percent);
+                        break;
+                    case'chunk_result':
+                        // Draft responses are intentionally never shown.
+                        // Only summary_complete contains the final report.
+                        break;
+                    case'summary_complete':
+                        lastServerMetrics=v.metrics||null;
+                        processSummary(v.content, v.metrics || null, v.revised_contract || null);
+                        break;
+                    case'complete':
+                        log('🎉 Завершено!','success');
+                        finalizeReport();
+                        break;
+                    case'error':
+                        log(`❌ ${v.message||v.error||'Ошибка'}`,'error');
+                        showToast(v.message||v.error||'Ошибка','error');
+                        eventSource.close();
+                        resetSubmitBtn();
+                        break;
+                }
+            }catch(err){
+                console.error(err);
+            }
+        };
+        eventSource.onerror=()=>{
+            log('🔴 Ошибка соединения','error');
+            showToast('Потеряно соединение','error');
+            eventSource.close();
+            resetSubmitBtn();
+        };
+    }
 
-    function processSummary(content){
+    function normalizeServerRiskLevel(level){
+        const value=String(level||'').toLowerCase();
+        if(value.includes('высок')||value.includes('critical')||value.includes('high')) return 'critical';
+        if(value.includes('сред')||value.includes('medium')) return 'medium';
+        return 'low';
+    }
+
+    function processSummary(content, serverMetrics=null, revisedContract=null){
         lastReportContent=content;
+        setRevisedContractDownload(revisedContract);
         document.getElementById('reportContent').innerHTML=typeof marked!=='undefined'?marked.parse(content):`<pre>${escapeHtml(content)}</pre>`;
 
-        // ===== ИСПОЛЬЗУЕМ НАСТОЯЩИЙ АНАЛИЗ РИСКОВ =====
-        const analysisResult = analyzeReportRisk(content);
+        const serverScore = serverMetrics && Number.isFinite(Number(serverMetrics.score))
+            ? Math.max(0, Math.min(100, Math.round(Number(serverMetrics.score))))
+            : null;
+        const fallbackResult = serverScore === null ? analyzeReportRisk(content) : null;
+        const analysisResult = serverScore !== null
+            ? {
+                score: serverScore,
+                level: normalizeServerRiskLevel(serverMetrics.level),
+                findings: {
+                    critical: Number(serverMetrics.high || 0),
+                    warning: Number(serverMetrics.medium || 0),
+                    info: Number(serverMetrics.low || 0)
+                }
+            }
+            : fallbackResult;
         const riskLevel = analysisResult.level;
         const riskScore = analysisResult.score;
         const findingsCount = analysisResult.findings;
@@ -851,30 +1057,32 @@
         document.getElementById('findingsTable').innerHTML=buildFindingsHTML(findings);
         document.getElementById('reportSubtitle').textContent=`${cName} — ${getRiskLabel(riskLevel)} — ${riskScore}/100`;
 
-        // Сохраняем реальный балл и данные в историю
-        HM.add({
-            filename:cName,
-            fileSize:cSize,
-            riskLevel: riskLevel,
-            riskScore: riskScore, // ВАЖНО: сохраняем реальный балл
-            criticalCount: findingsCount.critical,
-            warningCount: findingsCount.warning,
-            infoCount: findingsCount.info,
-            report:content,
-            elapsed:null,
-            status:'completed'
-        });
-        recordCabinetActivity({
-            type:'analysis',
-            title:'Анализ документа',
-            details:`${cName || 'Документ'} — риск ${getRiskLabel(riskLevel)} (${riskScore}/100)`,
-            file_name:cName || '',
-            summary:`Риск ${getRiskLabel(riskLevel)} (${riskScore}/100). Критические: ${findingsCount.critical}, предупреждения: ${findingsCount.warning}, информационные: ${findingsCount.info}.`,
-            result:content,
-            status:'completed',
-            metadata:{riskLevel,riskScore,criticalCount:findingsCount.critical,warningCount:findingsCount.warning,infoCount:findingsCount.info}
-        });
-        showToast('Сохранено в историю','success',2500);
+        if(!reportSaved){
+            reportSaved=true;
+            HM.add({
+                filename:cName,
+                fileSize:cSize,
+                riskLevel: riskLevel,
+                riskScore: riskScore,
+                criticalCount: findingsCount.critical,
+                warningCount: findingsCount.warning,
+                infoCount: findingsCount.info,
+                report:content,
+                elapsed:null,
+                status:'completed'
+            });
+            recordCabinetActivity({
+                type:'analysis',
+                title:'Анализ документа',
+                details:`${cName || 'Документ'} — риск ${getRiskLabel(riskLevel)} (${riskScore}/100)`,
+                file_name:cName || '',
+                summary:`Риск ${getRiskLabel(riskLevel)} (${riskScore}/100). Критические: ${findingsCount.critical}, предупреждения: ${findingsCount.warning}, информационные: ${findingsCount.info}.`,
+                result:content,
+                status:'completed',
+                metadata:{riskLevel,riskScore,criticalCount:findingsCount.critical,warningCount:findingsCount.warning,infoCount:findingsCount.info}
+            });
+            showToast('Сохранено в историю','success',2500);
+        }
     }
 
     function finalizeReport() {
@@ -892,19 +1100,6 @@
             eventSource.close();
         }
 
-        // ===== ВАЖНОЕ ИСПРАВЛЕНИЕ РИСКОВ =====
-        // Вызываем финальный перерасчет рисков ПОЛНОГО текста отчета,
-        // который накопился в глобальной переменной (у вас это, скорее всего, `fullResponseText` или аналогичная)
-        if (typeof fullResponseText !== 'undefined' && fullResponseText) {
-            processSummary(fullResponseText);
-        } else if (typeof lastReportContent !== 'undefined' && lastReportContent) {
-            processSummary(lastReportContent);
-        } else {
-            // Если текст хранился прямо в DOM-элементе:
-            const rawContent = document.getElementById('reportContent').innerText;
-            processSummary(rawContent);
-        }
-
         // 4. Показываем финальное уведомление
         showToast('Анализ документа успешно завершён', 'success', 3000);
     }
@@ -912,7 +1107,7 @@
 
     function resetSubmitBtn(){const b=document.getElementById('submitBtn');b.disabled=false;b.setAttribute('aria-busy','false');b.innerHTML='<span class="text-xl group-hover:scale-110 transition-transform">🚀</span><span>Запустить анализ</span><svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>';isAnalyzing=false;}
 
-    function resetAnalysisUI(){document.getElementById('analysisProgress').classList.add('hidden');document.getElementById('finalReport').classList.add('hidden');document.getElementById('fileInput').value='';document.getElementById('dropContent').classList.remove('hidden');document.getElementById('fileSelected').classList.add('hidden');document.getElementById('progressBar').style.width='0%';document.getElementById('progressBar').style.background='';document.getElementById('progressBar').classList.add('progress-animated');document.getElementById('progressText').textContent='0%';['stage-upload','stage-process','stage-analyze','stage-done'].forEach((id,i)=>{document.getElementById(id).className=`w-2 h-2 rounded-full ${i===0?'bg-blue-500':'bg-slate-300 dark:bg-slate-600'}`;});isAnalyzing=false;resetSubmitBtn();}
+    function resetAnalysisUI(){document.getElementById('analysisProgress').classList.add('hidden');document.getElementById('finalReport').classList.add('hidden');setRevisedContractDownload(null);document.getElementById('fileInput').value='';document.getElementById('dropContent').classList.remove('hidden');document.getElementById('fileSelected').classList.add('hidden');document.getElementById('progressBar').style.width='0%';document.getElementById('progressBar').style.background='';document.getElementById('progressBar').classList.add('progress-animated');document.getElementById('progressText').textContent='0%';['stage-upload','stage-process','stage-analyze','stage-done'].forEach((id,i)=>{document.getElementById(id).className=`w-2 h-2 rounded-full ${i===0?'bg-blue-500':'bg-slate-300 dark:bg-slate-600'}`;});isAnalyzing=false;resetSubmitBtn();}
 
     // ===== INIT =====
     document.addEventListener('DOMContentLoaded',()=>{
@@ -926,9 +1121,9 @@
 
         uf.addEventListener('submit',async e=>{
             e.preventDefault();if(isAnalyzing)return;const file=fi.files[0];if(!file){showToast('Выберите файл','warning');return;}
-            document.getElementById('analysisProgress').classList.remove('hidden');document.getElementById('analysisFileName').textContent=file.name;document.getElementById('logContainer').innerHTML='';updateProgress(0);log('🔗 Подключение...','status');
-            isAnalyzing=true;const btn=document.getElementById('submitBtn');btn.disabled=true;btn.innerHTML='<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Загрузка...</span>';
-            try{log(`⬆️ ${file.name}`,'info');const id=await uploadFile(file);log('✅ Файл принят','success');connectSSE(id,file.name,formatSize(file.size));}catch(err){log(`❌ ${err.message}`,'error');showToast('Ошибка загрузки','error');resetSubmitBtn();}
+            document.getElementById('analysisProgress').classList.remove('hidden');document.getElementById('finalReport').classList.add('hidden');document.getElementById('analysisFileName').textContent=file.name;document.getElementById('logContainer').innerHTML='';updateProgress(0);log(`🔗 Подключаю RAG: ${CONTRACT_RAG_SOURCE}...`,'status');
+            isAnalyzing=true;const btn=document.getElementById('submitBtn');btn.disabled=true;btn.innerHTML='<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Подготовка RAG...</span>';
+            try{if(!await prepareContractRag())throw new Error(`RAG ${CONTRACT_RAG_SOURCE} не готов`);const generateRevisedContract=document.getElementById('generateRevisedContract').checked;btn.querySelector('span:last-child').textContent='Загрузка...';log(`⬆️ ${file.name}`,'info');const id=await uploadFile(file,generateRevisedContract);log(generateRevisedContract?'✅ Файл принят. Модель готовит отчёт и доработанный проект…':'✅ Файл принят. Модель готовит итоговый отчёт…','success');connectSSE(id,file.name,formatSize(file.size));}catch(err){log(`❌ ${err.message}`,'error');showToast('Анализ не начат: RAG недоступен','error');resetSubmitBtn();}
         });
 
         cl.addEventListener('click',()=>{document.getElementById('logContainer').innerHTML='';log('🧹 Лог очищен','info');});

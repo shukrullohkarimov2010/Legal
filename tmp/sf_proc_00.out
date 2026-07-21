@@ -1,0 +1,16 @@
+
+   PASS  Tests\Feature\Auth\AuthenticationTest
+  ✓ login screen can be rendered                                                                                 1.20s  
+  ✓ users can authenticate using the login screen                                                                0.66s  
+  ✓ authenticated users must scan face before dashboard                                                          0.04s  
+  ✓ users can access dashboard after face scan confirmation                                                      0.03s  
+  ✓ users can not authenticate with invalid password                                                             0.32s  
+  ✓ users can logout                                                                                             0.06s  
+
+   PASS  Tests\Feature\Auth\RegistrationTest
+  ✓ registration screen can be rendered                                                                          0.06s  
+  ✓ new users can register                                                                                       0.31s  
+
+  Tests:    8 passed (17 assertions)
+  Duration: 2.86s
+

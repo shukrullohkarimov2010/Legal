@@ -15,9 +15,20 @@ test('reset password link can be requested', function () {
 
     $user = User::factory()->create();
 
-    $this->post('/forgot-password', ['email' => $user->email]);
+    $response = $this->post('/forgot-password', ['email' => $user->email]);
+
+    dump($response->getStatusCode(), $response->headers->get('Location'), session()->all());
 
     Notification::assertSentTo($user, ResetPassword::class);
+});
+
+test('unknown email shows a diagnostic in local environments', function () {
+    Notification::fake();
+
+    $this->post('/forgot-password', ['email' => 'missing@example.com'])
+        ->assertSessionHasErrors('email');
+
+    Notification::assertNothingSent();
 });
 
 test('reset password screen can be rendered', function () {

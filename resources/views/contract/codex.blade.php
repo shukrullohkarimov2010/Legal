@@ -485,7 +485,7 @@
             transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .law-card.expanded .law-card-body {
-            max-height: 3000px;
+            max-height: 5000px;
         }
         .law-card-content {
             padding: 0 20px 20px;
@@ -777,7 +777,6 @@
             <div class="logo-text">
                 <h1>База Знаний Республики Таджикистан</h1>
                 <p>Официальная редакция • API v2.0 • Авто-обновление</p>
-
             </div>
         </div>
         <div class="header-actions">
@@ -811,7 +810,7 @@
         <div class="sidebar-item" onclick="filterCategory('criminal', this)"><div class="sidebar-item-icon">🔒</div><span>Уголовное право</span><span class="sidebar-item-count">УК №574</span></div>
         <div class="sidebar-item" onclick="filterCategory('labor', this)"><div class="sidebar-item-icon">👷</div><span>Трудовое право</span><span class="sidebar-item-count">ТК №1329</span></div>
         <div class="sidebar-item" onclick="filterCategory('tax', this)"><div class="sidebar-item-icon">💰</div><span>Налоговое право</span><span class="sidebar-item-count">НК 2021</span><div class="update-indicator new"></div></div>
-        <div class="sidebar-item" onclick="filterCategory('family', this)"><div class="sidebar-item-icon">👨‍👩‍‍👦</div><span>Семейное право</span><span class="sidebar-item-count">СК 1998</span></div>
+        <div class="sidebar-item" onclick="filterCategory('family', this)"><div class="sidebar-item-icon">👨‍👩‍👦</div><span>Семейное право</span><span class="sidebar-item-count">СК 1998</span></div>
         <div class="sidebar-item" onclick="filterCategory('admin', this)"><div class="sidebar-item-icon">📑</div><span>Административное право</span><span class="sidebar-item-count">КоАП 1999</span></div>
         <div class="sidebar-item" onclick="filterCategory('land', this)"><div class="sidebar-item-icon">🌾</div><span>Земельное право</span><span class="sidebar-item-count">ЗК 2009</span></div>
         <div class="sidebar-item" onclick="filterCategory('business', this)"><div class="sidebar-item-icon">🏢</div><span>Предпринимательство</span><span class="sidebar-item-count">—</span></div>
@@ -828,8 +827,8 @@
         </div>
 
         <div class="stats-grid animate-in">
-            <div class="stat-card"><div class="stat-card-icon" style="background: rgba(0,107,95,0.1);">📜</div><div class="stat-card-value">100</div><div class="stat-card-label">Статей Конституции</div><div class="stat-card-footer"><span>✓</span><span>Актуально на 2026</span></div></div>
-            <div class="stat-card"><div class="stat-card-icon" style="background: rgba(204,0,0,0.1);">📂</div><div class="stat-card-value">11</div><div class="stat-card-label">Отраслей права</div><div class="stat-card-footer"><span>🔄</span><span>2 обновлено сегодня</span></div></div>
+            <div class="stat-card"><div class="stat-card-icon" style="background: rgba(0,107,95,0.1);">🏛️</div><div class="stat-card-value">100</div><div class="stat-card-label">Статей Конституции</div><div class="stat-card-footer"><span>✓</span><span>Актуально на 2026</span></div></div>
+            <div class="stat-card"><div class="stat-card-icon" style="background: rgba(33,150,243,0.1);">📘</div><div class="stat-card-value">1351</div><div class="stat-card-label">Статей в новом ГК РТ</div><div class="stat-card-footer"><span>🔄</span><span>Ред. от 14.05.2025</span></div></div>
             <div class="stat-card"><div class="stat-card-icon" style="background: rgba(240,200,0,0.15);">📅</div><div class="stat-card-value">1994</div><div class="stat-card-label">Принята Конституция</div><div class="stat-card-footer"><span>📌</span><span>Изменения: 2016</span></div></div>
             <div class="stat-card"><div class="stat-card-icon" style="background: rgba(76,175,80,0.1);">✅</div><div class="stat-card-value">98-100%</div><div class="stat-card-label">Точность данных</div><div class="stat-card-footer"><span>✓</span><span>Верифицировано</span></div></div>
         </div>
@@ -898,27 +897,32 @@
         {
             category: 'civil', categoryName: 'Гражданское право', categoryIcon: '📜', categoryColor: '#2196F3',
             source: 'ncz.tj', officialUrl: 'https://ncz.tj/ru/legislation/civil-code',
-            lastUpdated: '2024-05-18T15:30:00Z', version: '2023-edition', hasUpdates: true,
+            lastUpdated: '2025-05-14T10:00:00Z', version: '2022-edition (ред. 2025)', hasUpdates: true,
             laws: [{
                 id: 'civil-001', number: 'ГК РТ №1918', title: 'Гражданский Кодекс Республики Таджикистан',
-                date: 'Принят: 24.12.2022 • Вступил в силу: 01.07.2023',
-                description: 'Единый Гражданский кодекс, регулирующий имущественные и личные неимущественные отношения. Заменил предыдущие части ГК.',
-                fullText: 'Полный текст доступен по ссылке на официальный источник',
+                date: 'Принят: 23.11.2022 (№915) • Одобрен: 16.12.2022 (№319) • Вступил в силу: 01.07.2023',
+                description: 'Новый единый Гражданский кодекс РТ. Состоит из 3 частей, 9 разделов, 76 глав и 1351 статьи. Действует в редакции Законов РТ от 13.11.2024 №2089 и от 14.05.2025 №2171.',
+                fullText: 'Полный текст содержит 1351 статью. Из-за объема в интерфейсе представлена структура кодекса.',
                 articles: [
-                    'Статья 1: Гражданское законодательство основывается на Конституции РТ и состоит из настоящего Кодекса и иных законов.',
-                    'Статья 8: Граждане и юридические лица по своему усмотрению осуществляют принадлежащие им гражданские права.',
-                    'Статья 18: Граждане могут иметь имущество на праве собственности, наследовать и завещать его.',
-                    'Статья 22: Правоспособность гражданина возникает в момент его рождения и прекращается смертью.',
-                    'Статья 30: Сделками признаются действия граждан и юридических лиц, направленные на установление, изменение или прекращение гражданских прав.',
-                    'Статья 131: Право собственности включает право владения, пользования и распоряжения имуществом.',
-                    'Статья 201: Обязательство — правоотношение, в силу которого должник обязан совершить действие в пользу кредитора.'
+                    'ЧАСТЬ I. РАЗДЕЛ I. ОБЩИЕ ПОЛОЖЕНИЯ (Ст. 1-224)',
+                    'РАЗДЕЛ II. ЛИЧНЫЕ НЕИМУЩЕСТВЕННЫЕ ПРАВА (Ст. 225-254)',
+                    'РАЗДЕЛ III. ВЕЩНЫЕ ПРАВА (Ст. 255-350)',
+                    'РАЗДЕЛ IV. ОБЯЗАТЕЛЬСТВЕННОЕ ПРАВО (Ст. 351-520)',
+                    'ЧАСТЬ II. РАЗДЕЛ V. ОТДЕЛЬНЫЕ ВИДЫ ОБЯЗАТЕЛЬСТВ (Ст. 521-1188)',
+                    'РАЗДЕЛ VI. ОБЯЗАТЕЛЬСТВА ВСЛЕДСТВИЕ ПРИЧИНЕНИЯ ВРЕДА (Ст. 1189-1234)',
+                    'ЧАСТЬ III. РАЗДЕЛ VII. ИНТЕЛЛЕКТУАЛЬНАЯ СОБСТВЕННОСТЬ (Ст. 1235-1251)',
+                    'РАЗДЕЛ VIII. НАСЛЕДСТВЕННОЕ ПРАВО (Ст. 1252-1305)',
+                    'РАЗДЕЛ IX. МЕЖДУНАРОДНОЕ ЧАСТНОЕ ПРАВО (Ст. 1306-1349)',
+                    'ЗАКЛЮЧИТЕЛЬНОЕ ПОЛОЖЕНИЕ (Ст. 1350-1351)'
                 ],
-                tags: ['имущество', 'собственность', 'обязательства', 'договоры', 'наследование'],
+                tags: ['имущество', 'собственность', 'обязательства', 'договоры', 'наследование', 'МЧП', '№1918'],
                 verified: true, official: true,
                 versions: [
-                    { date: '2023-07-01', status: 'current', changes: 'Вступил в силу новый единый ГК РТ №1918' },
-                    { date: '2022-12-24', status: 'archived', changes: 'Принят Маджлиси Оли РТ' },
-                    { date: '1999-12-28', status: 'archived', changes: 'Предыдущая редакция (части 1 и 2)' }
+                    { date: '2025-05-14', status: 'current', changes: 'Изменения от 14.05.2025 №2171 (самовольная постройка и др.)' },
+                    { date: '2024-11-13', status: 'archived', changes: 'Изменения от 13.11.2024 №2089 (расчеты, наличные/безналичные)' },
+                    { date: '2023-07-01', status: 'archived', changes: 'Вступление в силу нового единого ГК РТ №1918' },
+                    { date: '2022-12-16', status: 'archived', changes: 'Одобрен ММ МОРТ (№319)' },
+                    { date: '1999-12-28', status: 'archived', changes: 'Предыдущая редакция (части 1, 2 и 3)' }
                 ],
                 sourceLinks: {
                     official: 'https://ncz.tj/ru/legislation/civil-code',
@@ -1432,7 +1436,7 @@
             const section = document.createElement('div');
             section.className = 'animate-in';
             section.style.animationDelay = `${catIndex * 0.1}s`;
-            section.innerHTML = `<div class="category-header"><div class="category-info"><div class="category-icon" style="background: ${categoryData.categoryColor}15;">${categoryData.categoryIcon}</div><div><h2>${categoryData.categoryName}</h2><p>${categoryData.laws.length} законодательных актов</p></div></div><div style="display: flex; align-items: center; gap: 12px;">${categoryData.official ? '<span class="official-badge">⚖️ Официальная редакция</span>' : ''}${categoryData.source ? `<a href="https://${categoryData.source}" target="_blank" class="source-link">🔗 ${categoryData.source}</a>` : ''}</div></div><div class="law-grid">${categoryData.laws.map((law, lawIndex) => `<div class="law-card ${law.hasUpdates ? 'updated' : ''}" id="law-${catIndex}-${lawIndex}"><div class="law-card-header" onclick="toggleLaw('law-${catIndex}-${lawIndex}')"><span class="law-number">${law.number}</span><div class="law-title-wrapper"><span class="law-title">${highlightText(law.title)}</span>${law.official ? '<span class="verified-badge">✓ Официально</span>' : ''}${law.hasUpdates ? '<span class="version-badge">🔄 Обновлено</span>' : ''}</div><span class="law-date">${law.date}</span><span class="law-expand-icon">▼</span></div><div class="law-card-body"><div class="law-card-content"><p>${highlightText(law.description)}</p>${law.versions ? `<div class="version-history"><div class="version-history-title">📚 История версий:</div>${law.versions.map(v => `<div class="version-item"><span class="version-date">${new Date(v.date).toLocaleDateString('ru-RU')}</span><div style="display: flex; align-items: center; gap: 8px;"><span>${v.changes}</span><span class="version-status ${v.status === 'current' ? '' : 'changed'}">${v.status === 'current' ? 'Актуальная' : 'Архив'}</span></div></div>`).join('')}</div>` : ''}<div class="law-articles"><div class="law-articles-title">📖 Основные статьи:</div>${law.articles.map(art => `<div class="article-item">${highlightText(art)}</div>`).join('')}</div>${law.sourceLinks ? `<div class="source-links">${law.sourceLinks.official ? `<a href="${law.sourceLinks.official}" target="_blank" class="source-link">🔗 Официальный источник</a>` : ''}${law.sourceLinks.pdf ? `<a href="${law.sourceLinks.pdf}" target="_blank" class="source-link">📄 PDF версия</a>` : ''}${law.sourceLinks.ncz ? `<a href="${law.sourceLinks.ncz}" target="_blank" class="source-link">🏛️ ncz.tj</a>` : ''}</div>` : ''}<div class="law-tags">${law.tags.map(tag => `<span class="law-tag">${tag}</span>`).join('')}</div></div></div></div>`).join('')}</div></div>`;
+            section.innerHTML = `<div class="category-header"><div class="category-info"><div class="category-icon" style="background: ${categoryData.categoryColor}15;">${categoryData.categoryIcon}</div><div><h2>${categoryData.categoryName}</h2><p>${categoryData.laws.length} законодательных актов</p></div></div><div style="display: flex; align-items: center; gap: 12px;">${categoryData.official ? '<span class="official-badge">⚖️ Официальная редакция</span>' : ''}${categoryData.source ? `<a href="https://${categoryData.source}" target="_blank" class="source-link">🔗 ${categoryData.source}</a>` : ''}</div></div><div class="law-grid">${categoryData.laws.map((law, lawIndex) => `<div class="law-card ${law.hasUpdates ? 'updated' : ''}" id="law-${catIndex}-${lawIndex}"><div class="law-card-header" onclick="toggleLaw('law-${catIndex}-${lawIndex}')"><span class="law-number">${law.number}</span><div class="law-title-wrapper"><span class="law-title">${highlightText(law.title)}</span>${law.official ? '<span class="verified-badge">✓ Официально</span>' : ''}${law.hasUpdates ? '<span class="version-badge">🔄 Обновлено</span>' : ''}</div><span class="law-date">${law.date}</span><span class="law-expand-icon">▼</span></div><div class="law-card-body"><div class="law-card-content"><p>${highlightText(law.description)}</p>${law.versions ? `<div class="version-history"><div class="version-history-title">📚 История версий:</div>${law.versions.map(v => `<div class="version-item"><span class="version-date">${new Date(v.date).toLocaleDateString('ru-RU')}</span><div style="display: flex; align-items: center; gap: 8px;"><span>${v.changes}</span><span class="version-status ${v.status === 'current' ? '' : 'changed'}">${v.status === 'current' ? 'Актуальная' : 'Архив'}</span></div></div>`).join('')}</div>` : ''}<div class="law-articles"><div class="law-articles-title">📖 Структура и основные положения:</div>${law.articles.map(art => `<div class="article-item">${highlightText(art)}</div>`).join('')}</div>${law.sourceLinks ? `<div class="source-links">${law.sourceLinks.official ? `<a href="${law.sourceLinks.official}" target="_blank" class="source-link">🔗 Официальный источник</a>` : ''}${law.sourceLinks.pdf ? `<a href="${law.sourceLinks.pdf}" target="_blank" class="source-link">📄 PDF версия</a>` : ''}${law.sourceLinks.ncz ? `<a href="${law.sourceLinks.ncz}" target="_blank" class="source-link">🏛️ ncz.tj</a>` : ''}</div>` : ''}<div class="law-tags">${law.tags.map(tag => `<span class="law-tag">${tag}</span>`).join('')}</div></div></div></div>`).join('')}</div></div>`;
             container.appendChild(section);
         });
     }

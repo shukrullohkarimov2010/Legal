@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -19,7 +20,7 @@ class SocialController extends Controller
         return Socialite::driver($provider)->redirect();
     }
 
-    public function handleProviderCallback(string $provider): RedirectResponse
+    public function handleProviderCallback(Request $request, string $provider): RedirectResponse
     {
         try {
             $socialUser = Socialite::driver($provider)->user();
@@ -50,15 +51,28 @@ class SocialController extends Controller
             $user = User::where('email', $email)->first();
         }
 
+        $isNewUser = false;
+
         if (!$user) {
             $user = $this->createUserFromSocialProvider($provider, $socialUser, $email);
+            $isNewUser = true;
         } else {
             $this->syncSocialProviderData($user, $provider, $socialUser);
         }
 
         Auth::login($user, true);
+        $request->session()->regenerate();
+        $request->session()->forget([
+            'face_enrollment_user_id',
+            'face_verified_at',
+            'face_verified_user_id',
+        ]);
 
-        return redirect()->intended('/dashboard');
+        if ($isNewUser) {
+            $request->session()->put('face_enrollment_user_id', $user->id);
+        }
+
+        return redirect()->intended(route('face.verification', absolute: false));
     }
 
     private function createUserFromSocialProvider(string $provider, SocialUser $socialUser, string $email): User

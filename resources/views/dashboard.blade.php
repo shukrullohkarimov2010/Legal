@@ -914,6 +914,11 @@
                 grid-column: span 12;
             }
         }
+        /* Criminal Code RT Colors */
+.feature-icon-box.red { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #b91c1c; }
+[data-theme="dark"] .feature-icon-box.red { background: linear-gradient(135deg, rgba(220,38,38,0.25), rgba(185,28,28,0.15)); color: #f87171; }
+.feature-badge.red { color: #dc2626; }
+[data-theme="dark"] .feature-badge.red { color: #f87171; }
 
         .feature-badge {
             display: inline-flex;
@@ -1806,7 +1811,8 @@
 
 <div class="app-shell">
     <!-- весь остальной контент без изменений -->
-    <!-- ============ NAVBAR ============ -->
+    <!-- ============ NAVBAR ============ --> 
+
     <nav class="navbar-glass fixed-top" id="mainNav">
         <div class="container" style="max-width: 1280px;">
             <div class="d-flex align-items-center justify-content-between py-3">
@@ -1833,7 +1839,6 @@
                     <a href="{{ route('dashboard') }}" class="nav-link-premium" data-i18n="nav_dashboard">Рабочий стол</a>
                     <a href="#features" class="nav-link-premium" data-i18n="nav_features">Возможности</a>
                 </div>
-
                 <!-- Right actions -->
                 <div class="d-flex align-items-center gap-2">
 
@@ -3000,5 +3005,5 @@
     });
 </script>
 
-</body>
+</body> 
 </html>

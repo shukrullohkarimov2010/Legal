@@ -958,6 +958,8 @@
     // Initialize theme on load
     initTheme();
 
+    const PYTHON_API = "{{ env('PYTHON_API_URL', 'http://127.0.0.1:5000') }}";
+
     // Application State
     const state = {
         currentModel: 'llama3.1:8b',
@@ -975,6 +977,7 @@
         loadConversations();
         setupTextarea();
         setupTemperatureSlider();
+        checkChatRagStatus();
     });
 
     function setupTextarea() {
@@ -991,6 +994,18 @@
         slider.addEventListener('input', () => {
             display.textContent = slider.value;
         });
+    }
+
+    async function checkChatRagStatus() {
+        try {
+            const response = await fetch(`${PYTHON_API}/api/rag/status`, { headers: { 'Accept': 'application/json' } });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const status = await response.json();
+            const suffix = status.ready ? ` + RAG ${status.chunks}` : ' + RAG off';
+            document.getElementById('modelStatus').textContent = `${state.currentModel} Ready${suffix}`;
+        } catch (error) {
+            document.getElementById('modelStatus').textContent = `${state.currentModel} Ready + RAG ?`;
+        }
     }
 
     function autoResize(textarea) {
@@ -1106,14 +1121,16 @@
             concise: 'Вы краткий юридический эксперт. Давайте точные ответы без лишних деталей, только суть.'
         };
 
-        const response = await fetch(`${ollamaUrl}/api/generate`, {
+        const response = await fetch(`${PYTHON_API}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: state.currentModel,
                 prompt: `${systemPrompts[personality]}\n\nВопрос пользователя: ${message}`,
-                stream: true,
-                options: { temperature: temperature, num_predict: 1024 }
+                message,
+                history: state.chatHistory.slice(-8),
+                personality,
+                temperature
             }),
             signal: state.abortController.signal
         });
@@ -1260,6 +1277,7 @@
         );
 
         document.getElementById('modelStatus').textContent = `${model} Ready`;
+        checkChatRagStatus();
     }
 
     async function testConnection() {

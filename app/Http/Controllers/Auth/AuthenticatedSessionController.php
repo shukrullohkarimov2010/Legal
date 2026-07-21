@@ -27,8 +27,13 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $request->session()->forget([
+            'face_enrollment_user_id',
+            'face_verified_at',
+            'face_verified_user_id',
+        ]);
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('face.verification', absolute: false));
     }
 
     /**

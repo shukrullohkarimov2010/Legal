@@ -32,12 +32,46 @@ class PasswordResetLinkController extends Controller
         // whether the email exists in the system to avoid leaking user data.
         $status = Password::sendResetLink($request->only('email'));
 
-        // Log non-existent users at debug level for administrators (no user-facing leak)
-        if ($status !== Password::RESET_LINK_SENT) {
-            logger()->debug('Password reset requested for unknown email', ['email' => $request->input('email'), 'status' => $status]);
+        if ($status === Password::RESET_LINK_SENT) {
+            if ($this->usesLocalOnlyMailer()) {
+                return back()->with('status', 'Ссылка сброса создана, но MAIL_MAILER=' . config('mail.default') . ': письмо не уходит на Gmail, а сохраняется локально. Настройте SMTP в .env или смотрите storage/logs/laravel.log.');
+            }
+
+            return back()->with('status', __('ui.password_reset_sent'));
         }
 
-        // Always return the same response to the user for security / UX consistency.
+        logger()->debug('Password reset link was not sent', [
+            'email' => $request->input('email'),
+            'status' => $status,
+        ]);
+
+        if ($this->canShowPasswordResetDiagnostics()) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => $this->passwordResetStatusMessage($status)]);
+        }
+
+        // Production keeps the same response to avoid leaking user data.
         return back()->with('status', __('ui.password_reset_sent'));
+    }
+
+    private function usesLocalOnlyMailer(): bool
+    {
+        return $this->canShowPasswordResetDiagnostics()
+            && in_array(config('mail.default'), ['array', 'log'], true);
+    }
+
+    private function canShowPasswordResetDiagnostics(): bool
+    {
+        return app()->environment(['local', 'testing']);
+    }
+
+    private function passwordResetStatusMessage(string $status): string
+    {
+        return match ($status) {
+            Password::INVALID_USER => 'Пользователь с таким email не найден. Зарегистрируйтесь или укажите email существующего аккаунта.',
+            Password::RESET_THROTTLED => 'Ссылка уже запрошена недавно. Подождите немного и попробуйте снова.',
+            default => 'Не удалось отправить ссылку для сброса пароля. Проверьте email и настройки почты.',
+        };
     }
 }

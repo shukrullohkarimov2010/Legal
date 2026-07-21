@@ -42,5 +42,15 @@ class ContractController extends Controller
     {
         return view('contract.compare');
     }
+    public function kodex()
+    {
+        return view('contract.ugalov-kodex', [
+            'pythonApiUrl' => $this->pythonApi,
+        ]);
+    }
+     public function form()
+    {
+        return view('contract.form'); 
+    }
 
 }
