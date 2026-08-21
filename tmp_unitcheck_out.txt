@@ -1,0 +1,40 @@
+1) quote reformulation match: True
+2) contract evidence kept: 1
+3) heuristic missing clauses count: 5
+  [SEVERITY] ¦íTÁ¦¦¦-¦¬¦-TÆ¦¬TÏ: medium òÆÒ high | ¦Þ¦+¦-¦-TÁTÂ¦-TÀ¦-¦-¦-¦¦¦¦ TÀ¦-TÁTÂ¦-TÀ¦¦¦¦¦-¦¬¦¦
+4) one-sided termination severity: high
+  [SEVERITY] ¦íTÁ¦¦¦-¦¬¦-TÆ¦¬TÏ: low òÆÒ high | ¦Ô¦¦¦¬¦-¦¬¦¬TÂ¦-TË¦¦ TÀ¦¬TÁ¦¦
+   non-refundable severity: high
+  [PARSER] ¦Ý¦-¦¦¦+¦¦¦-¦- TÀ¦¬TÁ¦¦¦-¦- ¦+¦- TÄ¦¬¦¬TÌTÂTÀ¦-TÆ¦¬¦¬: 1
+  [PARSER] ¦ß¦-TÁ¦¬¦¦ TÄ¦¬¦¬TÌTÂTÀ¦-TÆ¦¬¦¬, TÍ¦-TÀ¦¬TÁTÂ¦¬¦¦ ¦¬ ¦+¦¦¦+TÃ¦¬¦¬¦¬¦¦¦-TÆ¦¬¦¬: 6
+    [high] ¦Þ¦+¦-¦-TÁTÂ¦-TÀ¦-¦-¦-¦¦¦¦ TÀ¦-TÁTÂ¦-TÀ¦¦¦¦¦-¦¬¦¦ | quality=0.90 | point=True frag=True norm=True
+    [high] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: TÁTÀ¦-¦¦ ¦¬TÁ¦¬¦-¦¬¦-¦¦¦-¦¬TÏ/¦+¦¦¦¦TÁTÂ¦-¦¬TÏ | quality=0.00 | point=True frag=False norm=True
+    [medium] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: ¦¬¦-TÀTÏ¦+¦-¦¦ TÀ¦-TÁTÂ¦-TÀ¦¦¦¦¦-¦¬TÏ | quality=0.00 | point=True frag=False norm=True
+    [medium] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: TÀ¦-¦¬TÀ¦¦TÈ¦¦¦-¦¬¦¦ TÁ¦¬¦-TÀ¦-¦- | quality=0.00 | point=True frag=False norm=True
+    [low] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: TÄ¦-TÀTÁ-¦-¦-¦¦¦-TÀ | quality=0.00 | point=True frag=False norm=True
+    [low] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: TÃ¦-¦¦¦+¦-¦-¦¬¦¦¦-¦¬TÏ TÁTÂ¦-TÀ¦-¦- | quality=0.00 | point=True frag=False norm=True
+5) metrics score/verdict: 86 òÝÌ ¦Ý¦¦ ¦¬¦-¦+¦¬¦¬TÁTË¦-¦-TÂTÌ findings: 6
+   norm_text contains ¦áTÂ¦-TÂTÌTÏ 450: True
+  [PARSER] ¦Ý¦-¦¦¦+¦¦¦-¦- TÀ¦¬TÁ¦¦¦-¦- ¦+¦- TÄ¦¬¦¬TÌTÂTÀ¦-TÆ¦¬¦¬: 1
+  [FILTER] ¦ã¦+¦-¦¬¦¦¦- ¦-¦¬¦¬¦¦¦-¦¦¦-TÇ¦¦TÁTÂ¦-¦¦¦-¦-TË¦¦ TÀ¦¬TÁ¦¦: === ¦ç¦-TÁTÂTÌ 1 === (quality=0.20)
+  [PARSER] ¦ß¦-TÁ¦¬¦¦ TÄ¦¬¦¬TÌTÂTÀ¦-TÆ¦¬¦¬, TÍ¦-TÀ¦¬TÁTÂ¦¬¦¦ ¦¬ ¦+¦¦¦+TÃ¦¬¦¬¦¬¦¦¦-TÆ¦¬¦¬: 0
+  [PARSER] òÚàÿ¬Ï ¦Ô¦¬¦¬¦-¦-TË¦¦ ¦+¦-¦¦¦-¦-¦-TÀ ¦-¦¦¦¬ ¦¬¦-¦+TÂ¦-¦¦TÀ¦¦¦+TÑ¦-¦-TËTÅ TÀ¦¬TÁ¦¦¦-¦- òÀÔ TÂTÀ¦¦¦-TÃ¦¦TÂTÁTÏ TÀTÃTÇ¦-¦-TÏ ¦¬TÀ¦-¦-¦¦TÀ¦¦¦-
+6) long clean contract: score=0 verdict=òÚàÿ¬Ï ¦âTÀ¦¦¦-TÃ¦¦TÂTÁTÏ TÀTÃTÇ¦-¦-TÏ ¦¬TÀ¦-¦-¦¦TÀ¦¦¦- manual_review=True n_findings=0
+7) report includes norm text block: True
+  [PARSER] ¦Ý¦-¦¦¦+¦¦¦-¦- TÀ¦¬TÁ¦¦¦-¦- ¦+¦- TÄ¦¬¦¬TÌTÂTÀ¦-TÆ¦¬¦¬: 3
+  [EVIDENCE] Removed unsupported finding: ¦¬¦-¦-TÁTÂTÀ¦-¦-¦-¦-¦¦¦- TÀ¦-¦¬TÀ¦¦TÈ¦¦¦-¦¬TÏ TÁ¦¬¦-TÀ¦-¦-
+  [SEVERITY] ¦íTÁ¦¦¦-¦¬¦-TÆ¦¬TÏ: medium òÆÒ high | ¦-¦+¦-¦-TÁTÂ¦-TÀ¦-¦-¦-¦¦¦¦¦- TÀ¦-TÁTÂ¦-TÀ¦¦¦¦¦-¦¬TÏ ¦+¦-¦¦¦-¦-¦-TÀ¦-
+  [SEVERITY] ¦íTÁ¦¦¦-¦¬¦-TÆ¦¬TÏ: medium òÆÒ high | ¦-TÂTÁTÃTÂTÁTÂ¦-¦¬TÏ ¦-¦-¦¬¦-TÀ¦-TÂ¦- TÃ¦¬¦¬¦-TÇ¦¦¦-¦-TËTÅ TÁTÃ¦-¦-
+  [PARSER] ¦ß¦-TÁ¦¬¦¦ TÄ¦¬¦¬TÌTÂTÀ¦-TÆ¦¬¦¬, TÍ¦-TÀ¦¬TÁTÂ¦¬¦¦ ¦¬ ¦+¦¦¦+TÃ¦¬¦¬¦¬¦¦¦-TÆ¦¬¦¬: 7
+    [high] ¦-¦+¦-¦-TÁTÂ¦-TÀ¦-¦-¦-¦¦¦¦¦- TÀ¦-TÁTÂ¦-TÀ¦¦¦¦¦-¦¬TÏ ¦+¦-¦¦¦-¦-¦-TÀ¦- | quality=0.90 | point=True frag=True norm=True
+    [high] ¦-TÂTÁTÃTÂTÁTÂ¦-¦¬TÏ ¦-¦-¦¬¦-TÀ¦-TÂ¦- TÃ¦¬¦¬¦-TÇ¦¦¦-¦-TËTÅ TÁTÃ¦-¦- | quality=0.75 | point=True frag=True norm=True
+    [high] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: TÁTÀ¦-¦¦ ¦¬TÁ¦¬¦-¦¬¦-¦¦¦-¦¬TÏ/¦+¦¦¦¦TÁTÂ¦-¦¬TÏ | quality=0.00 | point=True frag=False norm=True
+    [medium] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: ¦¬¦-TÀTÏ¦+¦-¦¦ TÀ¦-TÁTÂ¦-TÀ¦¦¦¦¦-¦¬TÏ | quality=0.00 | point=True frag=False norm=True
+    [medium] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: TÀ¦-¦¬TÀ¦¦TÈ¦¦¦-¦¬¦¦ TÁ¦¬¦-TÀ¦-¦- | quality=0.00 | point=True frag=False norm=True
+    [low] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: TÄ¦-TÀTÁ-¦-¦-¦¦¦-TÀ | quality=0.00 | point=True frag=False norm=True
+    [low] ¦ÞTÂTÁTÃTÂTÁTÂ¦-TÃ¦¦TÂ TÃTÁ¦¬¦-¦-¦¬¦¦: TÃ¦-¦¦¦+¦-¦-¦¬¦¦¦-¦¬TÏ TÁTÂ¦-TÀ¦-¦- | quality=0.00 | point=True frag=False norm=True
+8) bracket-less format recovered: 7 findings; no_hallucination: True
+   term=high refund=high art450=True
+
+ALL ASSERTS PASSED
+

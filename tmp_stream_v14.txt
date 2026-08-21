@@ -1,0 +1,12 @@
+data: {"type": "status", "request_id": "cda3a93c9a68", "timestamp": 1786277949.3669941, "step": "rag_ready", "message": "RAG ready: 1918_ru_1.docx (691 fragments)", "source": "1918_ru_1.docx", "progress_percent": 1}
+
+data: {"type": "status", "request_id": "cda3a93c9a68", "timestamp": 1786277949.39615, "step": "reading", "file": "cda3a93c9a68_test_contract.txt", "progress_percent": 3}
+
+data: {"type": "status", "request_id": "cda3a93c9a68", "timestamp": 1786277949.5202472, "step": "extracted", "chars": 2198, "words": 284, "extension": ".txt", "progress_percent": 8}
+
+data: {"type": "status", "request_id": "cda3a93c9a68", "timestamp": 1786277949.6436152, "step": "cache_hit", "message": "Найден проверенный кэш: загружаем готовый RAG-отчёт", "progress_percent": 96, "cache_hit": true, "cached_at": 1786277739.5903647}
+
+data: {"type": "summary_complete", "request_id": "cda3a93c9a68", "timestamp": 1786277949.6590166, "step": "summary_complete", "content": "## Проверенный RAG-анализ договора\n\nИсточник права: `1918_ru_1.docx` (Республика Таджикистан).\nВ отчёт включены пункты с цитатой из договора и нормой, сверенной с подключённым RAG.\nЕсли модель не смогла указать точную статью, это честно помечено как требующее ручной проверки.\n\nОпределённый тип договора: **возмездное оказание услуг** (уверенность: 100%).\nАльтернативные варианты: авторский заказ, кредитный.\n\n### Выявленные риски\n\nПодтверждённых рисков не найдено: для публикации требуется одновременно цитата из договора и применимая статья из RAG.\n\n⚠️ **Требуется ручная проверка.** Договор объёмный, но система не подтвердила ни одного риска. Это может быть следствием нестандартных формулировок — заключение должен проверить практикующий юрист.\n\n### Итог\n- Балл риска: **0/100**\n- Уровень: **Низкий**\n- Вердикт: **⚠️ Требуется ручная проверка**\n\nОтчёт основан на подключённой базе RAG и не заменяет проверку практикующим юристом.", "length": 934, "revised_contract": null, "metrics": {"score": 0, "level": "Низкий", "high": 0, "medium": 0, "low": 0, "verdict": "⚠️ Требуется ручная проверка", "hallucinations_detected": 0, "wrong_jurisdiction_mentions": 0}, "cache_hit": true}
+
+data: {"type": "complete", "request_id": "cda3a93c9a68", "timestamp": 1786277949.674208, "step": "complete", "status": "success", "chunks_processed": 1, "errors_count": 0, "cache_hit": true}
+

@@ -1,0 +1,10 @@
+NUM summary_complete events: 1
+#summary 1: score=0 level=Низкий verdict=⚠️ Требуется ручная проверка high=0 med=0 low=0 len=934
+#complete success ts=1786277949.674208
+FINAL score=0 level=Низкий verdict=⚠️ Требуется ручная проверка H/M/L=0/0/0
+HAS_NORM_TEXT_BLOCK=False
+HAS_ARTICLE_450=False
+NUM_RISK_SECTIONS=0
+HAS_ONE_SIDED=False
+HAS_GK_RF=False
+VERDICT_LINE=⚠️ Требуется ручная проверка

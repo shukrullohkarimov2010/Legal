@@ -3,6 +3,7 @@ from flask_cors import CORS
 import requests
 import json
 import os
+import sys
 import hashlib
 import time
 import threading
@@ -20,22 +21,41 @@ from pypdf import PdfReader
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
+# Консоль и перенаправленный вывод должны переживать эмодзи/кириллицу в cp1251.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # ================= НАСТРОЙКИ =================
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "llama3.1:8b"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
+# The single local legal profile is used by both contract analysis and chat.
+MODEL_NAME = os.environ.get("LEGAL_MODEL_NAME", "legal-strong")
 CHUNK_SIZE = 8000
 CHUNK_OVERLAP = 500
 MAX_WORKERS = 1
 CACHE_FILE = ".ollama_cache.json"
-ANALYSIS_VERSION = "analysis-v9-grounded-rag-final-only"
+ANALYSIS_VERSION = "analysis-v16-improved-lawyer"
 TEMP_DIR = "tmp_uploads"
 RESULTS_DIR = "analysis_results"
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+ANALYSIS_CACHE_DIR = os.path.join(PROJECT_ROOT, "analysis_cache")
+ANALYSIS_CACHE_TTL_SECONDS = int(os.environ.get("ANALYSIS_CACHE_TTL_SECONDS", str(14 * 24 * 60 * 60)))
+ANALYSIS_CACHE_MAX_ENTRIES = int(os.environ.get("ANALYSIS_CACHE_MAX_ENTRIES", "200"))
+OLLAMA_CACHE_MAX_ENTRIES = int(os.environ.get("OLLAMA_CACHE_MAX_ENTRIES", "1200"))
 CONTRACT_RAG_SOURCE_NAME = "1918_ru_1.docx"
 CONTRACT_RAG_MIN_CHUNKS = 600
+RAG_TOP_K = int(os.environ.get("RAG_TOP_K", "12"))
+RAG_SNIPPET_MAX = 700
+CHAT_RAG_TOP_K = int(os.environ.get("CHAT_RAG_TOP_K", "5"))
+CHAT_RAG_MAX_CHARS = int(os.environ.get("CHAT_RAG_MAX_CHARS", "6500"))
+CHAT_MAX_TOKENS = int(os.environ.get("CHAT_MAX_TOKENS", "850"))
+CHAT_KEEP_ALIVE = os.environ.get("CHAT_KEEP_ALIVE", "30m")
+
 _rag_source_env = os.environ.get("RAG_SOURCE_PATH")
 _rag_index_env = os.environ.get("RAG_INDEX_FILE")
 RAG_SOURCE_PATH = (
@@ -48,43 +68,269 @@ RAG_INDEX_FILE = (
 )
 RAG_CHUNK_SIZE = int(os.environ.get("RAG_CHUNK_SIZE", "1800"))
 RAG_CHUNK_OVERLAP = int(os.environ.get("RAG_CHUNK_OVERLAP", "200"))
+CHAT_RAG_SOURCE_NAMES = [
+    CONTRACT_RAG_SOURCE_NAME,
+    "574_ru.doc",
+    "семейный кодекс.docx",
+    "налоговый кодекс.docx",
+    "трудовой кодекс.docx",
+    "автомабильный кодекс.docx",
+]
+RAG_CODE_LABELS = {
+    CONTRACT_RAG_SOURCE_NAME: "Гражданский кодекс Республики Таджикистан",
+    "574_ru.doc": "Уголовный кодекс Республики Таджикистан",
+    "семейный кодекс.docx": "Семейный кодекс Республики Таджикистан",
+    "налоговый кодекс.docx": "Налоговый кодекс Республики Таджикистан",
+    "трудовой кодекс.docx": "Трудовой кодекс Республики Таджикистан",
+    "автомабильный кодекс.docx": "Кодекс автомобильного транспорта Республики Таджикистан",
+}
+CHAT_RAG_INDEX_FILE = os.path.join(PROJECT_ROOT, "storage", "app", "rag", "laws-rt-chat.index.json")
+RAG_CODE_NAME = os.environ.get("RAG_CODE_NAME", "Гражданский кодекс Республики Таджикистан")
+LEARNING_DATA_DIR = os.path.join(PROJECT_ROOT, "python", "training_data")
+LEARNING_DATA_FILE = os.path.join(LEARNING_DATA_DIR, "legal-approved.jsonl")
 
 _current_rag_source = None
 _current_rag_index = None
-RAG_TOP_K = int(os.environ.get("RAG_TOP_K", "10"))
 
 WRONG_JURISDICTION_PENALTY = 20
-HALLUCINATION_PENALTY = 0  # Отключаем штраф за галлюцинации
+HALLUCINATION_PENALTY = 25
 
 os.makedirs(TEMP_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
+os.makedirs(ANALYSIS_CACHE_DIR, exist_ok=True)
 os.makedirs(os.path.dirname(RAG_INDEX_FILE), exist_ok=True)
+os.makedirs(LEARNING_DATA_DIR, exist_ok=True)
 
 active_sessions = {}
 sessions_lock = threading.Lock()
 rag_index = None
+chat_rag_index = None
 rag_lock = threading.Lock()
 rag_articles_cache = None
+rag_citations_cache = None
+multi_rag_citations_cache = {}
+ollama_cache = None
+ollama_cache_lock = threading.Lock()
 
 # ================= КЭШИРОВАНИЕ =================
 def load_cache():
-    if os.path.exists(CACHE_FILE):
-        try:
-            with open(CACHE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"⚠️ Ошибка загрузки кэша: {e}")
-    return {}
+    """Load model responses once per process instead of once per LLM request."""
+    global ollama_cache
+    with ollama_cache_lock:
+        if ollama_cache is not None:
+            return ollama_cache
+        if os.path.exists(CACHE_FILE):
+            try:
+                with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                    ollama_cache = json.load(f)
+                    if isinstance(ollama_cache, dict):
+                        return ollama_cache
+            except Exception as e:
+                print(f"⚠️ Ошибка загрузки кэша: {e}")
+        ollama_cache = {}
+        return ollama_cache
 
 def save_cache(cache):
+    """Atomically persist the in-memory cache so parallel requests cannot corrupt it."""
+    tmp_path = f"{CACHE_FILE}.{uuid.uuid4().hex}.tmp"
     try:
-        with open(CACHE_FILE, "w", encoding="utf-8") as f:
-            json.dump(cache, f, ensure_ascii=False, indent=2)
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, separators=(",", ":"))
+        os.replace(tmp_path, CACHE_FILE)
     except Exception as e:
         print(f"⚠️ Ошибка сохранения кэша: {e}")
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
 
 def get_cache_key(text):
-    return hashlib.md5((ANALYSIS_VERSION + MODEL_NAME + text).encode("utf-8")).hexdigest()
+    return hashlib.sha256((ANALYSIS_VERSION + MODEL_NAME + text).encode("utf-8")).hexdigest()
+
+def get_analysis_cache_key(contract_text, rag_index_data):
+    """Tie a full-report cache entry to content, model and the exact RAG revision."""
+    payload = {
+        "version": ANALYSIS_VERSION,
+        "model": MODEL_NAME,
+        "contract": hashlib.sha256((contract_text or "").encode("utf-8")).hexdigest(),
+        "rag_source": rag_index_data.get("source_name"),
+        "rag_mtime": rag_index_data.get("source_mtime"),
+        "rag_chunk_size": rag_index_data.get("chunk_size"),
+        "rag_chunk_overlap": rag_index_data.get("chunk_overlap"),
+        "top_k": RAG_TOP_K,
+    }
+    encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+def load_analysis_cache(cache_key):
+    path = os.path.join(ANALYSIS_CACHE_DIR, f"{cache_key}.json")
+    try:
+        if not os.path.isfile(path):
+            return None
+        if time.time() - os.path.getmtime(path) > ANALYSIS_CACHE_TTL_SECONDS:
+            os.remove(path)
+            return None
+        with open(path, "r", encoding="utf-8") as f:
+            cached = json.load(f)
+        if not isinstance(cached, dict) or not cached.get("content") or not isinstance(cached.get("metrics"), dict):
+            return None
+        return cached
+    except Exception as e:
+        print(f"⚠️ Ошибка чтения кэша анализа: {e}")
+        return None
+
+def save_analysis_cache(cache_key, payload):
+    path = os.path.join(ANALYSIS_CACHE_DIR, f"{cache_key}.json")
+    tmp_path = f"{path}.{uuid.uuid4().hex}.tmp"
+    try:
+        data = {**payload, "cached_at": time.time(), "analysis_version": ANALYSIS_VERSION}
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
+        os.replace(tmp_path, path)
+        prune_analysis_cache()
+    except Exception as e:
+        print(f"⚠️ Ошибка сохранения кэша анализа: {e}")
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
+def prune_analysis_cache():
+    """Keep report cache bounded and remove expired entries opportunistically."""
+    try:
+        now = time.time()
+        entries = []
+        for name in os.listdir(ANALYSIS_CACHE_DIR):
+            if not name.endswith(".json"):
+                continue
+            path = os.path.join(ANALYSIS_CACHE_DIR, name)
+            mtime = os.path.getmtime(path)
+            if now - mtime > ANALYSIS_CACHE_TTL_SECONDS:
+                os.remove(path)
+            else:
+                entries.append((mtime, path))
+        overflow = max(0, len(entries) - max(ANALYSIS_CACHE_MAX_ENTRIES, 1))
+        for _, path in sorted(entries)[:overflow]:
+            os.remove(path)
+    except Exception as e:
+        print(f"⚠️ Ошибка очистки кэша анализа: {e}")
+
+# ================= КЛАССИФИКАТОР ТИПА ДОГОВОРА =================
+CONTRACT_TYPE_KEYWORDS = {
+    "купля-продажа": [
+        "купли-продажи", "продавец", "покупатель", "товар", "передаёт в собственность",
+        "price", "товара", "количество", "ассортимент", "качество товара",
+    ],
+    "аренда": [
+        "аренды", "арендатор", "арендодатель", "арендную плату", "арендная плата",
+        "имущество во временное владение", "объект аренды", "субаренд",
+    ],
+    "подряд": [
+        "подряда", "подрядчик", "заказчик", "строительн", "проектную документацию",
+        "смету", "работу", "результат работы", "сдать работу", "принять работу",
+    ],
+    "возмездное оказание услуг": [
+        "оказания услуг", "услуг", "исполнитель", "заказчик", "оказать услуги",
+        "качество услуг", "акт оказанных услуг",
+    ],
+    "поставка": [
+        "поставки", "поставщик", "покупатель", "поставку товара", "период поставки",
+        "график поставки", "парти",
+    ],
+    "займ": [
+        "займа", "займ", "заёмщик", "займодавец", "сумму займа", "проценты",
+        "возврат суммы займа",
+    ],
+    "кредитный": [
+        "кредита", "кредитный", "кредитор", "заёмщик", "кредитную", "банк",
+        "процентную ставку", "график погашения",
+    ],
+    "хранение": [
+        "хранения", "хранитель", "поклажедатель", "вещь", "сохранность",
+    ],
+    "поручение": [
+        "поручения", "поверенный", "доверитель", "от имени", "юридические действия",
+    ],
+    "комиссия": [
+        "комиссии", "комиссионер", "комитент", "сделк", "вознаграждение",
+    ],
+    "агентский": [
+        "агентского", "агент", "принципал", "агентировани",
+    ],
+    "доверительное управление": [
+        "доверительного управления", "доверительный управляющий", "учредитель управления",
+    ],
+    "франчайзинг": [
+        "франчайзинг", "коммерческой концессии", "франчайзи", "франчайзер",
+        "правообладатель", "пользователь",
+    ],
+    "страхование": [
+        "страхования", "страховщик", "страхователь", "страховой случай", "страховую премию",
+    ],
+    "лизинг": [
+        "лизинга", "лизингодатель", "лизингополучатель", "предмет лизинга",
+    ],
+    "залог": [
+        "залога", "залогодатель", "залогодержатель", "предмет залога", "заложенное имущество",
+    ],
+    "дарение": [
+        "дарения", "даритель", "одаряемый", "безвозмездно",
+    ],
+    "мены": [
+        "мены", "обмениваем", "обмен",
+    ],
+    "авторский заказ": [
+        "авторского заказа", "автор", "заказчик", "произведение",
+    ],
+    "отчуждение исключительного права": [
+        "отчуждения исключительного права", "исключительное право", "правообладатель",
+        "приобретатель",
+    ],
+    "лицензионный": [
+        "лицензионного", "лицензиар", "лицензиат", "право использования", "лицензию",
+    ],
+    "простой товарищества": [
+        "простого товарищества", "совместной деятельности", "товарищи",
+    ],
+}
+
+def classify_contract_type(text):
+    """
+    Определяет тип договора по ключевым словам в тексте.
+    Возвращает dict: {type, confidence, types_with_scores}
+    """
+    if not text:
+        return {"type": "неопределённый", "confidence": 0.0, "types_with_scores": []}
+    
+    text_lower = text.lower()
+    scores = []
+    
+    for contract_type, keywords in CONTRACT_TYPE_KEYWORDS.items():
+        score = 0
+        for kw in keywords:
+            # Прямой поиск без учёта окончаний
+            if kw.lower() in text_lower:
+                score += 1
+        if score > 0:
+            # Нормализуем на количество ключевых слов, чтобы получить 0-1
+            normalized = score / max(len(keywords) * 0.4, 1)  # 40% совпадений = 1.0
+            normalized = min(1.0, normalized)
+            scores.append({"type": contract_type, "score": round(normalized, 3), "matches": score})
+    
+    # Сортируем по убыванию
+    scores.sort(key=lambda x: x["score"], reverse=True)
+    
+    if not scores:
+        return {"type": "неопределённый", "confidence": 0.0, "types_with_scores": []}
+    
+    best = scores[0]
+    return {
+        "type": best["type"],
+        "confidence": best["score"],
+        "types_with_scores": scores[:5],  # Топ-5
+    }
 
 # ================= ДЕТЕКТОР НЕПРАВИЛЬНОЙ ЮРИСДИКЦИИ =================
 def detect_wrong_jurisdiction(text):
@@ -125,10 +371,44 @@ def detect_wrong_jurisdiction(text):
     
     return violations
 
-# ================= ФУНКЦИЯ ГАЛЛЮЦИНАЦИЙ (отключена) =================
-def detect_hallucination(finding, contract_text, rag_context):
-    """Минимальная проверка — только если вообще нет данных"""
-    return False
+# ================= ПРОВЕРКА ОБОСНОВАННОСТИ ВЫВОДОВ =================
+def _rag_article_numbers():
+    """Return article numbers that are actually present in the active RAG index."""
+    index = load_rag_index(force=False)
+    numbers = set()
+    for chunk in index.get("chunks", []):
+        text = chunk.get("text", "")
+        for match in re.finditer(r"(?:статья|ст\.)\s*(\d+(?:[-.]\d+)?(?:\.\d+)?)", text, re.IGNORECASE):
+            numbers.add(match.group(1))
+    return numbers
+
+def _cited_article_numbers(text):
+    return set(
+        re.findall(
+            r"(?:статья|ст\.|ч\.)\s*(\d+(?:[-.]\d+)?(?:\.\d+)?)",
+            text or "",
+            re.IGNORECASE,
+        )
+    )
+
+def detect_hallucination(finding, contract_text, rag_context=""):
+    """Return a reason when a finding cannot be verified by the contract and RAG."""
+    quote = _normalize_text(finding.get("fragment", ""))
+    contract = _normalize_text(contract_text)
+    if len(quote) < 15 or not _quote_matches_contract(quote, contract):
+        return "цитата не найдена в тексте договора"
+
+    cited_articles = _cited_article_numbers(finding.get("norm", ""))
+    if not cited_articles:
+        return "не указана конкретная статья РТ"
+
+    available_articles = _rag_article_numbers()
+    if not cited_articles.issubset(available_articles):
+        return "указанная статья отсутствует в подключённом RAG"
+
+    if detect_wrong_jurisdiction(" ".join(str(value) for value in finding.values())):
+        return "обнаружена ссылка на другую юрисдикцию"
+    return None
 
 # ================= ФУНКЦИЯ ИЗВЛЕЧЕНИЯ СТАТЕЙ ИЗ RAG =================
 def extract_article_numbers_from_text(text):
@@ -217,6 +497,11 @@ def extract_text_from_doc(path):
             print(f"  ✅ DOC (внешняя утилита): {len(text)} символов")
             return text
 
+        text = _extract_text_from_doc_unicode(path)
+        if text and text.strip():
+            print(f"  ✅ DOC (unicode binary): {len(text)} символов")
+            return text
+
         text = _extract_text_from_doc_binary(path)
         if text and len(text.strip()) > 40:
             print(f"  ✅ DOC (бинарный парсер): {len(text)} символов")
@@ -236,6 +521,77 @@ def _extract_text_from_doc_command(path):
             except Exception as e:
                 print(f"  ⚠️ Ошибка вызова {cmd}: {e}")
     return ""
+
+def _extract_text_from_doc_unicode(path):
+    """High-fidelity extractor for legacy binary .doc (OLE2) documents.
+
+    No ``antiword``/``catdoc``/``olefile``/``pywin32`` is installed in this
+    environment, but Word 97-2003 files keep their document text inside the
+    WordDocument stream as UTF-16 (little-endian) runs. The previous approach
+    tried ``cp1251`` first and bailed out on the first encoding that produced
+    >=5 garbage lines, which is why the *Уголовный кодекс* index came back as
+    noise. We now score every candidate encoding by Cyrillic + legal-vocabulary
+    density, keep the best one, then normalise the output so chapter/article
+    headers land on their own lines (the citation-catalogue builder anchors on
+    ``^Статья``).
+    """
+    with open(path, "rb") as f:
+        data = f.read()
+
+    legal_seed = re.compile(
+        r"(статья|глава|раздел|часть|пункт|кодекс|наказывается|ответственность"
+        r"|преступление|санкция|уголовн)", re.IGNORECASE,
+    )
+
+    chosen = None
+    for encoding in ("utf-16-le", "utf-16-be", "utf-8", "cp1251", "cp1252"):
+        try:
+            decoded = data.decode(encoding, errors="ignore")
+        except Exception:
+            continue
+        cyrillic = sum(1 for ch in decoded if "\u0400" <= ch <= "\u04FF")
+        hits = len(legal_seed.findall(decoded))
+        ratio = cyrillic / max(len(decoded), 1)
+        # Require a real legal document: meaningful Cyrillic + vocabulary.
+        if cyrillic > 300 and ratio > 0.05 and hits > 0:
+            chosen = (encoding, decoded)
+            break
+
+    if chosen is None:
+        chosen = ("utf-16-le", data.decode("utf-16-le", errors="ignore"))
+    encoding, decoded = chosen
+
+    # Strip VFP field markers (\x13...\x15), BOM and stray control bytes.
+    cleaned = re.sub(r"\x13[^\x15]*\x15", " ", decoded)
+    cleaned = cleaned.replace("\ufeff", " ").replace("\u00ad", "")
+    cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", " ", cleaned)
+
+    # Put legal-structure headers on their own lines (non-consuming lookahead).
+    header_re = (
+        r"Статья\s+\d[\d.]*|ГЛАВА\s+\d+|РАЗДЕЛ\s+\S+|ЧАСТЬ\s+\S+|"
+        r"ПОДРАЗДЕЛ\s+\d+|ПУНКТ\s+\d+"
+    )
+    cleaned = re.sub(
+        r"(?<![А-Яа-яЁё])(?=(" + header_re + r"))",
+        "\n",
+        cleaned,
+    )
+
+    # Collapse horizontal whitespace, keep newlines, drop noise lines.
+    cleaned = re.sub(r"[ \t]+", " ", cleaned)
+    cleaned = re.sub(r"\n{2,}", "\n", cleaned)
+    lines = [ln.strip() for ln in cleaned.split("\n") if ln.strip()]
+    keep = []
+    for ln in lines:
+        cyrillic = sum(1 for ch in ln if "\u0400" <= ch <= "\u04FF")
+        is_header = bool(re.match(r"(Статья|ГЛАВА|РАЗДЕЛ|ЧАСТЬ|ПОДРАЗДЕЛ|ПУНКТ)\s+\d", ln, re.IGNORECASE))
+        if cyrillic > 15 or is_header:
+            keep.append(ln)
+
+    text = "\n".join(keep)
+    print(f"  ✅ DOC (unicode binary, {encoding}): {len(text)} символов")
+    return text
+
 
 def _extract_text_from_doc_binary(path):
     with open(path, "rb") as f:
@@ -371,20 +727,23 @@ def guess_chunk_title(chunk, idx):
             return line
     return f"Fragment {idx + 1}"
 
-def build_rag_chunks(text):
+def build_rag_chunks(text, source_name=None):
     raw_chunks = split_text_smart(text, RAG_CHUNK_SIZE, RAG_CHUNK_OVERLAP)
     chunks = []
     for idx, chunk in enumerate(raw_chunks):
         tokens = tokenize_for_rag(chunk)
         if len(tokens) < 10:
             continue
-        chunks.append({
+        rag_chunk = {
             "id": idx + 1,
             "title": guess_chunk_title(chunk, idx),
             "text": chunk,
             "tokens": tokens,
             "token_count": len(tokens),
-        })
+        }
+        if source_name:
+            rag_chunk["source"] = source_name
+        chunks.append(rag_chunk)
     return chunks
 
 def hydrate_rag_index(index):
@@ -468,8 +827,71 @@ def load_rag_index(force=False):
 
         return rag_index
 
+def load_chat_rag_index(force=False):
+    """Load one searchable index containing every approved RT code for chat."""
+    global chat_rag_index
+    with rag_lock:
+        rag_dir = os.path.dirname(RAG_SOURCE_PATH)
+        source_paths = [
+            os.path.join(rag_dir, name)
+            for name in CHAT_RAG_SOURCE_NAMES
+            if os.path.isfile(os.path.join(rag_dir, name))
+        ]
+        if not source_paths:
+            return {"ready": False, "error": "Chat RAG sources not found", "chunks": []}
+
+        sources = [
+            {"path": path, "name": os.path.basename(path), "mtime": os.path.getmtime(path)}
+            for path in source_paths
+        ]
+        if not force and chat_rag_index and chat_rag_index.get("sources") == sources:
+            return chat_rag_index
+
+        if not force and os.path.isfile(CHAT_RAG_INDEX_FILE):
+            try:
+                with open(CHAT_RAG_INDEX_FILE, "r", encoding="utf-8") as file:
+                    cached = json.load(file)
+                if (
+                    cached.get("sources") == sources
+                    and cached.get("chunk_size") == RAG_CHUNK_SIZE
+                    and cached.get("chunk_overlap") == RAG_CHUNK_OVERLAP
+                ):
+                    chat_rag_index = hydrate_rag_index(cached)
+                    return chat_rag_index
+            except Exception as error:
+                print(f"Chat RAG cache load error: {error}")
+
+        chunks = []
+        for source in sources:
+            try:
+                document_chunks = build_rag_chunks(extract_text_for_rag(source["path"]), source["name"])
+                for index, chunk in enumerate(document_chunks, 1):
+                    chunk["id"] = f"{source['name']}:{index}"
+                chunks.extend(document_chunks)
+            except Exception as error:
+                print(f"Chat RAG source skipped ({source['name']}): {error}")
+
+        index = {
+            "source_name": "Законы Республики Таджикистан",
+            "sources": sources,
+            "built_at": time.time(),
+            "chunk_size": RAG_CHUNK_SIZE,
+            "chunk_overlap": RAG_CHUNK_OVERLAP,
+            "chunks": chunks,
+        }
+        chat_rag_index = hydrate_rag_index(index)
+        try:
+            cacheable = dict(index)
+            with open(CHAT_RAG_INDEX_FILE, "w", encoding="utf-8") as file:
+                json.dump(cacheable, file, ensure_ascii=False)
+        except Exception as error:
+            print(f"Chat RAG cache save error: {error}")
+        return chat_rag_index
+
 def rag_status_payload():
     index = load_rag_index(force=False)
+    rag_dir = os.path.dirname(RAG_SOURCE_PATH)
+    chat_sources = [name for name in CHAT_RAG_SOURCE_NAMES if os.path.isfile(os.path.join(rag_dir, name))]
     return {
         "ready": bool(index.get("ready")),
         "source": index.get("source_name"),
@@ -477,6 +899,7 @@ def rag_status_payload():
         "chunks": len(index.get("chunks", [])),
         "built_at": index.get("built_at"),
         "error": index.get("error"),
+        "chat_sources": chat_sources,
     }
 
 def _shorten_text(text, limit=260):
@@ -486,61 +909,179 @@ def _shorten_text(text, limit=260):
     shortened = text[:limit].rsplit(" ", 1)[0].strip()
     return shortened + "..."
 
-def extract_rag_articles(article_numbers):
+def rag_article_catalog():
+    """Build an exact chapter/article catalogue from the active RAG source."""
+    global rag_citations_cache
     source_path = discover_rag_source()
-    if not source_path:
-        return []
+    if not source_path or not os.path.isfile(source_path):
+        return {}
+    cache_key = (source_path, os.path.getmtime(source_path))
+    if isinstance(rag_citations_cache, dict) and rag_citations_cache.get("key") == cache_key:
+        return rag_citations_cache["articles"]
+
     ext = os.path.splitext(source_path)[1].lower()
-    if ext not in [".docx", ".doc"]:
-        return []
-    paragraphs = []
-    source_name = os.path.basename(source_path)
+    if ext == ".docx":
+        paragraphs = [p.text.strip() for p in Document(source_path).paragraphs if p.text and p.text.strip()]
+    elif ext == ".doc":
+        paragraphs = [p.strip() for p in extract_text_from_doc(source_path).split("\n") if p.strip()]
+    else:
+        paragraphs = []
+
+    articles = {}
+    chapter = None
+    for paragraph in paragraphs:
+        chapter_match = re.match(r"^ГЛАВА\s+(\d+(?:\.\d+)?)\.?\s*(.*)$", paragraph, re.IGNORECASE)
+        if chapter_match:
+            chapter = chapter_match.group(1)
+            continue
+        article_match = re.match(r"^Статья\s+(\d+(?:[-.]\d+)?(?:\.\d+)?)\.\s*(.*)$", paragraph, re.IGNORECASE)
+        if not article_match:
+            continue
+        number, title = article_match.groups()
+        articles.setdefault(number, {
+            "number": number,
+            "chapter": chapter,
+            "title": title.strip(),
+            "code": RAG_CODE_NAME,
+        })
+
+    rag_citations_cache = {"key": cache_key, "articles": articles}
+    return articles
+
+def canonical_rag_norm(article_numbers):
+    """Return only citations backed by the connected RAG source."""
+    catalog = rag_article_catalog()
+    citations = []
+    for number in sorted({str(number) for number in article_numbers}):
+        item = catalog.get(number)
+        if not item:
+            continue
+        chapter_part = f", Глава {item['chapter']}" if item.get("chapter") else ""
+        citations.append(f"{item.get('code', RAG_CODE_NAME)}{chapter_part}, Статья {number}")
+    return "; ".join(citations)
+
+def canonical_rag_norm_for_source(article_numbers, source_name):
+    """Get exact citations for every document included in the chat RAG."""
+    global multi_rag_citations_cache
+    rag_dir = os.path.dirname(RAG_SOURCE_PATH)
+    source_path = os.path.join(rag_dir, source_name)
+    if not os.path.isfile(source_path):
+        return ""
+    cache_key = (source_path, os.path.getmtime(source_path))
+    catalog = multi_rag_citations_cache.get(cache_key)
+    if catalog is None:
+        try:
+            ext = os.path.splitext(source_path)[1].lower()
+            if ext == ".docx":
+                paragraphs = [p.text.strip() for p in Document(source_path).paragraphs if p.text and p.text.strip()]
+            elif ext == ".doc":
+                paragraphs = [p.strip() for p in extract_text_from_doc(source_path).split("\n") if p.strip()]
+            else:
+                paragraphs = []
+            catalog, chapter = {}, None
+            for paragraph in paragraphs:
+                chapter_match = re.match(r"^ГЛАВА\s+(\d+(?:\.\d+)?)\.?\s*(.*)$", paragraph, re.IGNORECASE)
+                if chapter_match:
+                    chapter = chapter_match.group(1)
+                    continue
+                article_match = re.match(r"^Статья\s+(\d+(?:[-.]\d+)?(?:\.\d+)?)\.\s*(.*)$", paragraph, re.IGNORECASE)
+                if article_match:
+                    number = article_match.group(1)
+                    catalog.setdefault(number, chapter)
+            multi_rag_citations_cache[cache_key] = catalog
+        except Exception as error:
+            print(f"RAG citation catalogue skipped ({source_name}): {error}")
+            return ""
+
+    label = RAG_CODE_LABELS.get(source_name, source_name)
+    citations = []
+    for number in sorted({str(number) for number in article_numbers}):
+        if number not in catalog:
+            continue
+        chapter_part = f", Глава {catalog[number]}" if catalog[number] else ""
+        citations.append(f"{label}{chapter_part}, Статья {number}")
+    return "; ".join(citations)
+
+def _source_paragraphs(source_path):
+    """Return clean paragraph lines for a docx/doc source file."""
+    ext = os.path.splitext(source_path)[1].lower()
     if ext == ".docx":
         doc = Document(source_path)
-        paragraphs = [p.text.strip() for p in doc.paragraphs if p.text and p.text.strip()]
-    elif ext == ".doc":
+        return [p.text.strip() for p in doc.paragraphs if p.text and p.text.strip()]
+    if ext == ".doc":
         text = extract_text_from_doc(source_path)
         if text:
-            paragraphs = [p.strip() for p in text.split('\n') if p.strip()]
-    if not paragraphs:
-        return []
+            return [p.strip() for p in text.split("\n") if p.strip()]
+    return []
+
+
+def extract_rag_articles(article_numbers, source_name=None):
+    """Full article texts for the requested numbers. When ``source_name`` is
+    given, only that RAG source (e.g. the Уголовный кодекс 574_ru.doc) is
+    searched; otherwise every chat RAG source is searched."""
+    rag_dir = os.path.dirname(RAG_SOURCE_PATH)
+    sources = [
+        (name, os.path.join(rag_dir, name))
+        for name in CHAT_RAG_SOURCE_NAMES
+        if os.path.isfile(os.path.join(rag_dir, name))
+        and (source_name is None or name == source_name)
+    ]
+
     articles = []
     for number in article_numbers:
         number = str(number).strip()
         if not number:
             continue
-        starts = [
-            idx for idx, paragraph in enumerate(paragraphs)
-            if re.match(rf"^Статья\s+{re.escape(number)}\.", paragraph, re.IGNORECASE)
-        ]
-        candidates = []
-        for start in starts:
-            block = []
-            for paragraph in paragraphs[start:]:
-                if block and re.match(r"^Статья\s+\d+\.", paragraph, re.IGNORECASE):
-                    break
-                block.append(paragraph)
-            if block:
-                candidates.append(block)
-        if not candidates:
-            continue
-        block = max(candidates, key=lambda item: sum(len(part) for part in item))
-        title = block[0]
-        title = re.sub(rf"^Статья\s+{re.escape(number)}\.\s*", "", title, flags=re.IGNORECASE).strip()
-        body = "\n".join(block[1:]).strip()
-        full_text = "\n".join(block).strip()
-        articles.append({
-            "number": number,
-            "title": title or f"Статья {number}",
-            "description": _shorten_text(body or full_text, 320),
-            "text": full_text,
-            "source": source_name,
-            "source_path": source_path,
-        })
+        for source_name, source_path in sources:
+            paragraphs = _source_paragraphs(source_path)
+            if not paragraphs:
+                continue
+            starts = [
+                idx for idx, paragraph in enumerate(paragraphs)
+                if re.match(rf"^Статья\s+{re.escape(number)}\.", paragraph, re.IGNORECASE)
+            ]
+            if not starts:
+                continue
+            candidates = []
+            for start in starts:
+                block = []
+                for paragraph in paragraphs[start:]:
+                    if block and re.match(r"^Статья\s+\d+\.", paragraph, re.IGNORECASE):
+                        break
+                    block.append(paragraph)
+                if block:
+                    candidates.append(block)
+            if not candidates:
+                continue
+            block = max(candidates, key=lambda item: sum(len(part) for part in item))
+            title = block[0]
+            title = re.sub(rf"^Статья\s+{re.escape(number)}\.\s*", "", title, flags=re.IGNORECASE).strip()
+            body = "\n".join(block[1:]).strip()
+            full_text = "\n".join(block).strip()
+            articles.append({
+                "number": number,
+                "title": title or f"Статья {number}",
+                "description": _shorten_text(body or full_text, 320),
+                "text": full_text,
+                "source": source_name,
+                "source_path": source_path,
+                "code": RAG_CODE_LABELS.get(source_name, source_name),
+            })
+            break  # first source that contains the article wins
+        else:
+            # article not found in any source
+            articles.append({
+                "number": number,
+                "title": f"Статья {number}",
+                "description": "Не найдено в подключённых RAG-источниках",
+                "text": "",
+                "source": None,
+                "source_path": None,
+                "code": None,
+            })
     return articles
-
-def retrieve_rag(query, top_k=None):
-    index = load_rag_index(force=False)
+def retrieve_rag(query, top_k=None, index=None):
+    index = index or load_rag_index(force=False)
     if not index.get("ready"):
         return []
     query_tokens = tokenize_for_rag(query)
@@ -578,7 +1119,7 @@ def retrieve_rag(query, top_k=None):
                 "title": chunk.get("title"),
                 "text": chunk.get("text"),
                 "score": round(score, 4),
-                "source": index.get("source_name"),
+                "source": chunk.get("source", index.get("source_name")),
             })
     results.sort(key=lambda item: item["score"], reverse=True)
     return results[:top_k or RAG_TOP_K]
@@ -592,7 +1133,14 @@ def format_rag_context(results, max_chars=12000):
         text = re.sub(r"\s+", " ", item.get("text", "")).strip()
         if len(text) > 2000:
             text = text[:2000].rsplit(" ", 1)[0] + "..."
-        block = f"[{i}] {item.get('source')} / {item.get('title')} (score {item.get('score')}):\n{text}"
+        article_numbers = _cited_article_numbers(text)
+        citations = (
+            canonical_rag_norm(article_numbers)
+            if item.get("source") == CONTRACT_RAG_SOURCE_NAME
+            else canonical_rag_norm_for_source(article_numbers, item.get("source", ""))
+        )
+        citation_note = f"\nПРОВЕРЕННАЯ ССЫЛКА RAG: {citations}" if citations else ""
+        block = f"[{i}] {item.get('source')} / {item.get('title')} (score {item.get('score')}):\n{text}{citation_note}"
         if used + len(block) > max_chars:
             break
         blocks.append(block)
@@ -712,12 +1260,13 @@ def send_to_ollama(prompt, stream_callback=None, num_predict=2048, temperature=0
     cache = load_cache()
     key = get_cache_key(prompt)
 
-    if key in cache:
-        cached = cache[key]
+    with ollama_cache_lock:
+        cached = cache.get(key)
+    if cached:
         if stream_callback:
-            for char in cached:
-                stream_callback(char)
-                time.sleep(0.001)
+            # Cached data is already complete: forwarding it in one call avoids
+            # an artificial per-character delay on repeat analyses.
+            stream_callback(cached)
         return cached
 
     response_text = ""
@@ -735,7 +1284,9 @@ def send_to_ollama(prompt, stream_callback=None, num_predict=2048, temperature=0
     try:
         with requests.post(OLLAMA_URL, json=data, stream=True, timeout=1500) as r:
             r.raise_for_status()
-            for line in r.iter_lines():
+            # The default 512-byte buffer postpones the visible first token.
+            # A one-byte chunk keeps browser streaming responsive on slow CPUs.
+            for line in r.iter_lines(chunk_size=1):
                 if line:
                     try:
                         obj = json.loads(line.decode("utf-8"))
@@ -748,8 +1299,11 @@ def send_to_ollama(prompt, stream_callback=None, num_predict=2048, temperature=0
                         continue
 
         if response_text:
-            cache[key] = response_text
-            save_cache(cache)
+            with ollama_cache_lock:
+                cache[key] = response_text
+                while len(cache) > max(OLLAMA_CACHE_MAX_ENTRIES, 1):
+                    cache.pop(next(iter(cache)))
+                save_cache(cache)
 
     except requests.exceptions.ConnectionError:
         error_msg = "⚠️ Не удалось подключиться к Ollama. Убедитесь, что сервер запущен: ollama serve"
@@ -764,9 +1318,109 @@ def send_to_ollama(prompt, stream_callback=None, num_predict=2048, temperature=0
 
     return response_text
 
+def _build_contract_type_guidance(contract_type):
+    """Return a string of key points to check for a specific contract type."""
+    guidance = {
+        "купля-продажа": (
+            "Купля-продажа: проверь предмет (товар, количество, ассортимент), цену и порядок расчётов, "
+            "момент перехода права собственности и риска случайной гибели, качество товара и гарантию, "
+            "порядок приёмки, ответственность за просрочку поставки/оплаты, предоплату."
+        ),
+        "аренда": (
+            "Аренда: проверь предмет аренды (индивидуализация имущества), арендную плату и порядок её пересмотра, "
+            "срок аренды, обязанности по ремонту и содержанию, субаренду, порядок возврата имущества, "
+            "ответственность за повреждение, преимущественное право арендатора."
+        ),
+        "подряд": (
+            "Подряд: проверь предмет (конкретный результат работ), сроки начала/окончания и промежуточные, цену и смету, "
+            "качество результата и гарантийные сроки, порядок сдачи-приёмки, право на привлечение субподрядчиков, "
+            "ответственность за просрочку и скрытые недостатки."
+        ),
+        "возмездное оказание услуг": (
+            "Услуги: проверь предмет (конкретный перечень услуг), сроки оказания, цену и порядок оплаты, "
+            "качество услуг и порядок приёмки (акт), право отказа от договора, ответственность за некачественное оказание."
+        ),
+        "поставка": (
+            "Поставка: проверь количество, ассортимент, качество и комплектность товара, график/период поставки, "
+            "порядок приёмки по количеству и качеству, ответственность за недопоставку и просрочку, "
+            "восполнение недопоставки, односторонний отказ."
+        ),
+        "займ": (
+            "Займ: проверь сумму, валюту, проценты и порядок их начисления, срок и порядок возврата, "
+            "досрочный возврат, последствия просрочки возврата, безвозмездность/возмездность."
+        ),
+        "кредитный": (
+            "Кредит: проверь сумму, процентную ставку и способ её определения, график погашения, "
+            "комиссии, досрочное погашение, обеспечение, право банка на одностороннее изменение условий, "
+            "последствия просрочки."
+        ),
+        "хранение": (
+            "Хранение: проверь предмет (вещи), возмездность, обязательства по сохранности, "
+            "ответственность хранителя за утрату/повреждение, порядок выдачи вещи, срок хранения."
+        ),
+        "поручение": (
+            "Поручение: проверь объём полномочий поверенного, вознаграждение, отчётность, "
+            "право отмены поручения и отказа, ответственность поверенного, передоверие."
+        ),
+        "комиссия": (
+            "Комиссия: проверь предмет сделки, вознаграждение, отчётность комиссионера, "
+            "ответственность за утрату имущества, право комиссионера на удержание, исполнение третьим лицом."
+        ),
+        "агентский": (
+            "Агентский: проверь объём действий агента, вознаграждение, отчётность, "
+            "ограничения прав принципала/агента, суб-агентов, срок и порядок прекращения."
+        ),
+        "доверительное управление": (
+            "Доверительное управление: проверь объект управления, полномочия управляющего, "
+            "вознаграждение, отчётность, ответственность управляющего, выгоды и убытки."
+        ),
+        "франчайзинг": (
+            "Франчайзинг (коммерческая концессия): проверь предмет (комплекс исключительных прав), "
+            "обязанности по обучению и поддержке, роялти и платежи, ограничения конкуренции, "
+            "ответственность за качество, срок и порядок прекращения."
+        ),
+        "страхование": (
+            "Страхование: проверь страховой интерес, страховые случаи, страховую сумму и премию, "
+            "обязанности страхователя, исключения из покрытия, порядок выплаты, франшизу."
+        ),
+        "лизинг": (
+            "Лизинг: проверь предмет, продавца, график лизинговых платежей, переход рисков, "
+            "обслуживание и страхование, выкупную стоимость, ответственность сторон."
+        ),
+        "залог": (
+            "Залог: проверь предмет залога, существо обеспеченного обязательства, порядок обращения взыскания, "
+            "обязанности залогодателя по содержанию, последующая ипотека/залог."
+        ),
+        "дарение": (
+            "Дарение: проверь предмет дара, запрет/ограничение дарения, отмену дарения, "
+            "обещание дарения, форму договора."
+        ),
+        "мены": (
+            "Мена: проверь предмет обмена, неравноценность и компенсацию, момент перехода права собственности, "
+            "качество и ответственность при обмене."
+        ),
+        "авторский заказ": (
+            "Авторский заказ: проверь предмет (конкретное произведение), срок создания, вознаграждение, "
+            "исключительное право и порядок его использования, ответственность за неисполнение."
+        ),
+        "отчуждение исключительного права": (
+            "Отчуждение исключительного права: проверь объём отчуждаемого права, территорию и срок, "
+            "вознаграждение, последствия, ограничения использования."
+        ),
+        "лицензионный": (
+            "Лицензионный: проверь объём и способы использования, территорию, срок, вознаграждение, "
+            "исключительную/неисключительную лицензию, сублицензирование."
+        ),
+        "простой товарищества": (
+            "Простое товарищество: проверь цель совместной деятельности, вклады, порядок ведения общих дел, "
+            "распределение прибыли и убытков, ответственность по общим обязательствам."
+        ),
+    }
+    return guidance.get(contract_type, "")
+
 # ================= АНАЛИЗ ЧАНКА =================
 def analyze_chunk(args):
-    i, total, chunk, full_text = args
+    i, total, chunk, full_text, contract_type_info = args
     result = []
 
     def collect(text):
@@ -779,18 +1433,36 @@ def analyze_chunk(args):
         "\n\nRAG-контекст по кодексам Республики Таджикистан не найден или база еще не подключена.\n"
     )
 
+    # Тип договора и его специфические проверки
+    contract_type = contract_type_info.get("type", "неопределённый")
+    type_guidance = _build_contract_type_guidance(contract_type)
+    type_block = ""
+    if contract_type != "неопределённый":
+        type_block = (
+            f"\n\nОпределённый тип договора: «{contract_type}» (уверенность {contract_type_info.get('confidence', 0):.0%}).\n"
+            f"Специфические аспекты для проверки: {type_guidance}\n"
+        )
+
     # Берем начало и конец документа для контекста
     full_text_preview = ""
     if total > 1:
         full_text_preview = f"\n\nКОНТЕКСТ ВСЕГО ДОКУМЕНТА (начало):\n{full_text[:1500]}\n...\n(конец):\n{full_text[-1500:]}\n"
 
-    prompt = f"""Ты — юрист-аналитик по законодательству Республики Таджикистан. 
+    prompt = f"""Ты — юрист-аналитик по законодательству Республики Таджикистан с 20-летним опытом договорной работы.
 
 ЮРИСДИКЦИЯ: ТОЛЬКО Республика Таджикистан (РТ). ЗАПРЕЩЕНО: РФ, Россия, ГК РФ.
 
-Это ЧАСТЬ {i+1} из {total} договора.{full_text_preview}
+Это ЧАСТЬ {i+1} из {total} договора.{full_text_preview}{type_block}
 
-Проанализируй этот фрагмент договора по законам РТ и НАЙДИ ВСЕ юридически значимые риски. 
+ПРОФЕССИОНАЛЬНАЯ МЕТОДОЛОГИЯ (действуй как старший юрист при проверке договора):
+Перед составлением ответа проведи мысленно следующие этапы проверки этого фрагмента:
+1. Существенные/обязательные условия для данного типа договора — присутствуют ли они и однозначно ли определены.
+2. Сбалансированность интересов сторон — нет ли явного смещения прав/обязанностей в пользу одной стороны.
+3. Соответствие императивным нормам ГК РТ — не противоречит ли условие обязательным правилам.
+4. Полнота процедурных условий — сроки, порядок исполнения, оплаты, уведомлений, ответственности, расторжения.
+5. Двусмысленность и неопределённость формулировок, которые могут привести к спору.
+
+Проанализируй этот фрагмент и НАЙДИ ВСЕ юридически значимые риски. 
 Для КАЖДОГО риска ОБЯЗАТЕЛЬНО укажи КОНКРЕТНУЮ СТАТЬЮ из RAG-контекста.
 
 ВАЖНО: Пиши КАЖДЫЙ риск отдельным пунктом со ВСЕМИ 6 полями.
@@ -835,7 +1507,19 @@ def analyze_chunk(args):
 - Проверь каждый из трёх уровней отдельно. Не помечай все замечания как «Высокий»; выбери уровень по этим критериям.
 - Не повышай и не понижай уровень ради количества. Если для уровня нет подтверждённого фрагмента договора и нормы из RAG, не создавай риск.
 """
-    send_to_ollama(prompt, stream_callback=collect, num_predict=2000, temperature=0.15)
+    prompt += """
+
+СТРОГИЙ ПРОТОКОЛ ДОКАЗАТЕЛЬНОСТИ (имеет приоритет над всеми предыдущими инструкциями):
+1. Единственные допустимые источники права — фрагменты RAG, приведённые в этом запросе. Твои знания, память, предположения, аналогии и «обычная практика» не являются источниками.
+2. Создавай риск только когда одновременно имеются: (а) дословная цитата из этого фрагмента договора; (б) конкретная статья, буквально присутствующая в RAG; (в) прямая логическая связь между ними.
+3. Номер статьи, название кодекса, глава и содержание нормы должны быть скопированы из RAG. Запрещено дополнять, исправлять, угадывать или объединять номера статей.
+4. Если RAG не содержит подходящей нормы, НЕ создавай риск и НЕ пиши «статья не найдена». Отсутствие основания — это не риск.
+5. Не ссылайся на законы, судебную практику или органы вне RAG. Юрисдикция исключительно Республика Таджикистан. Любое упоминание РФ, России или российского права запрещено.
+6. Не интерпретируй отсутствие условия как нарушение закона без прямой нормы RAG. Не называй договор недействительным, незаконным или ничтожным, если это прямо не следует из цитируемой нормы.
+7. До ответа проведи внутреннюю проверку каждого пункта. Если не можешь подтвердить любой из шести полей — исключи пункт целиком.
+8. Выводи только подтверждённые риски в заданном формате; никаких вступлений, дисклеймеров, предположений и дополнительных рекомендаций.
+"""
+    send_to_ollama(prompt, stream_callback=collect, num_predict=2400, temperature=0.15)
     return {"idx": i, "content": normalize_legal_terms("".join(result))}
 
 def _calculate_finding_quality(finding):
@@ -1008,11 +1692,68 @@ def _deduplicate_findings(findings):
     
     return unique_findings
 
+def _apply_severity_heuristics(findings):
+    """Escalate severity of verified findings for high-risk clause patterns.
+
+    The models tend to under-report classic red flags.  These rules raise the
+    severity when a confirmed clause objectively threatens a party's rights or
+    money, and never downgrade a higher severity assigned by the model.
+
+    Every rule is a pair: (groups, target).  Each group is a tuple of
+    substrings; at least one substring of every group must occur in the
+    verified clause text (fragment + title + rationale).  Rules are therefore
+    keyword-grounded on verified text only - a hallucinated pattern can not
+    produce a finding by itself.
+    """
+    rules = [
+        # Одностороннее расторжение/изменение в пользу одной стороны.
+        ((("односторонн",), ("расторж", "изменен", "отказ", "прекращени")), "high"),
+        ((("расторж", "отказ"), ("без объяснения", "по своему усмотрению", "в любое время")), "high"),
+        # Невозвратные платежи / предоплата без встречного предоставления.
+        ((("возврату", "возврат"), ("не подлеж", "не возвраща")), "high"),
+        ((("предоплат", "аванс"), ("100", "сто процентов", "полностью")), "high"),
+        ((("оплаченные суммы", "оплата"), ("не возвращ",)), "high"),
+        # Одностороннее изменение цены / тарифов.
+        ((("измен",), ("цен", "тариф", "стоимость", "ставку")), "medium"),
+        # Ограничение ответственности одной стороны.
+        ((("ответственност",), ("не несет", "не несёт", "освобожда")), "medium"),
+        ((("неустойк", "штраф", "пен"), ("только", "исключительн", "не более", "огранич")), "medium"),
+        # Отсутствие гарантий/ответственности за результат.
+        ((("гарант",), ("не предостав", "не даёт", "не дает")), "high"),
+        ((("ответственност",), ("не огранич", "не несет")), "high"),
+        # Невозможность исполнения/приостановление по усмотрению.
+        ((("исполнени",), ("приостанови", "отложи", "по своему усмотрению")), "high"),
+        # Смещение рисков на одну сторону.
+        ((("риск",), ("покупател", "заказчик", "исполнитель", "поставщик")), "medium"),
+    ]
+    priorities = {"low": 0, "medium": 1, "high": 2}
+
+    for finding in findings:
+        current = finding.get("severity", "medium")
+        text = " ".join(str(finding.get(k, "") or "") for k in ("title", "fragment", "why", "fix", "norm")).lower()
+        if not text:
+            continue
+        for groups, target in rules:
+            if not all(any(n in text for n in group) for group in groups):
+                continue
+            if priorities.get(target, 0) > priorities.get(current, 0):
+                print(f"  [SEVERITY] Эскалация: {current} → {target} | {finding.get('title', '')[:60]}")
+                current = target
+                finding["severity"] = target
+    return findings
+
 def _filter_findings_by_quality(findings, min_quality=0.45):
-    """Фильтрует риски по минимальному качеству"""
+    """Фильтрует риски по минимальному качеству, но сохраняет важные эвристические находки."""
     filtered = []
     for finding in findings:
         quality = _calculate_finding_quality(finding)
+        # Сохраняем эвристические находки из чек-листа существенных условий, даже если качество ниже порога.
+        if quality < min_quality and finding.get("_heuristic") and finding.get("severity") in ("high", "medium"):
+            quality = max(quality, min_quality)
+            finding["_quality"] = quality
+            filtered.append(finding)
+            print(f"  [FILTER] Сохранён эвристический риск: {finding.get('title', 'N/A')[:60]} (quality={quality:.2f})")
+            continue
         if quality >= min_quality:
             finding['_quality'] = quality
             filtered.append(finding)
@@ -1020,8 +1761,42 @@ def _filter_findings_by_quality(findings, min_quality=0.45):
             print(f"  [FILTER] Удален низкокачественный риск: {finding.get('title', 'N/A')[:60]} (quality={quality:.2f})")
     return filtered
 
+def _quote_matches_contract(quote, source, coverage_threshold=0.70, min_matches=4):
+    """Check a quote is grounded in the source.
+
+    Accept an exact substring, a long contiguous phrase, or a keyword match:
+    when at least 70% of the quote's significant words appear in the contract
+    (with stem-insensitive comparison), the quote is treated as a reformulation
+    of the actual clause rather than as a hallucination.
+    """
+    if not quote or not source:
+        return False
+    if quote in source:
+        return True
+    q_words = quote.split()
+    if len(q_words) < 8:
+        return False
+    for i in range(len(q_words) - 5):
+        if " ".join(q_words[i:i + 6]) in source:
+            return True
+    # Keyword-coverage fallback: tolerance for the model's reformulations.
+    significant = [w for w in q_words if len(w) > 3]
+    unique_sig = sorted(set(significant))
+    if len(unique_sig) < min_matches:
+        return False
+    source_words = set(source.split())
+    def _covered(word):
+        if word in source_words:
+            return True
+        if len(word) >= 6:
+            stem = word[:4]
+            return any(other.startswith(stem) or word.startswith(other[:4]) for other in source_words if len(other) >= 4)
+        return False
+    covered = sum(1 for w in unique_sig if _covered(w))
+    return covered / len(unique_sig) >= coverage_threshold
+
 def _filter_findings_by_contract_evidence(findings, contract_text):
-    """Keep only findings whose quoted clause can be located in the source."""
+    """Keep findings whose quoted clause can be located in the source (exact or fuzzy)."""
     source = _normalize_text(contract_text)
     if not source:
         return []
@@ -1031,28 +1806,49 @@ def _filter_findings_by_contract_evidence(findings, contract_text):
         quote = _normalize_text(finding.get("fragment", ""))
         quote = quote.strip('«»"\'')
         # A short or fabricated quote is not enough to support a legal finding.
-        if len(quote) < 20 or quote not in source:
+        if len(quote) < 15 or not _quote_matches_contract(quote, source):
             print(f"  [EVIDENCE] Removed unsupported finding: {finding.get('title', 'N/A')[:60]}")
             continue
         finding["_contract_evidence"] = True
         verified.append(finding)
     return verified
 
+def _filter_findings_by_rag_evidence(findings, contract_text, rag_context=""):
+    """Keep findings grounded in the contract; mark missing RAG norms honestly instead of deleting."""
+    verified = []
+    for finding in findings:
+        reason = detect_hallucination(finding, contract_text, rag_context)
+        if reason == "цитата не найдена в тексте договора":
+            print(f"  [RAG EVIDENCE] Removed ungrounded finding: {finding.get('title', 'N/A')[:60]} ({reason})")
+            continue
+        finding["_rag_evidence"] = True
+        if reason in ("не указана конкретная статья РТ", "указанная статья отсутствует в подключённом RAG"):
+            finding["norm"] = "Статья не найдена в подключённой базе (требуется ручная проверка)"
+            finding["_norm_verified"] = False
+        else:
+            # Replace model wording with the exact code/chapter/article parsed
+            # from the primary RAG document.
+            exact_norm = canonical_rag_norm(_cited_article_numbers(finding.get("norm", "")))
+            if exact_norm:
+                finding["norm"] = exact_norm
+                finding["_norm_verified"] = True
+        verified.append(finding)
+    return verified
+
 def _calculate_severity_score(severity, quality):
-    """Вычисляет взвешенный балл за severity с учетом качества"""
+    """Return the exposure of one verified finding on a 0-100 scale."""
     base_scores = {
-        # A risk score is an exposure indicator, not a count of errors.
-        # Keep one severity band from overwhelming the whole 0–100 scale.
-        'high': 4,
-        'medium': 2,
-        'low': 1,
+        # These values represent the maximum impact of one *verified* issue.
+        # Multiple issues are combined below as probabilities, not added.
+        'high': 50,
+        'medium': 30,
+        'low': 8,
     }
-    
-    base = base_scores.get(severity, 2)
-    
-    # Умножаем на качество (минимум 0.6, максимум 1.0)
-    quality_factor = max(0.6, min(1.0, 0.7 + 0.3 * quality))
-    
+
+    base = base_scores.get(severity, 8)
+    # Evidence quality affects confidence in the finding but cannot inflate a
+    # weakly documented item above its severity band.
+    quality_factor = max(0.75, min(1.0, 0.75 + 0.25 * float(quality or 0)))
     return base * quality_factor
 
 def _calculate_complexity_bonus(findings):
@@ -1087,7 +1883,216 @@ def _calculate_complexity_bonus(findings):
     
     return min(10, round(bonus))
 
-def estimate_risk_metrics(analysis_text, contract_text="", rag_context=""):
+# ================= ЧЕК-ЛИСТ ОБЯЗАТЕЛЬНЫХ УСЛОВИЙ ДОГОВОРА =================
+ESSENTIAL_CLAUSE_PATTERNS = {
+    "предмет договора": {
+        "patterns": [
+            r"предмет\w*\s+договор",
+            r"предмет\w*\s+соглашени",
+            r"предмет\w*\s+о\s+оказани",
+            r"предмет\w*\s+поставки",
+            r"предмет\w*\s+выполнени",
+        ],
+        "severity": "high",
+    },
+    "цена и порядок расчётов": {
+        "patterns": [
+            r"цен\w*\s+договор",
+            r"стоимост",
+            r"оплат\w*\s+договор",
+            r"порядок\s+расчёт",
+            r"аванс",
+            r"цена\s+договор",
+            r"общая\s+стоимост",
+        ],
+        "severity": "high",
+    },
+    "срок исполнения/действия": {
+        "patterns": [
+            r"срок\w*\s+(?:исполнени|выполнени|оказани|поставки|действи)",
+            r"период\s+поставки",
+            r"начало\s+работ",
+            r"окончани\w*\s+работ",
+            r"срок\s+действия\s+договор",
+            r"срок\s+исполнени\w*\s+обязан",
+        ],
+        "severity": "high",
+    },
+    "ответственность сторон": {
+        "patterns": [
+            r"ответственност",
+            r"неустойк",
+            r"пен\w*\s+за\s+просрочк",
+            r"штраф",
+            r"возмещени\w*\s+убытк",
+        ],
+        "severity": "medium",
+    },
+    "порядок расторжения": {
+        "patterns": [
+            r"расторжени",
+            r"прекращени\s+договор",
+            r"односторонн\w*\s+расторжени",
+            r"расторжени\w*\s+договор",
+        ],
+        "severity": "medium",
+    },
+    "разрешение споров": {
+        "patterns": [
+            r"разрешени\w*\s+спор",
+            r"подсудност",
+            r"арбитраж",
+            r"\bсуд\b",
+            r"разрешение\s+споров",
+            r"компетентный\s+суд",
+        ],
+        "severity": "medium",
+    },
+    "форс-мажор": {
+        "patterns": [
+            r"форс-мажор",
+            r"непреодолимой",
+            r"обстоятельства\s+непреодолимой",
+            r"чрезвычайны\w*\s+обстоятельств",
+        ],
+        "severity": "low",
+    },
+    "уведомления сторон": {
+        "patterns": [
+            r"уведомлени",
+            r"извещени",
+            r"порядок\s+уведомлени",
+            r"порядок\s+извещени",
+        ],
+        "severity": "low",
+    },
+    "регулирование отношений": {
+        "patterns": [
+            r"действующ\w*\s+законодательств\w*\s+республик\w*\s+таджикистан",
+            r"законодательств\w*\s+республик\w*\s+таджикистан",
+            r"гк\s+рт",
+            r"гр\s+кодекс\s+республик\w*\s+таджикистан",
+        ],
+        "severity": "medium",
+    },
+    "порядок изменения/дополнения": {
+        "patterns": [
+            r"порядок\s+изменени\w*\s+договор",
+            r"порядок\s+дополнени\w*\s+договор",
+            r"изменени\w*\s+договор\s+только\s+письмен",
+            r"дополнени\w*\s+к\s+договор",
+        ],
+        "severity": "low",
+    },
+    "неустойка/санкции": {
+        "patterns": [
+            r"неустойк\w*\s+за\s+просрочк",
+            r"пени\s+за\s+просрочк",
+            r"штраф\s+за\s+нарушен",
+            r"санкци",
+        ],
+        "severity": "medium",
+    },
+    "конфиденциальность": {
+        "patterns": [
+            r"конфиденциальн\w*",
+            r"неразглашени",
+            r"сохранени\w*\s+конфиденциальност",
+        ],
+        "severity": "low",
+    },
+    "порядок приёма-передачи": {
+        "patterns": [
+            r"порядок\s+приёмк\w*\s+работ",
+            r"порядок\s+передач\w*\s+товар",
+            r"акт\s+приёмк\w*\s+работ",
+            r"акт\s+приёмк\w*\s+поставки",
+        ],
+        "severity": "low",
+    },
+}
+
+def check_essential_conditions(text, contract_type_info=None):
+    """Find essential clauses missing from the contract and return them as findings."""
+    findings = []
+    if not text or len(text.strip()) < 100:
+        return findings
+    text_lower = text.lower()
+    for clause, cfg in ESSENTIAL_CLAUSE_PATTERNS.items():
+        found = any(re.search(p, text_lower) for p in cfg["patterns"])
+        if found:
+            continue
+        findings.append({
+            "title": f"Отсутствует условие: {clause}",
+            "severity": cfg["severity"],
+            "point": "весь договор",
+            "fragment": "",
+            "norm": "Проверьте существенные условия в Гражданском кодексе РТ",
+            "why": (
+                f"В договоре не обнаружено условие о {clause}. "
+                "Отсутствие существенного условия создаёт риск признания договора незаключённым "
+                "или неопределённости прав и обязанностей сторон."
+            ),
+            "fix": f"Добавить в договор раздел, чётко определяющий {clause}",
+            "_heuristic": True,
+        })
+    return findings
+
+def _attach_rag_norm_text(findings):
+    """Attach real article text from the connected RAG source to verified norms.
+
+    A verified finding keeps its model-provided norm, but the actual statutory
+    text is pulled from the loaded RAG index (the same source of truth used by
+    ``detect_hallucination``) and stored in ``norm_text`` so the final report
+    quotes the real norm instead of an approximation.
+    """
+    index = load_rag_index(force=False)
+    chunks = index.get("chunks", []) if isinstance(index, dict) else []
+
+    def _best_chunk_for_numbers(numbers, norm_text):
+        best = ""
+        for num in numbers:
+            if not num:
+                continue
+            pattern = re.compile(
+                rf"(?:^|\b|\.\s+)(?:статья|ст\.|ч\.)\s*{re.escape(num)}\b", re.IGNORECASE
+            )
+            candidates = []
+            for chunk in chunks:
+                text = chunk.get("text", "")
+                if pattern.search(text):
+                    candidates.append(text)
+            if candidates:
+                candidate = max(candidates, key=len)
+                if len(candidate) > len(best):
+                    best = candidate
+        if not best and norm_text:
+            norm_lower = norm_text.lower()
+            for chunk in chunks:
+                text = chunk.get("text", "")
+                text_lower = text.lower()
+                if any(part in text_lower for part in norm_lower.split() if len(part) > 4):
+                    if len(text) > len(best):
+                        best = text
+        return _shorten_text(best, RAG_SNIPPET_MAX)
+
+    cache = {}
+    for finding in findings:
+        if finding.get("_norm_verified") is False:
+            continue
+        numbers = _cited_article_numbers(finding.get("norm", ""))
+        norm_text = finding.get("norm", "")
+        if not numbers and not norm_text:
+            continue
+        snippet = cache.get((tuple(numbers), norm_text))
+        if snippet is None:
+            snippet = _best_chunk_for_numbers(numbers, norm_text)
+            cache[(tuple(numbers), norm_text)] = snippet
+        if snippet:
+            finding["norm_text"] = snippet
+    return findings
+
+def estimate_risk_metrics(analysis_text, contract_text="", rag_context="", contract_type_info=None):
     text = (analysis_text or "").lower()
     
     if not text.strip():
@@ -1109,19 +2114,54 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context=""):
     if wrong_jurisdiction_count > 0:
         print(f"⚠️ ОБНАРУЖЕНО {wrong_jurisdiction_count} УПОМИНАНИЙ РОССИЙСКИХ ЗАКОНОВ!")
 
-    # Парсер рисков
+    # Парсер рисков — устойчив к опечаткам и отклонениям модели (когда она
+    # опускает [severity] или меняет порядок строк), чтобы не терять реальные риски.
     findings = []
     current = None
-    
+    pending_title = None
+    seen_titles = set()
+
+    FIELD_PATTERNS = [
+        ("point", re.compile(r'Пункт\s+договора\s*:\s*(.*)', re.IGNORECASE)),
+        ("fragment", re.compile(r'Фрагмент\s+договора\s*:\s*(.*)', re.IGNORECASE)),
+        ("norm", re.compile(r'Норма\s+РТ\s*:\s*(.*)', re.IGNORECASE)),
+        ("why", re.compile(r'Почему\s+риск\s*:\s*(.*)', re.IGNORECASE)),
+        ("fix", re.compile(r'Что\s+исправить\s*:\s*(.*)', re.IGNORECASE)),
+    ]
+
+    def _new_finding(title, severity):
+        t = re.sub(r'\[[^\]]*\]\s*', '', title).strip()
+        t = re.sub(r'^[\s\u2022\-\*\u2023]+', '', t).strip()
+        t = re.sub(r'^Риск[: ]+', '', t, flags=re.IGNORECASE).strip()
+        if not t or len(t) < 3:
+            t = "Юридический риск"
+        return {
+            "title": t,
+            "severity": severity,
+            "point": "",
+            "fragment": "",
+            "norm": "",
+            "why": "",
+            "fix": "",
+        }
+
+    def _title_key(title):
+        t = re.sub(r"\W+", " ", (title or "")).strip().lower()
+        return " ".join(t.split())[:80]
+
     for raw_line in (analysis_text or "").splitlines():
         line = raw_line.strip()
-        
+
         if not line:
             if current:
-                findings.append(current)
+                title_key = _title_key(current.get("title"))
+                if title_key and title_key not in seen_titles:
+                    seen_titles.add(title_key)
+                    findings.append(current)
                 current = None
+            pending_title = None
             continue
-        
+
         severity = None
         if re.search(r'\[(?:Высокий|высок)\]', line):
             severity = "high"
@@ -1129,51 +2169,73 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context=""):
             severity = "medium"
         elif re.search(r'\[(?:Низкий|низк)\]', line):
             severity = "low"
-        
+
         if severity:
             if current:
-                findings.append(current)
-            title = re.sub(r'\[[^\]]*\]\s*', '', line)
-            title = re.sub(r'^[\s•\-\*]+', '', title)
-            title = title.strip(' .:')
-            if not title or len(title) < 3:
-                title = "Юридический риск"
-            current = {
-                "title": title,
-                "severity": severity,
-                "point": "",
-                "fragment": "",
-                "norm": "",
-                "why": "",
-                "fix": "",
-            }
+                title_key = _title_key(current.get("title"))
+                if title_key and title_key not in seen_titles:
+                    seen_titles.add(title_key)
+                    findings.append(current)
+            current = _new_finding(line, severity)
+            pending_title = None
             continue
-        
+
+        # Поле текущего риска?
+        field_matched = False
         if current:
-            m = re.search(r'Пункт\s+договора\s*:\s*(.*)', line, re.IGNORECASE)
-            if m: current["point"] = m.group(1).strip()
-            m = re.search(r'Фрагмент\s+договора\s*:\s*(.*)', line, re.IGNORECASE)
-            if m: current["fragment"] = m.group(1).strip()
-            m = re.search(r'Норма\s+РТ\s*:\s*(.*)', line, re.IGNORECASE)
-            if m: current["norm"] = m.group(1).strip()
-            m = re.search(r'Почему\s+риск\s*:\s*(.*)', line, re.IGNORECASE)
-            if m: current["why"] = m.group(1).strip()
-            m = re.search(r'Что\s+исправить\s*:\s*(.*)', line, re.IGNORECASE)
-            if m: current["fix"] = m.group(1).strip()
-    
+            for fname, pat in FIELD_PATTERNS:
+                m = pat.search(line)
+                if m:
+                    current[fname] = m.group(1).strip()
+                    field_matched = True
+                    break
+        if field_matched:
+            continue
+
+        # Поле, но риск ещё не открыт (модель опустила [severity]) — восстанавливаем
+        # заголовок из буфера и открываем риск со severity medium; он будет
+        # эскализирован _apply_severity_heuristics при необходимости.
+        if not current and pending_title:
+            current = _new_finding(pending_title, "medium")
+            pending_title = None
+            for fname, pat in FIELD_PATTERNS:
+                m = pat.search(line)
+                if m:
+                    current[fname] = m.group(1).strip()
+                    break
+            continue
+
+        # Иначе: потенциальный заголовок следующего риска (буферизуем).
+        pending_title = line
+
     if current:
-        findings.append(current)
+        title_key = _title_key(current.get("title"))
+        if title_key and title_key not in seen_titles:
+            seen_titles.add(title_key)
+            findings.append(current)
 
     print(f"  [PARSER] Найдено рисков до фильтрации: {len(findings)}")
     
     # Фильтруем низкокачественные риски
     findings = _filter_findings_by_quality(findings, min_quality=0.45)
     findings = _filter_findings_by_contract_evidence(findings, contract_text)
+    findings = _filter_findings_by_rag_evidence(findings, contract_text, rag_context)
+    
+    # Добавляем эвристический чек-лист отсутствующих существенных условий.
+    # Для «отсутствующего» условия цитата из договора невозможна, поэтому добавляем после фильтров.
+    heuristic_findings = check_essential_conditions(contract_text, contract_type_info)
+    findings.extend(heuristic_findings)
     
     # Удаляем дубликаты
     findings = _deduplicate_findings(findings)
     
-    print(f"  [PARSER] После фильтрации и дедупликации: {len(findings)}")
+    # Усиливаем severity по эвристикам (одностороннее расторжение → высокий и т.п.)
+    findings = _apply_severity_heuristics(findings)
+
+    # Прикрепляем реальный текст статей из подключённого RAG к подтверждённым нормам.
+    findings = _attach_rag_norm_text(findings)
+
+    print(f"  [PARSER] После фильтрации, эвристик и дедупликации: {len(findings)}")
     for f in findings:
         quality = f.get('_quality', 0)
         print(f"    [{f['severity']}] {f['title'][:50]} | quality={quality:.2f} | point={bool(f['point'])} frag={bool(f['fragment'])} norm={bool(f['norm'])}")
@@ -1183,22 +2245,16 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context=""):
     medium = sum(1 for f in findings if f['severity'] == 'medium')
     low = sum(1 for f in findings if f['severity'] == 'low')
 
-    # Улучшенный расчёт балла с учетом качества
-    score = 0
-    
+    # Combine independently verified findings as cumulative exposure. This is
+    # stable: it never assigns a magic fixed score, never exceeds 100 from a
+    # long list, and every added verified finding increases the result.
+    remaining_safe_probability = 1.0
     for finding in findings:
-        severity = finding.get('severity')
-        quality = finding.get('_quality', 0.5)
-        score += _calculate_severity_score(severity, quality)
-    
-    # Бонус за количество (сниженный)
-    total_findings = high + medium + low
-    if total_findings > 0:
-        score += min(8, total_findings * 1.5)
-    
-    # Бонус за сложность и разнообразие
-    complexity_bonus = _calculate_complexity_bonus(findings)
-    score += complexity_bonus
+        impact = _calculate_severity_score(
+            finding.get('severity'), finding.get('_quality', 0.5)
+        )
+        remaining_safe_probability *= 1.0 - (impact / 100.0)
+    score = 100.0 * (1.0 - remaining_safe_probability)
     
     # Штраф за неправильную юрисдикцию
     if wrong_jurisdiction_count > 0:
@@ -1207,18 +2263,24 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context=""):
     # 100 is reserved for a human-confirmed critical situation; an automated
     # RAG analysis must not assign it merely because it found many items.
     score = max(0, min(95, round(score)))
-    level = "Высокий" if score >= 70 or high >= 2 else "Средний" if score >= 35 or high >= 1 or medium >= 3 else "Низкий"
+    # The level is derived from the same score shown to the user. This prevents
+    # contradictory output such as "Высокий риск — 35/100".
+    level = "Высокий" if score >= 65 else "Средний" if score >= 25 else "Низкий"
     
-    # Улучшенный вердикт с учетом качества
-    high_quality = sum(1 for f in findings 
-                       if f['severity'] == 'high' and f.get('_quality', 0) >= 0.60)
-    medium_quality = sum(1 for f in findings 
-                         if f['severity'] == 'medium' and f.get('_quality', 0) >= 0.60)
-    
-    if score >= 70 or high_quality >= 3:
+    # Длинный договор не может быть «чистым»: если фильтры убрали все риски,
+    # отчёт честно предупреждает о необходимости ручной проверки, а не выдаёт
+    # ложный вердикт «Можно подписывать».
+    contract_len = len((contract_text or "").strip())
+    manual_review_required = (len(findings) == 0 and contract_len >= 1000)
+    if manual_review_required:
+        print("  [PARSER] ⚠️ Длинный договор без подтверждённых рисков — требуется ручная проверка")
+
+    if score >= 65:
         verdict = "❌ Не подписывать"
-    elif score >= 30 or high_quality >= 1 or medium_quality >= 3:
+    elif score >= 25:
         verdict = "⚠️ Требует правок"
+    elif manual_review_required:
+        verdict = "⚠️ Требуется ручная проверка"
     else:
         verdict = "✅ Можно подписывать"
 
@@ -1239,6 +2301,7 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context=""):
         "hallucinations_detected": 0,
         "wrong_jurisdiction_mentions": wrong_jurisdiction_count,
         "wrong_jurisdiction_violations": wrong_jurisdiction_violations[:10],
+        "manual_review_required": manual_review_required,
     }
 
 def format_verified_findings_for_prompt(findings, max_items=20):
@@ -1265,6 +2328,70 @@ def format_verified_findings_for_prompt(findings, max_items=20):
             ])
         )
     return "\n\n".join(blocks)
+
+def build_grounded_contract_report(metrics, contract_type_info=None):
+    """Render the final report from verified records only; no second model pass."""
+    findings = metrics.get("findings", [])
+    severity_labels = {"high": "Высокий", "medium": "Средний", "low": "Низкий"}
+    lines = [
+        "## Проверенный RAG-анализ договора",
+        "",
+        f"Источник права: `{CONTRACT_RAG_SOURCE_NAME}` (Республика Таджикистан).",
+        "В отчёт включены пункты с цитатой из договора и нормой, сверенной с подключённым RAG.",
+        "Если модель не смогла указать точную статью, это честно помечено как требующее ручной проверки.",
+    ]
+    # Добавляем тип договора, если определён
+    if contract_type_info and contract_type_info.get("type") != "неопределённый":
+        lines.append(f"")
+        lines.append(f"Определённый тип договора: **{contract_type_info['type']}** (уверенность: {contract_type_info.get('confidence', 0):.0%}).")
+        if contract_type_info.get('types_with_scores'):
+            alt_types = [t['type'] for t in contract_type_info['types_with_scores'][1:3] if t['score'] > 0.2]
+            if alt_types:
+                lines.append(f"Альтернативные варианты: {', '.join(alt_types)}.")
+    lines.append("")
+    lines.append("### Выявленные риски")
+    if not findings:
+        lines.extend([
+            "",
+            "Подтверждённых рисков не найдено: для публикации требуется одновременно цитата из договора и применимая статья из RAG.",
+        ])
+        if metrics.get("manual_review_required"):
+            lines.extend([
+                "",
+                "⚠️ **Требуется ручная проверка.** Договор объёмный, но система не подтвердила ни одного риска. "
+                "Это может быть следствием нестандартных формулировок — заключение должен проверить практикующий юрист.",
+            ])
+    else:
+        for number, finding in enumerate(findings, 1):
+            lines.extend([
+                "",
+                f"#### {number}. {finding.get('title') or 'Юридический риск'}",
+                f"- Уровень: **{severity_labels.get(finding.get('severity'), 'Низкий')}**",
+                f"- Пункт договора: {finding.get('point') or 'не указан в документе'}",
+                f"- Цитата из договора: «{finding.get('fragment') or 'условие отсутствует в договоре'}»",
+                f"- Норма РТ из RAG: {finding.get('norm') or ''}",
+                f"- Основание: {finding.get('why') or ''}",
+                f"- Рекомендуемая правка: {finding.get('fix') or ''}",
+            ])
+            if finding.get("norm_text"):
+                lines.extend([
+                    "",
+                    f"**Текст нормы из подключённого RAG:**",
+                    finding["norm_text"],
+                ])
+    lines.extend([
+        "",
+        "### Резюме",
+        f"- Балл риска: **{metrics.get('score', 0)}/100**",
+        f"- Уровень: **{metrics.get('level', 'Низкий')}**",
+        f"- Высоких рисков: **{metrics.get('high', 0)}**",
+        f"- Средних рисков: **{metrics.get('medium', 0)}**",
+        f"- Низких рисков: **{metrics.get('low', 0)}**",
+        f"- Вердикт: **{metrics.get('verdict', '')}**",
+        "",
+        "Отчёт основан на подключённой базе RAG и не заменяет проверку практикующим юристом.",
+    ])
+    return "\n".join(lines)
 
 def normalize_legal_terms(text):
     text = re.sub(r"\bГК\s*РФ\b", "[УДАЛЕНО: ГК РФ]", text, flags=re.IGNORECASE)
@@ -1362,13 +2489,52 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
         }, "status")
         time.sleep(0.1)
 
+        # Full-report cache: identical document text + identical RAG revision
+        # can return immediately without invoking the model again. Revised
+        # contract generation remains live because it creates a new file.
+        analysis_cache_key = get_analysis_cache_key(full_text, contract_rag)
+        if not generate_revised:
+            cached_report = load_analysis_cache(analysis_cache_key)
+            if cached_report:
+                cached_metrics = cached_report["metrics"]
+                yield send_event({
+                    "step": "cache_hit",
+                    "message": "Найден проверенный кэш: загружаем готовый RAG-отчёт",
+                    "progress_percent": 96,
+                    "cache_hit": True,
+                    "cached_at": cached_report.get("cached_at"),
+                }, "status")
+                yield send_event({
+                    "step": "summary_complete",
+                    "content": cached_report["content"],
+                    "length": len(cached_report["content"]),
+                    "revised_contract": None,
+                    "metrics": cached_metrics,
+                    "cache_hit": True,
+                }, "summary_complete")
+                yield send_event({
+                    "step": "complete",
+                    "status": "success",
+                    "chunks_processed": cached_report.get("chunks_processed", 0),
+                    "errors_count": 0,
+                    "cache_hit": True,
+                }, "complete")
+                return
+
         chunks = split_text_smart(full_text, CHUNK_SIZE, CHUNK_OVERLAP)
         print(f"📦 Разбито на {len(chunks)} чанков")
 
         yield send_event({"step": "chunked", "count": len(chunks), "progress_percent": 12}, "status")
         yield send_event({"step": "analyzing_start", "total": len(chunks), "progress_percent": 15}, "status")
 
-        tasks = [(i, len(chunks), c, full_text) for i, c in enumerate(chunks)]
+        # Классифицируем тип договора
+        contract_type_info = classify_contract_type(full_text)
+        print(f"📋 Тип договора: {contract_type_info['type']} (уверенность: {contract_type_info['confidence']:.0%})")
+        if contract_type_info['types_with_scores']:
+            for t in contract_type_info['types_with_scores'][:3]:
+                print(f"   - {t['type']}: {t['score']:.0%} ({t.get('matches', 0)} совпадений)")
+
+        tasks = [(i, len(chunks), c, full_text, contract_type_info) for i, c in enumerate(chunks)]
         all_findings = []
         errors_count = 0
 
@@ -1454,7 +2620,12 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
             "\n\nRAG-контекст по кодексам Республики Таджикистан не найден или база еще не подключена.\n"
         )
         
-        risk_metrics = estimate_risk_metrics(full_analysis_text, contract_text=full_text, rag_context=rag_summary_context)
+        risk_metrics = estimate_risk_metrics(
+            full_analysis_text,
+            contract_text=full_text,
+            rag_context=rag_summary_context,
+            contract_type_info=contract_type_info,
+        )
         verified_findings_text = format_verified_findings_for_prompt(risk_metrics.get("findings", []))
 
         # Формируем промпт для summary с жёстким требованием указать статьи РТ
@@ -1494,7 +2665,10 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
 
         print("🧠 Генерация финального заключения...")
         try:
-            final_summary = send_to_ollama(summary_prompt, num_predict=2500, temperature=0.3)
+            # Do not let a second generative pass introduce unsupported claims.
+            # The published report is rendered only from findings that passed
+            # contract-quote and RAG-article verification.
+            final_summary = build_grounded_contract_report(risk_metrics, contract_type_info=contract_type_info)
 
             if final_summary and not final_summary.startswith("⚠️"):
                 revised_contract = None
@@ -1525,22 +2699,30 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
 - Вердикт: {risk_metrics['verdict']}
 
 """
-                final_summary = metrics_header + normalize_legal_terms(final_summary)
+                final_summary = normalize_legal_terms(final_summary)
+                response_metrics = {
+                    "score": risk_metrics["score"],
+                    "level": risk_metrics["level"],
+                    "high": risk_metrics["high"],
+                    "medium": risk_metrics["medium"],
+                    "low": risk_metrics["low"],
+                    "verdict": risk_metrics["verdict"],
+                    "hallucinations_detected": risk_metrics.get("hallucinations_detected", 0),
+                    "wrong_jurisdiction_mentions": risk_metrics.get("wrong_jurisdiction_mentions", 0),
+                }
+                if not generate_revised:
+                    save_analysis_cache(analysis_cache_key, {
+                        "content": final_summary,
+                        "metrics": response_metrics,
+                        "chunks_processed": len(all_findings),
+                        "rag_source": CONTRACT_RAG_SOURCE_NAME,
+                    })
                 yield send_event({
                     "step": "summary_complete",
                     "content": final_summary,
                     "length": len(final_summary),
                     "revised_contract": revised_contract,
-                    "metrics": {
-                        "score": risk_metrics["score"],
-                        "level": risk_metrics["level"],
-                        "high": risk_metrics["high"],
-                        "medium": risk_metrics["medium"],
-                        "low": risk_metrics["low"],
-                        "verdict": risk_metrics["verdict"],
-                        "hallucinations_detected": risk_metrics.get("hallucinations_detected", 0),
-                        "wrong_jurisdiction_mentions": risk_metrics.get("wrong_jurisdiction_mentions", 0),
-                    }
+                    "metrics": response_metrics
                 }, "summary_complete")
                 print("✅ Заключение сгенерировано")
             else:
@@ -1626,8 +2808,11 @@ def rag_status():
 def rag_reindex():
     try:
         index = load_rag_index(force=True)
+        chat_index = load_chat_rag_index(force=True)
         payload = rag_status_payload()
         payload["rebuilt"] = bool(index.get("ready"))
+        payload["chat_rebuilt"] = bool(chat_index.get("ready"))
+        payload["chat_chunks"] = len(chat_index.get("chunks", []))
         return jsonify(payload)
     except Exception as e:
         return jsonify({"ready": False, "error": str(e)}), 500
@@ -1639,7 +2824,7 @@ def rag_search():
     top_k = int(data.get("top_k", RAG_TOP_K))
     return jsonify({
         "query": query,
-        "results": retrieve_rag(query, top_k=top_k),
+        "results": retrieve_rag(query, top_k=top_k, index=load_chat_rag_index()),
         "status": rag_status_payload(),
     })
 
@@ -1647,8 +2832,10 @@ def rag_search():
 def rag_articles():
     data = request.get_json(silent=True) or {}
     numbers = data.get("numbers") or ["104", "111", "114", "246", "247", "248", "249", "250"]
+    # ugalov-kodex (Уголовный кодекс РТ) page requests criminal articles.
+    source = data.get("source") or "574_ru.doc"
     return jsonify({
-        "articles": extract_rag_articles(numbers),
+        "articles": extract_rag_articles(numbers, source_name=source),
         "status": rag_status_payload(),
     })
 
@@ -1658,8 +2845,24 @@ def crime_qualify():
     crime_description = (data.get("description") or "").strip()
     if not crime_description:
         return jsonify({"error": "crime description is required"}), 400
-    rag_results = retrieve_rag(crime_description, top_k=8)
-    rag_context = format_rag_context(rag_results)
+        # Crime qualification MUST retrieve from the criminal code (Уголовный
+# кодекс), which lives in the multi-source chat RAG index — NOT from the
+# contract/Civil-Code index, which knows nothing about "кража"/"убийство".
+    crime_index = load_chat_rag_index()
+    if not crime_index.get("ready"):
+        try:
+            ensure_contract_rag_ready()
+            crime_index = load_rag_index(force=False)
+        except Exception:
+            crime_index = None
+    rag_results = retrieve_rag(crime_description, top_k=8, index=crime_index)
+    # Provenance for the UI: unique source names + human labels + articles.
+    rag_source_names = sorted({r.get("source") for r in rag_results if r.get("source")})
+    rag_source_labels = [RAG_CODE_LABELS.get(s, s) for s in rag_source_names]
+    article_numbers = sorted(
+        {n for r in rag_results for n in _cited_article_numbers(r.get("text", ""))}
+    )
+    rag_context = format_rag_context(rag_results, max_chars=CHAT_RAG_MAX_CHARS)
     prompt = f"""Ты — опытный юрист по уголовному праву Республики Таджикистан с 15+ лет опыта.
 
 ЗАДАЧА: Выполнить ПОЛНУЮ уголовно-правовую квалификацию преступления по действующему УК РТ.
@@ -1709,8 +2912,21 @@ def crime_qualify():
     response_text = send_to_ollama(prompt, num_predict=1500, temperature=0.3)
     return jsonify({
         "qualification": response_text,
+        "sources": [
+            {"name": name, "label": RAG_CODE_LABELS.get(name, name)}
+            for name in rag_source_names
+        ],
+        "primary_source": rag_source_labels[0] if rag_source_labels else None,
+        "article_numbers": article_numbers,
         "rag_sources": [
-            {"number": i + 1, "source": item.get("source"), "title": item.get("title")}
+            {
+                "number": i + 1,
+                "source": item.get("source"),
+                "source_label": RAG_CODE_LABELS.get(item.get("source"), item.get("source")),
+                "title": item.get("title"),
+                "score": item.get("score"),
+                "snippet": (item.get("text") or "")[:RAG_SNIPPET_MAX],
+            }
             for i, item in enumerate(rag_results)
         ],
         "rag_status": rag_status_payload(),
@@ -1720,7 +2936,7 @@ def stream_chat_response(payload):
     message = (payload.get("message") or "").strip()
     history = payload.get("history") or []
     model = payload.get("model") or MODEL_NAME
-    temperature = float(payload.get("temperature", 0.5))
+    temperature = max(0.0, min(float(payload.get("temperature", 0.2)), 0.3))
     personality = payload.get("personality") or "professional"
 
     system_prompts = {
@@ -1729,19 +2945,19 @@ def stream_chat_response(payload):
         "concise": "Вы краткий юридический эксперт по законодательству Республики Таджикистан. Только суть, риски и практические шаги. Только законы РТ.",
     }
 
-    rag_results = retrieve_rag(message, top_k=RAG_TOP_K)
-    rag_context = format_rag_context(rag_results)
+    rag_results = retrieve_rag(message, top_k=CHAT_RAG_TOP_K, index=load_chat_rag_index())
+    rag_context = format_rag_context(rag_results, max_chars=CHAT_RAG_MAX_CHARS)
     sources = [
         f"[{i + 1}] {item.get('source')} / {item.get('title')}"
         for i, item in enumerate(rag_results)
     ]
 
     recent_history = []
-    for item in history[-8:]:
+    for item in history[-4:]:
         role = item.get("role")
         content = (item.get("content") or "").strip()
         if role in ["user", "ai"] and content:
-            recent_history.append(f"{'Пользователь' if role == 'user' else 'Ассистент'}: {content[:1200]}")
+            recent_history.append(f"{'Пользователь' if role == 'user' else 'Ассистент'}: {content[:600]}")
 
     prompt = f"""{system_prompts.get(personality, system_prompts["professional"])}
 
@@ -1752,9 +2968,10 @@ def stream_chat_response(payload):
 
 Правила RAG:
 - Используй фрагменты кодексов РТ ниже как основной справочный материал
-- Если в контексте нет точной нормы, честно скажи, что в подключенной базе не найдено
-- Не выдумывай номера статей
-- В конце добавь раздел "Источники RAG"
+- Цитируй главу и статью только из строки «ПРОВЕРЕННАЯ ССЫЛКА RAG»
+- Если такой строки нет, напиши: «Точная ссылка не подтверждена RAG»
+- Не выдумывай номера статей, главы или название кодекса
+- Отвечай по существу: до 6 коротких абзацев или пунктов
 
 Релевантные фрагменты кодексов Республики Таджикистан:
 {rag_context if rag_context else "RAG-контекст не найден."}
@@ -1773,17 +2990,21 @@ def stream_chat_response(payload):
         "model": model,
         "prompt": prompt,
         "stream": True,
+        "think": False,
+        "keep_alive": CHAT_KEEP_ALIVE,
         "options": {
             "temperature": temperature,
-            "num_predict": 1536,
-            "top_p": 0.9,
+            "num_predict": CHAT_MAX_TOKENS,
+            "top_p": 0.85,
         },
     }
 
     try:
         with requests.post(OLLAMA_URL, json=data, stream=True, timeout=600) as r:
             r.raise_for_status()
-            for line in r.iter_lines():
+            # Do not wait for Requests' default 512-byte buffer: chat should
+            # render each generated fragment as soon as Ollama sends it.
+            for line in r.iter_lines(chunk_size=1):
                 if line:
                     decoded = line.decode("utf-8")
                     try:
@@ -1929,7 +3150,8 @@ def health():
     return jsonify({
         "status": "ok",
         "service": "LegalAI API",
-        "version": "3.0.0-senior",
+        "version": "3.1.0-complete-lawyer",
+        "analysis_version": ANALYSIS_VERSION,
         "model": MODEL_NAME,
         "ollama": {"status": ollama_status, "models": ollama_models, "url": OLLAMA_URL},
         "temp_dir": {"path": os.path.abspath(TEMP_DIR), "files": temp_files, "size_bytes": temp_size},
@@ -1960,7 +3182,7 @@ def cleanup():
 # ================= ЗАПУСК =================
 if __name__ == "__main__":
     print("=" * 60)
-    print("🚀 LegalAI Python API v3.0 (Senior Edition)")
+    print("🚀 LegalAI Python API v3.1 (Complete Lawyer Edition)")
     print("=" * 60)
     print(f"📦 Модель: {MODEL_NAME}")
     print(f"🌐 Ollama: {OLLAMA_URL}")

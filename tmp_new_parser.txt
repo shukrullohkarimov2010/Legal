@@ -1,0 +1,87 @@
+    # Парсер рисков — устойчив к опечаткам и отклонениям модели (когда она
+    # опускает [severity] или меняет порядок строк), чтобы не терять реальные риски.
+    findings = []
+    current = None
+    pending_title = None
+
+    FIELD_PATTERNS = [
+        ("point", re.compile(r'Пункт\s+договора\s*:\s*(.*)', re.IGNORECASE)),
+        ("fragment", re.compile(r'Фрагмент\s+договора\s*:\s*(.*)', re.IGNORECASE)),
+        ("norm", re.compile(r'Норма\s+РТ\s*:\s*(.*)', re.IGNORECASE)),
+        ("why", re.compile(r'Почему\s+риск\s*:\s*(.*)', re.IGNORECASE)),
+        ("fix", re.compile(r'Что\s+исправить\s*:\s*(.*)', re.IGNORECASE)),
+    ]
+
+    def _new_finding(title, severity):
+        t = re.sub(r'\[[^\]]*\]\s*', '', title).strip()
+        t = re.sub(r'^[\s\u2022\-\*\u2023]+', '', t).strip()
+        t = re.sub(r'^Риск[: ]+', '', t, flags=re.IGNORECASE).strip()
+        if not t or len(t) < 3:
+            t = "Юридический риск"
+        return {
+            "title": t,
+            "severity": severity,
+            "point": "",
+            "fragment": "",
+            "norm": "",
+            "why": "",
+            "fix": "",
+        }
+
+    for raw_line in (analysis_text or "").splitlines():
+        line = raw_line.strip()
+
+        if not line:
+            if current:
+                findings.append(current)
+                current = None
+            pending_title = None
+            continue
+
+        severity = None
+        if re.search(r'\[(?:Высокий|высок)\]', line):
+            severity = "high"
+        elif re.search(r'\[(?:Средний|средн)\]', line):
+            severity = "medium"
+        elif re.search(r'\[(?:Низкий|низк)\]', line):
+            severity = "low"
+
+        if severity:
+            if current:
+                findings.append(current)
+            current = _new_finding(line, severity)
+            pending_title = None
+            continue
+
+        # Поле текущего риска?
+        field_matched = False
+        if current:
+            for fname, pat in FIELD_PATTERNS:
+                m = pat.search(line)
+                if m:
+                    current[fname] = m.group(1).strip()
+                    field_matched = True
+                    break
+        if field_matched:
+            continue
+
+        # Поле, но риск ещё не открыт (модель опустила [severity]) — восстанавливаем
+        # заголовок из буфера и открываем риск со severity medium; он будет
+        # эскализирован _apply_severity_heuristics при необходимости.
+        if not current and pending_title:
+            current = _new_finding(pending_title, "medium")
+            pending_title = None
+            for fname, pat in FIELD_PATTERNS:
+                m = pat.search(line)
+                if m:
+                    current[fname] = m.group(1).strip()
+                    break
+            continue
+
+        # Иначе: потенциальный заголовок следующего риска (буферизуем).
+        pending_title = line
+
+    if current:
+        findings.append(current)
+
+    print(f"  [PARSER] Найдено рисков до фильтрации: {len(findings)}")

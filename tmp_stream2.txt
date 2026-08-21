@@ -1,0 +1,46 @@
+﻿data: {"type": "status", "request_id": "78a62a457986", "timestamp": 1786277356.1346185, "step": "rag_ready", "message": "RAG ready: 1918_ru_1.docx (691 fragments)", "source": "1918_ru_1.docx", "progress_percent": 1}
+
+data: {"type": "status", "request_id": "78a62a457986", "timestamp": 1786277356.1603231, "step": "reading", "file": "78a62a457986_test_contract.txt", "progress_percent": 3}
+
+data: {"type": "status", "request_id": "78a62a457986", "timestamp": 1786277356.2855966, "step": "extracted", "chars": 2198, "words": 284, "extension": ".txt", "progress_percent": 8}
+
+data: {"type": "status", "request_id": "78a62a457986", "timestamp": 1786277356.4108377, "step": "chunked", "count": 1, "progress_percent": 12}
+
+data: {"type": "status", "request_id": "78a62a457986", "timestamp": 1786277356.425292, "step": "analyzing_start", "total": 1, "progress_percent": 15}
+
+data: {"type": "status", "request_id": "78a62a457986", "timestamp": 1786277366.4532945, "step": "analyzing", "processed": 0, "total": 1, "progress_percent": 15, "message": "╨Ь╨╛╨┤╨╡╨╗╤М ╨░╨╜╨░╨╗╨╕╨╖╨╕╤А╤Г╨╡╤В ╨┤╨╛╨║╤Г╨╝╨╡╨╜╤В, ╨│╨╛╤В╨╛╨▓╨╛ 0/1"}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277386.4857225, "progress_percent": 16, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277416.521536, "progress_percent": 17, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277446.551885, "progress_percent": 18, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277476.5996287, "progress_percent": 19, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277506.6375382, "progress_percent": 20, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277536.6741223, "progress_percent": 21, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277566.7044306, "progress_percent": 22, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277596.728275, "progress_percent": 23, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277626.7613568, "progress_percent": 24, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277656.7944648, "progress_percent": 25, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277686.8290157, "progress_percent": 26, "processed": 0, "total": 1}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277716.885875, "progress_percent": 27, "processed": 0, "total": 1}
+
+data: {"type": "status", "request_id": "78a62a457986", "timestamp": 1786277739.2859228, "step": "chunk_done", "idx": 1, "total": 1, "message": "Reviewed section 1/1; preparing final report"}
+
+data: {"type": "progress", "request_id": "78a62a457986", "timestamp": 1786277739.3010616, "progress_percent": 88, "processed": 1, "total": 1}
+
+data: {"type": "status", "request_id": "78a62a457986", "timestamp": 1786277739.3165653, "step": "summary_start", "progress_percent": 92}
+
+data: {"type": "summary_complete", "request_id": "78a62a457986", "timestamp": 1786277739.5923822, "step": "summary_complete", "content": "## ╨Я╤А╨╛╨▓╨╡╤А╨╡╨╜╨╜╤Л╨╣ RAG-╨░╨╜╨░╨╗╨╕╨╖ ╨┤╨╛╨│╨╛╨▓╨╛╤А╨░\n\n╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╨┐╤А╨░╨▓╨░: `1918_ru_1.docx` (╨а╨╡╤Б╨┐╤Г╨▒╨╗╨╕╨║╨░ ╨в╨░╨┤╨╢╨╕╨║╨╕╤Б╤В╨░╨╜).\n╨Т ╨╛╤В╤З╤С╤В ╨▓╨║╨╗╤О╤З╨╡╨╜╤Л ╨┐╤Г╨╜╨║╤В╤Л ╤Б ╤Ж╨╕╤В╨░╤В╨╛╨╣ ╨╕╨╖ ╨┤╨╛╨│╨╛╨▓╨╛╤А╨░ ╨╕ ╨╜╨╛╤А╨╝╨╛╨╣, ╤Б╨▓╨╡╤А╨╡╨╜╨╜╨╛╨╣ ╤Б ╨┐╨╛╨┤╨║╨╗╤О╤З╤С╨╜╨╜╤Л╨╝ RAG.\n╨Х╤Б╨╗╨╕ ╨╝╨╛╨┤╨╡╨╗╤М ╨╜╨╡ ╤Б╨╝╨╛╨│╨╗╨░ ╤Г╨║╨░╨╖╨░╤В╤М ╤В╨╛╤З╨╜╤Г╤О ╤Б╤В╨░╤В╤М╤О, ╤Н╤В╨╛ ╤З╨╡╤Б╤В╨╜╨╛ ╨┐╨╛╨╝╨╡╤З╨╡╨╜╨╛ ╨║╨░╨║ ╤В╤А╨╡╨▒╤Г╤О╤Й╨╡╨╡ ╤А╤Г╤З╨╜╨╛╨╣ ╨┐╤А╨╛╨▓╨╡╤А╨║╨╕.\n\n╨Ю╨┐╤А╨╡╨┤╨╡╨╗╤С╨╜╨╜╤Л╨╣ ╤В╨╕╨┐ ╨┤╨╛╨│╨╛╨▓╨╛╤А╨░: **╨▓╨╛╨╖╨╝╨╡╨╖╨┤╨╜╨╛╨╡ ╨╛╨║╨░╨╖╨░╨╜╨╕╨╡ ╤Г╤Б╨╗╤Г╨│** (╤Г╨▓╨╡╤А╨╡╨╜╨╜╨╛╤Б╤В╤М: 100%).\n╨Р╨╗╤М╤В╨╡╤А╨╜╨░╤В╨╕╨▓╨╜╤Л╨╡ ╨▓╨░╤А╨╕╨░╨╜╤В╤Л: ╨░╨▓╤В╨╛╤А╤Б╨║╨╕╨╣ ╨╖╨░╨║╨░╨╖, ╨║╤А╨╡╨┤╨╕╤В╨╜╤Л╨╣.\n\n### ╨Т╤Л╤П╨▓╨╗╨╡╨╜╨╜╤Л╨╡ ╤А╨╕╤Б╨║╨╕\n\n╨Я╨╛╨┤╤В╨▓╨╡╤А╨╢╨┤╤С╨╜╨╜╤Л╤Е ╤А╨╕╤Б╨║╨╛╨▓ ╨╜╨╡ ╨╜╨░╨╣╨┤╨╡╨╜╨╛: ╨┤╨╗╤П ╨┐╤Г╨▒╨╗╨╕╨║╨░╤Ж╨╕╨╕ ╤В╤А╨╡╨▒╤Г╨╡╤В╤Б╤П ╨╛╨┤╨╜╨╛╨▓╤А╨╡╨╝╨╡╨╜╨╜╨╛ ╤Ж╨╕╤В╨░╤В╨░ ╨╕╨╖ ╨┤╨╛╨│╨╛╨▓╨╛╤А╨░ ╨╕ ╨┐╤А╨╕╨╝╨╡╨╜╨╕╨╝╨░╤П ╤Б╤В╨░╤В╤М╤П ╨╕╨╖ RAG.\n\nтЪая╕П **╨в╤А╨╡╨▒╤Г╨╡╤В╤Б╤П ╤А╤Г╤З╨╜╨░╤П ╨┐╤А╨╛╨▓╨╡╤А╨║╨░.** ╨Ф╨╛╨│╨╛╨▓╨╛╤А ╨╛╨▒╤К╤С╨╝╨╜╤Л╨╣, ╨╜╨╛ ╤Б╨╕╤Б╤В╨╡╨╝╨░ ╨╜╨╡ ╨┐╨╛╨┤╤В╨▓╨╡╤А╨┤╨╕╨╗╨░ ╨╜╨╕ ╨╛╨┤╨╜╨╛╨│╨╛ ╤А╨╕╤Б╨║╨░. ╨н╤В╨╛ ╨╝╨╛╨╢╨╡╤В ╨▒╤Л╤В╤М ╤Б╨╗╨╡╨┤╤Б╤В╨▓╨╕╨╡╨╝ ╨╜╨╡╤Б╤В╨░╨╜╨┤╨░╤А╤В╨╜╤Л╤Е ╤Д╨╛╤А╨╝╤Г╨╗╨╕╤А╨╛╨▓╨╛╨║ тАФ ╨╖╨░╨║╨╗╤О╤З╨╡╨╜╨╕╨╡ ╨┤╨╛╨╗╨╢╨╡╨╜ ╨┐╤А╨╛╨▓╨╡╤А╨╕╤В╤М ╨┐╤А╨░╨║╤В╨╕╨║╤Г╤О╤Й╨╕╨╣ ╤О╤А╨╕╤Б╤В.\n\n### ╨Ш╤В╨╛╨│\n- ╨С╨░╨╗╨╗ ╤А╨╕╤Б╨║╨░: **0/100**\n- ╨г╤А╨╛╨▓╨╡╨╜╤М: **╨Э╨╕╨╖╨║╨╕╨╣**\n- ╨Т╨╡╤А╨┤╨╕╨║╤В: **тЪая╕П ╨в╤А╨╡╨▒╤Г╨╡╤В╤Б╤П ╤А╤Г╤З╨╜╨░╤П ╨┐╤А╨╛╨▓╨╡╤А╨║╨░**\n\n╨Ю╤В╤З╤С╤В ╨╛╤Б╨╜╨╛╨▓╨░╨╜ ╨╜╨░ ╨┐╨╛╨┤╨║╨╗╤О╤З╤С╨╜╨╜╨╛╨╣ ╨▒╨░╨╖╨╡ RAG ╨╕ ╨╜╨╡ ╨╖╨░╨╝╨╡╨╜╤П╨╡╤В ╨┐╤А╨╛╨▓╨╡╤А╨║╤Г ╨┐╤А╨░╨║╤В╨╕╨║╤Г╤О╤Й╨╕╨╝ ╤О╤А╨╕╤Б╤В╨╛╨╝.", "length": 934, "revised_contract": null, "metrics": {"score": 0, "level": "╨Э╨╕╨╖╨║╨╕╨╣", "high": 0, "medium": 0, "low": 0, "verdict": "тЪая╕П ╨в╤А╨╡╨▒╤Г╨╡╤В╤Б╤П ╤А╤Г╤З╨╜╨░╤П ╨┐╤А╨╛╨▓╨╡╤А╨║╨░", "hallucinations_detected": 0, "wrong_jurisdiction_mentions": 0}}
+
+data: {"type": "complete", "request_id": "78a62a457986", "timestamp": 1786277739.6126459, "step": "complete", "status": "success", "chunks_processed": 1, "errors_count": 0}
+

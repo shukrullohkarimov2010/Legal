@@ -771,10 +771,10 @@
                     <span>Модель ИИ</span>
                 </h4>
                 <div class="space-y-3">
-                    <div class="model-selector active p-4 rounded-xl border" style="border-color: var(--accent);" onclick="selectModel('llama3.1:8b', this)">
+                    <div class="model-selector active p-4 rounded-xl border" style="border-color: var(--accent);" onclick="selectModel('legal-fast', this)">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="font-medium" style="color: var(--text-primary);">llama3.1:8b</div>
+                                <div class="font-medium" style="color: var(--text-primary);">legal-fast</div>
                                 <div class="text-sm" style="color: var(--text-muted);">Локальная • Быстрая</div>
                             </div>
                             <svg class="check-icon w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -962,7 +962,7 @@
 
     // Application State
     const state = {
-        currentModel: 'llama3.1:8b',
+        currentModel: 'legal-fast',
         chatHistory: [],
         conversations: [],
         currentConversationId: null,
