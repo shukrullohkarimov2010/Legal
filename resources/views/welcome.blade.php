@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="LegalAI Pro — AI-платформа для анализа юридических документов по законодательству Республики Таджикистан.">
-<meta property="og:title" content="LegalAI Pro — юридический AI Таджикистана">
-<meta property="og:type" content="website">
-<meta name="theme-color" content="#0B1120">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 
 @php
 /* ================================================================
@@ -497,6 +496,23 @@ default => [
 
 <title>{{ $L['hero']['title1'] }} — {{ $L['hero']['title2'] }} | LegalAI Pro</title>
 
+<meta name="description" content="{{ $L['hero']['sub'] }}">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="{{ url()->current() }}">
+
+<meta property="og:site_name" content="LegalAI Pro">
+<meta property="og:title" content="LegalAI Pro — {{ $L['hero']['title1'] }} {{ $L['hero']['title2'] }}">
+<meta property="og:description" content="{{ $L['hero']['sub'] }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ url()->current() }}">
+<meta property="og:locale" content="{{ app()->getLocale() === 'en' ? 'en_US' : (app()->getLocale() === 'tg' ? 'tg_TJ' : 'ru_RU') }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LegalAI Pro — {{ $L['hero']['title1'] }} {{ $L['hero']['title2'] }}">
+<meta name="twitter:description" content="{{ $L['hero']['sub'] }}">
+
+<meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0F1A" media="(prefers-color-scheme: dark)">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -506,61 +522,77 @@ default => [
    1. ДИЗАЙН-ТОКЕНЫ (светлая база — как на макете; тёмная — опция)
    ================================================================ */
 :root {
-    --bg-primary: #F7F9FC;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+
+    --bg-primary: #F8FAFC;
     --bg-secondary: #FFFFFF;
-    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-bg: rgba(255, 255, 255, 0.88);
     --card-solid: #FFFFFF;
-    --card-border: rgba(15, 23, 42, 0.08);
-    --card-hover-border: rgba(59, 130, 246, 0.35);
-    --text-primary: #0F172A;
-    --text-secondary: #64748B;
-    --text-muted: #94A3B8;
-    --accent-primary: #3B82F6;
-    --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
-    --accent-glow: rgba(99, 102, 241, 0.22);
-    --success: #10B981;
-    --warning: #F59E0B;
-    --error: #EF4444;
-    --glass-blur: blur(14px);
-    --shadow-card: 0 1px 2px rgba(15,23,42,.05), 0 8px 24px rgba(15,23,42,.07);
-    --shadow-hover: 0 12px 40px rgba(59,130,246,.16), 0 4px 12px rgba(15,23,42,.06);
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
+    --card-border: rgba(15, 23, 42, 0.07);
+    --card-hover-border: rgba(37, 99, 235, 0.28);
+    --text-primary: #0B1220;
+    --text-secondary: #475569;
+    --text-muted: #8A99AD;
+    --accent-primary: #2563EB;
+    --accent-strong: #1D4ED8;
+    --accent-gradient: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
+    --accent-glow: rgba(37, 99, 235, 0.18);
+    --success: #059669;
+    --warning: #D97706;
+    --error: #DC2626;
+    --glass-blur: blur(16px) saturate(140%);
+    /* Многослойные мягкие тени вместо одной «жирной» */
+    --shadow-card: 0 1px 1px rgba(11,18,32,.04), 0 3px 8px -2px rgba(11,18,32,.05), 0 12px 24px -12px rgba(11,18,32,.10);
+    --shadow-hover: 0 1px 2px rgba(11,18,32,.05), 0 8px 20px -6px rgba(11,18,32,.10), 0 24px 48px -20px rgba(11,18,32,.18);
+    --shadow-lift: 0 20px 60px -24px rgba(11,18,32,.28);
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
     --radius-full: 9999px;
     --t-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    --t-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --t-normal: 0.24s cubic-bezier(0.4, 0, 0.2, 1);
     --t-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    --nav-bg: rgba(255, 255, 255, 0.86);
-    --grid-line: rgba(15, 23, 42, 0.045);
-    --soft-blue: #EFF4FF;
-    --soft-blue-t: #2563EB;
+    --nav-bg: rgba(255, 255, 255, 0.72);
+    --grid-line: rgba(15, 23, 42, 0.035);
+    --soft-blue: rgba(37, 99, 235, 0.07);
+    --soft-blue-t: #1D4ED8;
+    --hairline: rgba(15, 23, 42, 0.06);
 }
 
 /* ---------- Тёмная тема ---------- */
 body.dark-theme {
-    --bg-primary: #0B1120;
-    --bg-secondary: #111827;
-    --card-bg: rgba(17, 24, 39, 0.7);
-    --card-solid: #111827;
-    --card-border: rgba(55, 65, 81, 0.5);
-    --card-hover-border: rgba(59, 130, 246, 0.45);
-    --text-primary: #F9FAFB;
-    --text-secondary: #9CA3AF;
-    --text-muted: #6B7280;
-    --shadow-card: 0 8px 32px rgba(0,0,0,.3), 0 2px 8px rgba(0,0,0,.2);
-    --shadow-hover: 0 20px 60px rgba(0,0,0,.4), 0 4px 16px rgba(59,130,246,.15);
-    --nav-bg: rgba(11, 17, 32, 0.85);
-    --grid-line: rgba(148, 163, 184, 0.05);
-    --soft-blue: rgba(59, 130, 246, 0.12);
+    --bg-primary: #0A0F1A;
+    --bg-secondary: #0F1626;
+    --card-bg: rgba(19, 27, 44, 0.72);
+    --card-solid: #111a2b;
+    --card-border: rgba(148, 163, 184, 0.13);
+    --card-hover-border: rgba(96, 165, 250, 0.40);
+    --text-primary: #F1F5F9;
+    --text-secondary: #9FB0C6;
+    --text-muted: #6B7C93;
+    --accent-primary: #60A5FA;
+    --accent-strong: #93C5FD;
+    --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #6366F1 100%);
+    --accent-glow: rgba(59, 130, 246, 0.28);
+    --success: #34D399;
+    --warning: #FBBF24;
+    --error: #F87171;
+    --shadow-card: 0 1px 1px rgba(0,0,0,.3), 0 6px 16px -6px rgba(0,0,0,.5);
+    --shadow-hover: 0 2px 4px rgba(0,0,0,.35), 0 20px 44px -18px rgba(0,0,0,.7);
+    --shadow-lift: 0 24px 64px -28px rgba(0,0,0,.85);
+    --nav-bg: rgba(10, 15, 26, 0.72);
+    --grid-line: rgba(148, 163, 184, 0.045);
+    --soft-blue: rgba(96, 165, 250, 0.10);
     --soft-blue-t: #93C5FD;
+    --hairline: rgba(148, 163, 184, 0.10);
 }
 
 /* ================================================================
    2. БАЗА
    ================================================================ */
 * {
-    font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -568,21 +600,59 @@ body.dark-theme {
 
 html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
+    font-family: var(--font-sans);
     background: var(--bg-primary);
     color: var(--text-primary);
     overflow-x: hidden;
     line-height: 1.6;
     position: relative;
+    font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     transition: background var(--t-normal), color var(--t-normal);
 }
 
+button, input, select, textarea {
+    font-family: inherit;
+}
+
+/* Оптический трекинг: чем крупнее кегль, тем плотнее межбуквенное */
 h1, h2, h3, h4 {
     color: var(--text-primary);
-    letter-spacing: -0.02em;
+    text-wrap: balance;
 }
+
+h1 { letter-spacing: -0.038em; line-height: 1.06; }
+h2 { letter-spacing: -0.032em; line-height: 1.14; }
+h3 { letter-spacing: -0.018em; }
+h4 { letter-spacing: -0.012em; }
+
+/* Цифры одинаковой ширины — счётчики не «прыгают» */
+.counter,
+.tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+
+/* Ненавязчивая засечная акцентная гарнитура для ключевых слов в заголовках */
+.h-accent {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    padding-right: .06em;
+}
+
 
 ::selection {
     background: var(--accent-primary);
@@ -624,7 +694,7 @@ h1, h2, h3, h4 {
 .c3 { color: var(--text-muted); }
 
 /* ================================================================
-   3. ЖИВОЙ ФОН: сетка + частицы + дрейфующие градиенты
+   3. ФОН: тонкая сетка + спокойный градиентный подсвет
    ================================================================ */
 .bg-grid {
     position: fixed;
@@ -634,11 +704,12 @@ h1, h2, h3, h4 {
     background-image:
         linear-gradient(var(--grid-line) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse 100% 90% at 50% 10%, black 40%, transparent 90%);
-    -webkit-mask-image: radial-gradient(ellipse 100% 90% at 50% 10%, black 40%, transparent 90%);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 25%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 25%, transparent 80%);
 }
 
+/* Один спокойный тональный подсвет вместо трёх разноцветных пятен */
 body::before {
     content: '';
     position: fixed;
@@ -646,50 +717,14 @@ body::before {
     z-index: -1;
     pointer-events: none;
     background:
-        radial-gradient(600px circle at 18% 28%, rgba(59,130,246,.10) 0%, transparent 55%),
-        radial-gradient(520px circle at 82% 68%, rgba(139,92,246,.08) 0%, transparent 55%),
-        radial-gradient(420px circle at 42% 82%, rgba(236,72,153,.05) 0%, transparent 55%);
-    animation: bgShift 22s ease-in-out infinite alternate;
+        radial-gradient(900px circle at 78% -8%, rgba(37,99,235,.09) 0%, transparent 60%),
+        radial-gradient(700px circle at 8% 12%, rgba(79,70,229,.06) 0%, transparent 62%);
 }
 
-@keyframes bgShift {
-    0% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(28px, -22px) scale(1.02); }
-    100% { transform: translate(-22px, 20px) scale(0.98); }
-}
-
-.particles {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.particle {
-    position: absolute;
-    width: 5px;
-    height: 5px;
-    background: rgba(59, 130, 246, 0.35);
-    border-radius: 50%;
-    animation: floatParticle linear infinite;
-}
-
-.particle:nth-child(1) { left: 8%; animation-duration: 21s; }
-.particle:nth-child(2) { left: 18%; animation-duration: 18s; animation-delay: 2s; }
-.particle:nth-child(3) { left: 28%; animation-duration: 23s; animation-delay: 4s; }
-.particle:nth-child(4) { left: 38%; animation-duration: 17s; animation-delay: 1s; }
-.particle:nth-child(5) { left: 48%; animation-duration: 20s; animation-delay: 3s; }
-.particle:nth-child(6) { left: 58%; animation-duration: 22s; animation-delay: 5s; }
-.particle:nth-child(7) { left: 68%; animation-duration: 16s; animation-delay: .5s; }
-.particle:nth-child(8) { left: 78%; animation-duration: 24s; animation-delay: 2.5s; }
-.particle:nth-child(9) { left: 88%; animation-duration: 19s; animation-delay: 4.5s; }
-.particle:nth-child(10) { left: 94%; animation-duration: 21s; animation-delay: 6s; }
-
-@keyframes floatParticle {
-    0% { transform: translateY(105vh); opacity: 0; }
-    10%, 90% { opacity: .7; }
-    100% { transform: translateY(-8vh); opacity: 0; }
+body.dark-theme::before {
+    background:
+        radial-gradient(900px circle at 78% -8%, rgba(59,130,246,.16) 0%, transparent 60%),
+        radial-gradient(700px circle at 8% 12%, rgba(99,102,241,.10) 0%, transparent 62%);
 }
 
 /* ================================================================
@@ -749,9 +784,16 @@ nav {
     right: 0;
     z-index: 9999;
     background: var(--nav-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--card-border);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--t-normal), box-shadow var(--t-normal), background var(--t-normal);
+}
+
+/* Граница и тень появляются только после начала скролла */
+nav.scrolled {
+    border-bottom-color: var(--hairline);
+    box-shadow: 0 1px 0 var(--hairline), 0 8px 24px -18px rgba(11,18,32,.5);
 }
 
 .nav-link {
@@ -771,11 +813,12 @@ nav {
     content: '';
     position: absolute;
     bottom: 0;
-    left: 0;
+    left: 50%;
     width: 0;
     height: 2px;
     border-radius: 2px;
-    background: var(--accent-gradient);
+    background: var(--accent-primary);
+    transform: translateX(-50%);
     transition: width var(--t-normal);
 }
 
@@ -800,6 +843,26 @@ nav {
 
 .lang-btn:hover {
     border-color: var(--card-hover-border);
+}
+
+.lang-option {
+    display: block;
+    padding: .5rem .75rem;
+    border-radius: var(--radius-sm);
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: background var(--t-fast), color var(--t-fast);
+}
+
+.lang-option:hover { background: var(--soft-blue); color: var(--text-primary); }
+
+.lang-option.is-active,
+.lang-btn.is-active {
+    background: var(--soft-blue);
+    color: var(--accent-primary);
+    border-color: color-mix(in srgb, var(--accent-primary) 24%, transparent);
 }
 
 .dropdown-panel {
@@ -843,7 +906,7 @@ nav {
     right: 0;
     width: 16px;
     height: 16px;
-    background: #EF4444;
+    background: var(--error);
     border-radius: 50%;
     font-size: 10px;
     color: #fff;
@@ -860,39 +923,38 @@ nav {
     background: var(--accent-gradient);
     color: #fff;
     border: none;
-    padding: .8rem 1.6rem;
+    padding: .78rem 1.5rem;
     border-radius: var(--radius-md);
-    font-weight: 700;
+    font-weight: 600;
+    font-size: .9375rem;
+    letter-spacing: -0.01em;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: .6rem;
+    gap: .55rem;
     position: relative;
-    overflow: hidden;
-    box-shadow: 0 8px 24px var(--accent-glow);
-    transition: transform var(--t-normal), box-shadow var(--t-normal);
+    /* Внутренний блик сверху + мягкая цветная тень — «объём» без анимаций */
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.18),
+        0 1px 2px rgba(11,18,32,.12),
+        0 8px 20px -8px var(--accent-glow);
+    transition: transform var(--t-fast), box-shadow var(--t-normal), filter var(--t-fast);
     text-decoration: none;
 }
 
-.btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
-    transition: left .55s ease;
-}
-
 .btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 14px 34px var(--accent-glow);
+    transform: translateY(-1px);
+    filter: saturate(1.06);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.22),
+        0 2px 4px rgba(11,18,32,.12),
+        0 14px 28px -10px var(--accent-glow);
 }
 
-.btn-primary:hover::before {
-    left: 100%;
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: inset 0 1px 3px rgba(11,18,32,.22);
 }
 
 .btn-primary:disabled {
@@ -908,19 +970,27 @@ nav {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: .6rem;
+    justify-content: center;
+    gap: .55rem;
     font-weight: 600;
+    font-size: .9375rem;
+    letter-spacing: -0.01em;
     border-radius: var(--radius-md);
-    padding: .8rem 1.6rem;
-    transition: all .25s;
+    padding: .78rem 1.5rem;
+    transition: transform var(--t-fast), border-color var(--t-normal), box-shadow var(--t-normal), background var(--t-normal);
     box-shadow: var(--shadow-card);
     text-decoration: none;
 }
 
 .btn-white:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     border-color: var(--card-hover-border);
+    background: var(--bg-secondary);
     box-shadow: var(--shadow-hover);
+}
+
+.btn-white:active {
+    transform: translateY(0);
 }
 
 .badge-pill {
@@ -929,19 +999,21 @@ nav {
     gap: .5rem;
     background: var(--soft-blue);
     color: var(--soft-blue-t);
-    border: 1px solid rgba(59,130,246,.2);
+    border: 1px solid rgba(37,99,235,.16);
     border-radius: 999px;
-    padding: .45rem 1rem;
-    font-size: .8rem;
+    padding: .4rem .9rem;
+    font-size: .78125rem;
     font-weight: 600;
+    letter-spacing: -0.005em;
 }
 
 .dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: #10B981;
-    animation: pulse 2s infinite;
+    background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+    animation: pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes pulse {
@@ -953,17 +1025,20 @@ input, select, textarea {
     background: var(--card-solid);
     border: 1px solid var(--card-border);
     color: var(--text-primary);
-    padding: .7rem 1rem;
-    border-radius: 12px;
+    padding: .7rem .95rem;
+    border-radius: var(--radius-md);
     outline: none;
     width: 100%;
     font-size: .9rem;
-    transition: all .2s;
+    box-shadow: inset 0 1px 2px rgba(11,18,32,.03);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
+
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
 
 input:focus, select:focus, textarea:focus {
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 16%, transparent);
 }
 
 /* ================================================================
@@ -980,7 +1055,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .card-hover:hover {
-    transform: translateY(-6px);
+    transform: translateY(-3px);
     border-color: var(--card-hover-border);
     box-shadow: var(--shadow-hover);
 }
@@ -990,25 +1065,28 @@ input:focus, select:focus, textarea:focus {
     overflow: hidden;
 }
 
+/* Волосяная линия-подсветка сверху при наведении вместо «блика» */
 .feature-card::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(59,130,246,.08), transparent);
-    transition: left .6s ease;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+    opacity: 0;
+    transition: opacity var(--t-normal);
     pointer-events: none;
 }
 
 .feature-card:hover::before {
-    left: 100%;
+    opacity: .55;
 }
 
 .info-section {
     background: var(--card-bg);
     backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--card-border);
     box-shadow: var(--shadow-card);
     border-radius: var(--radius-xl);
@@ -1021,33 +1099,51 @@ input:focus, select:focus, textarea:focus {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    right: 0;
+    left: 15%;
+    right: 15%;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(59,130,246,.5), transparent);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-primary) 55%, transparent), transparent);
 }
 
+/* Единая «плитка» иконки: мягкая подложка + акцентный штрих.
+   Спокойнее и профессиональнее, чем восемь разноцветных градиентов. */
 .icon-tile {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    box-shadow: 0 6px 16px var(--accent-glow);
-    transition: transform .3s;
+    background: var(--soft-blue);
+    color: var(--accent-primary);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 14%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+    transition: background var(--t-normal), color var(--t-normal), border-color var(--t-normal);
+}
+
+body.dark-theme .icon-tile {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
 }
 
 .card-hover:hover .icon-tile {
-    transform: scale(1.08) rotate(-3deg);
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: #fff;
+}
+
+/* Круглая плитка для слайдера документов и карточек примеров */
+.icon-tile-round {
+    border-radius: var(--radius-full);
+    width: 56px;
+    height: 56px;
 }
 
 .bullet {
     display: flex;
     gap: .5rem;
     align-items: flex-start;
-    font-size: .82rem;
+    font-size: .8125rem;
+    line-height: 1.55;
     color: var(--text-secondary);
 }
 
@@ -1074,7 +1170,7 @@ input:focus, select:focus, textarea:focus {
 
 .tool-cta:hover {
     gap: .7rem;
-    color: #8B5CF6;
+    color: var(--accent-strong);
 }
 
 /* ================================================================
@@ -1082,25 +1178,21 @@ input:focus, select:focus, textarea:focus {
    ================================================================ */
 .text-gradient {
     background: var(--accent-gradient);
-    background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: gradMove 7s linear infinite;
-}
-
-@keyframes gradMove {
-    to { background-position: 200% center; }
+    color: transparent;
 }
 
 .type-cursor {
     display: inline-block;
-    width: 3px;
-    height: 1em;
-    background: #8B5CF6;
+    width: 2px;
+    height: 1.05em;
+    background: var(--accent-primary);
     margin-left: 4px;
-    vertical-align: -0.12em;
-    animation: blink 1s step-end infinite;
+    vertical-align: -0.14em;
+    border-radius: 1px;
+    animation: blink 1.1s step-end infinite;
 }
 
 @keyframes blink {
@@ -1112,30 +1204,51 @@ input:focus, select:focus, textarea:focus {
    ================================================================ */
 .hero-glow {
     position: absolute;
-    inset: -8%;
+    inset: -10%;
     z-index: 0;
-    background:
-        radial-gradient(50% 50% at 60% 40%, rgba(139,92,246,.22), transparent 70%),
-        radial-gradient(40% 40% at 30% 70%, rgba(59,130,246,.18), transparent 70%);
-    filter: blur(30px);
-    animation: glowB 6s ease-in-out infinite;
+    background: radial-gradient(55% 55% at 62% 38%, var(--accent-glow), transparent 72%);
+    filter: blur(38px);
 }
 
-@keyframes glowB {
-    0%, 100% { opacity: .7; }
-    50% { opacity: 1; }
+/* Оправа-«окно приложения» вокруг визуала — читается как продуктовый скриншот */
+.hero-frame {
+    position: relative;
+    z-index: 1;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--card-border);
+    background: var(--card-solid);
+    padding: 8px;
+    box-shadow: var(--shadow-lift);
+    overflow: hidden;
+}
+
+.hero-frame-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px 10px;
+}
+
+.hero-frame-bar i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--card-border);
+}
+
+.hero-frame-bar span {
+    margin-left: auto;
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--text-muted);
 }
 
 .hero-img {
-    border-radius: 20px;
-    box-shadow: 0 24px 70px rgba(15,23,42,.22);
+    display: block;
+    border-radius: calc(var(--radius-xl) - 10px);
     position: relative;
     z-index: 1;
-    transition: transform .2s ease;
-}
-
-body.dark-theme .hero-img {
-    box-shadow: 0 24px 70px rgba(0,0,0,.5);
 }
 
 .stat-badge {
@@ -1143,18 +1256,18 @@ body.dark-theme .hero-img {
     z-index: 2;
     background: var(--card-solid);
     border: 1px solid var(--card-border);
-    border-radius: 14px;
-    padding: .9rem 1.1rem;
+    border-radius: var(--radius-lg);
+    padding: .8rem 1rem;
     box-shadow: var(--shadow-hover);
     display: flex;
     align-items: center;
-    gap: .8rem;
-    animation: float 5s ease-in-out infinite;
+    gap: .75rem;
+    animation: float 7s ease-in-out infinite;
 }
 
 @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    50% { transform: translateY(-6px); }
 }
 
 /* ================================================================
@@ -1162,10 +1275,13 @@ body.dark-theme .hero-img {
    ================================================================ */
 .ticker {
     overflow: hidden;
-    border-top: 1px solid var(--card-border);
-    border-bottom: 1px solid var(--card-border);
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
     background: var(--bg-secondary);
-    padding: 14px 0;
+    padding: 15px 0;
+    /* Края растворяются — строка не «обрубается» о край экрана */
+    mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
 }
 
 .ticker-track {
@@ -1188,9 +1304,10 @@ body.dark-theme .hero-img {
     align-items: center;
     gap: .55rem;
     white-space: nowrap;
-    font-size: .85rem;
+    font-size: .8125rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    letter-spacing: -0.005em;
+    color: var(--text-muted);
 }
 
 /* ================================================================
@@ -1494,25 +1611,32 @@ body.dark-theme .hero-img {
    ================================================================ */
 .faq-item {
     border: 1px solid var(--card-border);
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     background: var(--card-bg);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     overflow: hidden;
-    transition: all .25s;
+    transition: border-color var(--t-normal), box-shadow var(--t-normal);
 }
 
 .faq-item:hover {
     border-color: var(--card-hover-border);
 }
 
+.faq-item.active {
+    border-color: var(--card-hover-border);
+    box-shadow: var(--shadow-card);
+}
+
 .faq-q {
     width: 100%;
-    padding: 1.1rem 1.25rem;
+    padding: 1.05rem 1.25rem;
     background: none;
     border: none;
     color: var(--text-primary);
-    font-size: .95rem;
+    font-size: .9375rem;
     font-weight: 600;
+    letter-spacing: -0.01em;
     text-align: left;
     cursor: pointer;
     display: flex;
@@ -1538,38 +1662,65 @@ body.dark-theme .hero-img {
     overflow: hidden;
     padding: 0 1.25rem;
     font-size: .875rem;
+    line-height: 1.65;
     color: var(--text-secondary);
-    transition: max-height .35s, padding .35s;
+    transition: max-height .35s cubic-bezier(0.4, 0, 0.2, 1), padding .35s;
 }
 
 .faq-item.active .faq-a {
     max-height: 400px;
-    padding: 0 1.25rem 1.25rem;
+    padding: 0 1.25rem 1.15rem;
 }
 
 .pricing-card {
     position: relative;
-    transition: all var(--t-slow);
+    transition: transform var(--t-normal), border-color var(--t-normal), box-shadow var(--t-normal);
 }
 
 .pricing-card:hover {
-    transform: translateY(-10px);
-    border-color: var(--accent-primary);
+    transform: translateY(-4px);
+    border-color: var(--card-hover-border);
     box-shadow: var(--shadow-hover);
 }
 
+/* Рекомендуемый тариф выделяется рамкой и высотой, а не свечением */
 .pricing-card.popular {
     border-color: var(--accent-primary);
-    box-shadow: 0 0 40px var(--accent-glow);
+    box-shadow:
+        0 0 0 1px var(--accent-primary),
+        var(--shadow-hover);
+}
+
+@media (min-width: 768px) {
+    .pricing-card.popular { transform: translateY(-10px); }
+    .pricing-card.popular:hover { transform: translateY(-14px); }
 }
 
 .testimonial-card {
-    transition: all var(--t-normal);
+    position: relative;
+    transition: transform var(--t-normal), box-shadow var(--t-normal), border-color var(--t-normal);
 }
 
 .testimonial-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-3px);
+    border-color: var(--card-hover-border);
     box-shadow: var(--shadow-hover);
+}
+
+/* Аватар автора отзыва — спокойная тональная заливка */
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .875rem;
+    background: var(--soft-blue);
+    color: var(--accent-primary);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 16%, transparent);
+    flex-shrink: 0;
 }
 
 /* ================================================================
@@ -1787,6 +1938,157 @@ footer {
 .dash-tab { display: none; }
 .dash-tab.active { display: block; animation: fadeIn .35s ease; }
 
+
+/* ================================================================
+   19. ПОДВАЛ И ТОНАЛЬНЫЕ ПЛАШКИ
+   ================================================================ */
+.site-footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--hairline);
+    margin-top: 2rem;
+}
+
+.foot-h {
+    font-size: .6875rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.foot-link {
+    font-size: .8125rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    transition: color var(--t-fast);
+}
+
+.foot-link:hover { color: var(--accent-primary); }
+
+/* Квадратная тональная плашка под иконку (герой, статистика) */
+.tint {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.tint-success {
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    color: var(--success);
+}
+
+.tint-accent {
+    background: var(--soft-blue);
+    color: var(--accent-primary);
+}
+
+/* ================================================================
+   18. ЕДИНЫЕ МЕЛОЧИ: маркеры, ленты, номера шагов, оправа героя
+   ================================================================ */
+.mark {
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mark svg { width: 12px; height: 12px; }
+
+.mark-bad {
+    background: color-mix(in srgb, var(--error) 12%, transparent);
+    color: var(--error);
+}
+
+.mark-good {
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+    color: var(--success);
+}
+
+/* Лента-метка на карточке */
+.ribbon {
+    position: absolute;
+    top: -11px;
+    right: 1.5rem;
+    font-size: .6875rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #fff;
+    padding: .3rem .75rem;
+    border-radius: var(--radius-full);
+    box-shadow: 0 4px 12px -4px rgba(11,18,32,.4);
+}
+
+.ribbon-good { background: var(--success); }
+.ribbon-accent { background: var(--accent-gradient); }
+
+/* Номер шага в разделе «как это работает» */
+.step-num {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 1.5rem;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    background: var(--accent-gradient);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.2),
+        0 8px 20px -8px var(--accent-glow);
+}
+
+/* Предупреждение внутри карточки инструмента */
+.tool-note {
+    display: flex;
+    align-items: flex-start;
+    gap: .4rem;
+    font-size: .6875rem;
+    line-height: 1.5;
+    margin-bottom: .75rem;
+    padding-top: .5rem;
+    border-top: 1px solid var(--hairline);
+    color: var(--warning);
+}
+
+.tool-note svg { width: 13px; height: 13px; flex-shrink: 0; margin-top: 2px; }
+
+/* Заглушка, если внешняя картинка героя не загрузилась */
+.hero-frame-empty::after {
+    content: '';
+    display: block;
+    aspect-ratio: 4 / 3;
+    border-radius: calc(var(--radius-xl) - 10px);
+    background:
+        linear-gradient(135deg, var(--soft-blue), transparent 60%),
+        var(--bg-primary);
+    border: 1px dashed var(--card-border);
+}
+
+@media (max-width: 768px) {
+    .info-section { border-radius: var(--radius-lg); }
+    .hero-frame { padding: 6px; }
+}
+
 @media (max-width: 768px) {
     .theme-toggle { top: 80px; right: 14px; width: 46px; height: 46px; }
     .fab { bottom: 18px; right: 18px; width: 52px; height: 52px; }
@@ -1813,19 +2115,6 @@ footer {
 <div id="scrollProgress" aria-hidden="true"></div>
 <div class="bg-grid" aria-hidden="true"></div>
 
-<div class="particles" aria-hidden="true">
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-</div>
-
 <!-- Theme toggle -->
 <button class="theme-toggle" onclick="toggleTheme()" role="switch" aria-label="{{ app()->getLocale() === 'en' ? 'Toggle theme' : (app()->getLocale() === 'tg' ? 'Иваз кардани мавзӯъ' : 'Переключить тему') }}">
     <svg class="sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['sun'] !!}</svg>
@@ -1837,7 +2126,7 @@ footer {
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 gap-4">
             <button onclick="showSection('landing'); window.scrollTo({top:0,behavior:'smooth'})" class="flex items-center gap-2.5">
-                <svg class="w-8 h-8" style="color:#3B82F6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">{!! $icons['shield'] !!}</svg>
+                <svg class="w-8 h-8" style="color:var(--accent-primary)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">{!! $icons['shield'] !!}</svg>
                 <span class="text-xl font-extrabold tracking-tight c1">LegalAI Pro</span>
             </button>
 
@@ -1857,7 +2146,7 @@ footer {
                     </button>
                     <div x-show="lang" x-on:click.outside="lang = false" class="dropdown-panel !w-28 p-1.5">
                         @foreach(['ru' => 'RU', 'tg' => 'TJ', 'en' => 'EN'] as $code => $label)
-                            <a href="{{ request()->fullUrlWithQuery(['lang' => $code]) }}" class="block px-3 py-2 rounded-lg text-xs font-bold transition hover:bg-blue-500/10 {{ app()->getLocale() === $code ? 'text-blue-500' : 'c2' }}">{{ $label }}</a>
+                            <a href="{{ route('locale.switch', $code) }}" class="lang-option {{ app()->getLocale() === $code ? 'is-active' : '' }}">{{ $label }}</a>
                         @endforeach
                     </div>
                 </div>
@@ -1902,7 +2191,7 @@ footer {
         <button onclick="openPalette()" class="sidebar-btn">⌘K {{ $L['nav']['search'] }}</button>
         <div class="pt-3 flex gap-2">
             @foreach(['ru' => 'RU', 'tg' => 'TJ', 'en' => 'EN'] as $code => $label)
-                <a href="{{ request()->fullUrlWithQuery(['lang' => $code]) }}" class="lang-btn flex-1 justify-center">{{ $label }}</a>
+                <a href="{{ route('locale.switch', $code) }}" class="lang-btn flex-1 justify-center {{ app()->getLocale() === $code ? 'is-active' : '' }}">{{ $label }}</a>
             @endforeach
         </div>
         <a href="{{ route('login') }}" class="btn-primary w-full !py-2.5 text-sm">{{ $L['nav']['login'] }}</a>
@@ -1920,7 +2209,7 @@ footer {
                 <div class="badge-pill mb-7"><span class="dot" aria-hidden="true"></span>{{ $L['hero']['badge'] }}</div>
                 <h1 class="text-4xl md:text-5xl xl:text-[3.5rem] font-extrabold leading-[1.12] mb-4">
                     {{ $L['hero']['title1'] }}<br>
-                    <span class="text-gradient">{{ $L['hero']['title2'] }}</span>
+                    <span class="h-accent">{{ $L['hero']['title2'] }}</span>
                 </h1>
                 <p class="text-lg md:text-xl font-semibold mb-6 c2">
                     <span id="typeTarget" class="text-gradient"></span><span class="type-cursor" aria-hidden="true"></span>
@@ -1958,9 +2247,15 @@ footer {
             <!-- Hero visual -->
             <div class="relative reveal active rd2" aria-hidden="true">
                 <div class="hero-glow"></div>
-                <img id="heroImg" src="https://image.qwenlm.ai/public_source/48f99b9f-6493-4401-a338-927a8c873e1a/1269011f0-818d-4497-9ee0-8c8efb1a3788.png" alt="Legal AI" class="hero-img w-full object-cover">
+                <div class="hero-frame">
+                    <div class="hero-frame-bar">
+                        <i></i><i></i><i></i>
+                        <span>LEGALAI PRO</span>
+                    </div>
+                    <img id="heroImg" src="https://image.qwenlm.ai/public_source/48f99b9f-6493-4401-a338-927a8c873e1a/1269011f0-818d-4497-9ee0-8c8efb1a3788.png" alt="Legal AI" class="hero-img w-full object-cover" loading="eager" onerror="this.closest('.hero-frame').classList.add('hero-frame-empty'); this.remove();">
+                </div>
                 <div class="stat-card stat-badge -bottom-5 -left-3 md:-left-6">
-                    <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#ECFDF5; color:#10B981;">
+                    <span class="tint tint-success">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['bolt'] !!}</svg>
                     </span>
                     <div>
@@ -1969,7 +2264,7 @@ footer {
                     </div>
                 </div>
                 <div class="stat-card stat-badge -top-5 -right-3 md:-right-6" style="animation-delay: 1.2s;">
-                    <span class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#EFF4FF; color:#3B82F6;">
+                    <span class="tint tint-accent">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['check'] !!}</svg>
                     </span>
                     <div>
@@ -2014,7 +2309,7 @@ footer {
         <div class="max-w-7xl mx-auto">
             <div class="max-w-3xl mx-auto text-center mb-14">
                 <div class="badge-pill mb-4" style="background:rgba(244,63,94,.08); color:#F43F5E; border-color:rgba(244,63,94,.2);"><span class="dot" style="background:#F43F5E"></span>{{ $L['prob']['badge'] }}</div>
-                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">{{ $L['prob']['title'] }} <span class="text-gradient">{{ $L['prob']['accent'] }}</span></h2>
+                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">{{ $L['prob']['title'] }} <span class="h-accent">{{ $L['prob']['accent'] }}</span></h2>
                 <p class="text-lg c2">{{ $L['prob']['sub'] }}</p>
             </div>
             <div class="grid lg:grid-cols-2 gap-6">
@@ -2032,7 +2327,7 @@ footer {
                         @foreach($L['prob']['problems'] as $p)
                             <div class="pain">
                                 <div class="flex gap-3">
-                                    <span class="mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style="background:rgba(244,63,94,.12); color:#F43F5E;">✕</span>
+                                    <span class="mark mark-bad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">{!! $icons['x'] !!}</svg></span>
                                     <div>
                                         <div class="font-bold text-sm c1">{{ $p['pain'] }}</div>
                                         <p class="text-[13px] mt-1 c2">{{ $p['detail'] }}</p>
@@ -2044,7 +2339,7 @@ footer {
                     </div>
                 </div>
                 <div class="card-gradient p-7 md:p-8 relative" style="border-color: rgba(16,185,129,.3);">
-                    <span class="absolute -top-3 right-6 text-[11px] font-bold text-white px-3 py-1 rounded-full" style="background:linear-gradient(135deg,#10B981,#0D9488);">✦ {{ $L['prob']['a_label'] }}</span>
+                    <span class="ribbon ribbon-good">{{ $L['prob']['a_label'] }}</span>
                     <div class="flex items-center gap-3 mb-6">
                         <span class="w-10 h-10 rounded-xl flex items-center justify-center text-white" style="background:linear-gradient(135deg,#10B981,#059669);">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">{!! $icons['check'] !!}</svg>
@@ -2058,7 +2353,7 @@ footer {
                         @foreach($L['prob']['solutions'] as $s)
                             <div class="win">
                                 <div class="flex gap-3">
-                                    <span class="mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs shrink-0" style="background:#10B981;">✓</span>
+                                    <span class="mark mark-good"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">{!! $icons['check'] !!}</svg></span>
                                     <div>
                                         <div class="font-bold text-sm c1">{{ $s['win'] }}</div>
                                         <p class="text-[13px] mt-1 c2">{{ $s['detail'] }}</p>
@@ -2079,13 +2374,13 @@ footer {
         <div class="max-w-7xl mx-auto">
             <div class="text-center max-w-3xl mx-auto mb-14">
                 <div class="badge-pill mb-4"><span class="dot"></span>{{ $L['tools']['badge'] }}</div>
-                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">{{ $L['tools']['title'] }} <span class="text-gradient">{{ $L['tools']['accent'] }}</span></h2>
+                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">{{ $L['tools']['title'] }} <span class="h-accent">{{ $L['tools']['accent'] }}</span></h2>
                 <p class="text-lg c2">{{ $L['tools']['sub'] }}</p>
             </div>
             <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
                 @foreach($L['tools']['items'] as $i => $tool)
                     <div class="card-gradient card-hover feature-card p-6 flex flex-col reveal rd{{ ($i % 4) + 1 }}">
-                        <div class="icon-tile mb-4 bg-gradient-to-br {{ ['from-blue-500 to-indigo-500','from-violet-500 to-purple-500','from-amber-500 to-orange-500','from-sky-500 to-cyan-500','from-emerald-500 to-teal-500','from-fuchsia-500 to-pink-500','from-rose-500 to-red-500','from-indigo-500 to-blue-500'][$i] }}">
+                        <div class="icon-tile mb-4">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons[$toolIcons[$i]] !!}</svg>
                         </div>
                         <h3 class="text-[15px] font-bold mb-1.5">{{ $tool['t'] }}</h3>
@@ -2096,7 +2391,10 @@ footer {
                             @endforeach
                         </ul>
                         @isset($tool['note'])
-                            <p class="text-[11px] mb-3 pt-2 border-t" style="color:var(--warning); border-color:var(--card-border);">⚠️ {{ $tool['note'] }}</p>
+                            <p class="tool-note">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{!! $icons['warning'] !!}</svg>
+                                <span>{{ $tool['note'] }}</span>
+                            </p>
                         @endisset
                         <button onclick="openTool('t{{ $i + 1 }}')" class="tool-cta">
                             {{ $L['tools']['cta'] }}
@@ -2112,15 +2410,15 @@ footer {
     <section class="py-24 px-4 sm:px-6 reveal">
         <div class="max-w-6xl mx-auto">
             <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">{{ $L['how']['title'] }} <span class="text-gradient">{{ $L['how']['accent'] }}</span></h2>
+                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">{{ $L['how']['title'] }} <span class="h-accent">{{ $L['how']['accent'] }}</span></h2>
                 <p class="text-lg c2">{{ $L['how']['sub'] }}</p>
             </div>
             <div class="relative">
-                <div class="hidden md:block absolute top-7 left-[18%] right-[18%] step-line"></div>
+                <div class="hidden md:block absolute top-[58px] left-[18%] right-[18%] step-line"></div>
                 <div class="grid md:grid-cols-3 gap-8">
                     @foreach($L['how']['steps'] as $i => $step)
                         <div class="card-gradient card-hover p-8 text-center relative reveal rd{{ $i + 1 }}">
-                            <div class="w-14 h-14 mx-auto mb-6 rounded-2xl flex items-center justify-center text-white text-lg font-extrabold relative z-10 bg-gradient-to-br {{ ['from-blue-500 to-indigo-500','from-violet-500 to-purple-500','from-emerald-500 to-teal-500'][$i] }}" style="box-shadow:0 8px 20px var(--accent-glow);">{{ $i + 1 }}</div>
+                            <div class="step-num">{{ $i + 1 }}</div>
                             <h3 class="text-base font-bold mb-2">{{ $step['title'] }}</h3>
                             <p class="text-[13px] mb-5 c2">{{ $step['desc'] }}</p>
                             <ul class="space-y-2">
@@ -2140,7 +2438,7 @@ footer {
         <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
             <div>
                 <div class="badge-pill mb-4"><span class="dot"></span>{{ $L['demo']['badge'] }}</div>
-                <h2 class="text-3xl md:text-4xl font-extrabold mb-4">{{ $L['demo']['title'] }}<br><span class="text-gradient">{{ $L['demo']['accent'] }}</span></h2>
+                <h2 class="text-3xl md:text-4xl font-extrabold mb-4">{{ $L['demo']['title'] }}<br><span class="h-accent">{{ $L['demo']['accent'] }}</span></h2>
                 <p class="text-base mb-8 c2">{{ $L['demo']['sub'] }}</p>
                 <div x-data="chatDemo" class="space-y-2.5">
                     <template x-for="(item, idx) in quick" :key="idx">
@@ -2198,8 +2496,8 @@ footer {
                 <div id="sliderTrack" class="flex gap-5 overflow-x-auto hide-scrollbar py-3 px-1 scroll-smooth">
                     @foreach($L['docs']['types'] as $i => $type)
                         <div class="card-gradient card-hover shrink-0 w-60 p-6 text-center">
-                            <div class="w-16 h-16 {{ ['bg-blue-50 text-blue-500','bg-amber-50 text-amber-500','bg-emerald-50 text-emerald-500','bg-violet-50 text-violet-500','bg-rose-50 text-rose-500','bg-cyan-50 text-cyan-500'][$i] }} rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons[$docIcons[$i]] !!}</svg>
+                            <div class="icon-tile icon-tile-round mx-auto mb-4">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">{!! $icons[$docIcons[$i]] !!}</svg>
                             </div>
                             <h3 class="font-bold text-sm mb-1">{{ $type[0] }}</h3>
                             <p class="text-xs c3">{{ $type[1] }}</p>
@@ -2220,15 +2518,15 @@ footer {
     <section class="py-20 px-4 sm:px-6 reveal">
         <div class="max-w-7xl mx-auto">
             <div class="text-center max-w-3xl mx-auto mb-12">
-                <h2 class="text-3xl md:text-4xl font-extrabold mb-4 text-gradient">{{ $L['examples']['title'] }}</h2>
+                <h2 class="text-3xl md:text-4xl font-extrabold mb-4">{{ $L['examples']['title'] }}</h2>
                 <p class="text-lg c2">{{ $L['examples']['sub'] }}</p>
             </div>
             <div class="grid md:grid-cols-2 gap-6">
                 @foreach($L['examples']['items'] as $i => $ex)
                     <div class="card-gradient card-hover feature-card p-6 reveal rd{{ ($i % 2) + 1 }}">
                         <div class="flex items-start gap-4">
-                            <span class="w-12 h-12 shrink-0 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons[$docIcons[$i]] !!}</svg>
+                            <span class="icon-tile icon-tile-round shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">{!! $icons[$docIcons[$i]] !!}</svg>
                             </span>
                             <div>
                                 <h3 class="text-lg font-bold mb-2">{{ $ex['t'] }}</h3>
@@ -2244,7 +2542,7 @@ footer {
     <!-- ABOUT -->
     <section class="py-16 px-4 sm:px-6 reveal">
         <div class="max-w-4xl mx-auto info-section">
-            <h2 class="text-2xl md:text-4xl font-extrabold text-center text-gradient mb-8">{{ $L['about']['title'] }}</h2>
+            <h2 class="text-2xl md:text-4xl font-extrabold text-center mb-8">{{ $L['about']['title'] }}</h2>
             <div class="space-y-5 text-[15px] leading-relaxed c2">
                 <p><strong class="c1">LegalAI Pro</strong> — {{ $L['about']['p1'] }}</p>
                 <p>{{ $L['about']['p2'] }}</p>
@@ -2273,7 +2571,7 @@ footer {
                         </div>
                         <p class="text-sm leading-relaxed mb-5 c2">«{{ $t['x'] }}»</p>
                         <div class="flex items-center gap-3">
-                            <span class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">{{ mb_substr($t['n'], 0, 1) }}</span>
+                            <span class="avatar">{{ mb_substr($t['n'], 0, 1) }}</span>
                             <div>
                                 <div class="text-sm font-bold c1">{{ $t['n'] }}</div>
                                 <div class="text-xs c3">{{ $t['r'] }}</div>
@@ -2296,7 +2594,7 @@ footer {
                 @foreach($L['pricing']['items'] as $i => $p)
                     <div class="card-gradient pricing-card p-7 flex flex-col {{ $i === 1 ? 'popular' : '' }} reveal rd{{ $i + 1 }}">
                         @if($i === 1)
-                            <span class="absolute -top-3 left-1/2 -translate-x-1/2 text-[11px] font-bold text-white px-3 py-1 rounded-full" style="background:var(--accent-gradient);">{{ $L['pricing']['popular'] }}</span>
+                            <span class="ribbon ribbon-accent" style="left:50%; transform:translateX(-50%); right:auto;">{{ $L['pricing']['popular'] }}</span>
                         @endif
                         <h3 class="text-lg font-bold mb-2">{{ $p['n'] }}</h3>
                         <div class="mb-5">
@@ -2320,7 +2618,7 @@ footer {
         <div class="max-w-3xl mx-auto">
             <div class="text-center mb-12">
                 <div class="badge-pill mb-4">{{ $L['faq']['badge'] }}</div>
-                <h2 class="text-3xl md:text-4xl font-extrabold mb-3">{{ $L['faq']['title'] }} <span class="text-gradient">{{ $L['faq']['accent'] }}</span></h2>
+                <h2 class="text-3xl md:text-4xl font-extrabold mb-3">{{ $L['faq']['title'] }} <span class="h-accent">{{ $L['faq']['accent'] }}</span></h2>
                 <p class="c2">{{ $L['faq']['sub'] }}</p>
             </div>
             <div class="space-y-3">
@@ -2418,7 +2716,7 @@ footer {
                     </div>
                     <div id="fileInfo" class="hidden mt-4 card-gradient p-3.5 flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <span class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background:#EFF4FF; color:#3B82F6;"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['doc'] !!}</svg></span>
+                            <span class="tint tint-accent !w-9 !h-9"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['doc'] !!}</svg></span>
                             <div class="min-w-0"><p id="fileName" class="text-sm font-bold truncate c1">document.docx</p><p id="fileSize" class="text-xs c3">—</p></div>
                         </div>
                         <button onclick="removeFile()" class="bell-btn" aria-label="✕"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['x'] !!}</svg></button>
@@ -2564,40 +2862,40 @@ footer {
 </main>
 
 <!-- ==================== FOOTER ==================== -->
-<footer class="py-14 px-4 sm:px-6">
+<footer class="site-footer py-14 px-4 sm:px-6">
     <div class="max-w-7xl mx-auto">
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
             <div>
                 <div class="flex items-center gap-2.5 mb-4">
-                    <svg class="w-8 h-8" style="color:#3B82F6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['shield'] !!}</svg>
+                    <svg class="w-8 h-8" style="color:var(--accent-primary)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['shield'] !!}</svg>
                     <span class="text-lg font-extrabold c1">LegalAI Pro</span>
                 </div>
                 <p class="text-[13px] leading-relaxed c2">{{ $L['footer']['about'] }}</p>
             </div>
             <div>
-                <h4 class="text-sm font-extrabold mb-4">{{ $L['footer']['product'] }}</h4>
+                <h4 class="foot-h">{{ $L['footer']['product'] }}</h4>
                 <ul class="space-y-2.5">
                     @foreach($L['tools']['items'] as $i => $tool)
-                        <li><button onclick="openTool('t{{ $i + 1 }}')" class="text-[13px] c2 hover:opacity-70">{{ $tool['t'] }}</button></li>
+                        <li><button onclick="openTool('t{{ $i + 1 }}')" class="foot-link">{{ $tool['t'] }}</button></li>
                     @endforeach
                 </ul>
             </div>
             <div>
-                <h4 class="text-sm font-extrabold mb-4">{{ $L['footer']['resources'] }}</h4>
-                <ul class="space-y-2.5">@foreach($L['footer']['res'] as $r)<li><a href="#" class="text-[13px] c2 hover:opacity-70">{{ $r }}</a></li>@endforeach</ul>
+                <h4 class="foot-h">{{ $L['footer']['resources'] }}</h4>
+                <ul class="space-y-2.5">@foreach($L['footer']['res'] as $r)<li><a href="#" class="foot-link">{{ $r }}</a></li>@endforeach</ul>
             </div>
             <div>
-                <h4 class="text-sm font-extrabold mb-4">{{ $L['footer']['company'] }}</h4>
-                <ul class="space-y-2.5">@foreach($L['footer']['comp'] as $c)<li><a href="#" class="text-[13px] c2 hover:opacity-70">{{ $c }}</a></li>@endforeach</ul>
+                <h4 class="foot-h">{{ $L['footer']['company'] }}</h4>
+                <ul class="space-y-2.5">@foreach($L['footer']['comp'] as $c)<li><a href="#" class="foot-link">{{ $c }}</a></li>@endforeach</ul>
             </div>
         </div>
-        <div class="h-px mb-6" style="background:var(--card-border);"></div>
+        <div class="h-px mb-6" style="background:var(--hairline);"></div>
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p class="text-xs c3">{{ str_replace(':year', date('Y'), $L['footer']['copyright']) }}</p>
             <div class="flex flex-wrap gap-x-6 gap-y-2">
-                <a href="#" class="text-xs c3 hover:opacity-70">{{ $L['footer']['privacy'] }}</a>
-                <a href="#" class="text-xs c3 hover:opacity-70">{{ $L['footer']['terms'] }}</a>
-                <a href="#" class="text-xs c3 hover:opacity-70">{{ $L['footer']['support'] }}</a>
+                <a href="#" class="foot-link !text-xs">{{ $L['footer']['privacy'] }}</a>
+                <a href="#" class="foot-link !text-xs">{{ $L['footer']['terms'] }}</a>
+                <a href="#" class="foot-link !text-xs">{{ $L['footer']['support'] }}</a>
             </div>
         </div>
     </div>
@@ -2699,6 +2997,8 @@ window.addEventListener('scroll', () => {
     const pct = h.scrollTop / (h.scrollHeight - h.clientHeight) * 100;
     document.getElementById('scrollProgress').style.width = pct + '%';
     document.getElementById('backToTop').classList.toggle('show', h.scrollTop > 600);
+    /* Шапка обретает границу и тень только после отрыва от верха страницы */
+    document.querySelector('nav')?.classList.toggle('scrolled', h.scrollTop > 8);
 }, { passive: true });
 
 /* ================================================================

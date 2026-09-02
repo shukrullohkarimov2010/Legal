@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="AI Конструктор Договоров — создавайте юридические документы за минуты с помощью искусственного интеллекта">
-    <title>AI Конструктор Договоров PRO | Современный генератор документов</title>
+    <meta name="description" content="{{ __('generate.meta_description') }}">
+    <title>{{ __('generate.page_title') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1061,6 +1061,238 @@
             flex-wrap: wrap;
         }
 
+        /* ===== ВЫБОР СТИЛЯ ДОГОВОРА ===== */
+        .style-picker-block {
+            margin-bottom: 24px;
+        }
+
+        .style-picker-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .style-picker-title {
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.2px;
+        }
+
+        .style-picker-hint {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .style-picker {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .style-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 16px;
+            text-align: left;
+            background: var(--gradient-surface);
+            border: 1.5px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            color: var(--text-secondary);
+            font-family: inherit;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+        }
+
+        .style-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.12) 50%, transparent 65%);
+            transform: translateX(-120%);
+            pointer-events: none;
+        }
+
+        .style-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--color-border-hover);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .style-card:hover::before {
+            animation: styleShimmer 900ms ease;
+        }
+
+        .style-card.selected {
+            border-color: var(--brand-primary);
+            box-shadow: var(--shadow-glow);
+            animation: stylePop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .style-card.selected::before {
+            animation: styleShimmer 2600ms ease infinite;
+        }
+
+        @keyframes styleShimmer {
+            to { transform: translateX(120%); }
+        }
+
+        @keyframes stylePop {
+            0% { transform: scale(0.96); }
+            60% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        .style-card-check {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--gradient-brand);
+            color: #fff;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.2) rotate(-90deg);
+            transition: all var(--transition-base);
+        }
+
+        .style-card.selected .style-card-check {
+            opacity: 1;
+            transform: scale(1) rotate(0);
+        }
+
+        /* Мини-превью документа внутри карточки */
+        .style-preview {
+            height: 74px;
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .style-preview-classic {
+            background: #fdfdf8;
+            border: 1px solid #d8d3c4;
+        }
+
+        .style-preview-modern {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 55%, #f093fb 100%);
+        }
+
+        .sp-line {
+            height: 5px;
+            border-radius: 2px;
+            background: rgba(15, 23, 42, 0.18);
+            width: 100%;
+        }
+
+        .style-preview-modern .sp-line {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .sp-line.sp-title {
+            height: 8px;
+            width: 58%;
+            margin: 0 auto 4px;
+            background: rgba(15, 23, 42, 0.55);
+        }
+
+        .style-preview-modern .sp-line.sp-title {
+            width: 62%;
+            margin: 0 0 4px;
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .sp-line.sp-short { width: 62%; }
+        .sp-line.sp-mid { width: 82%; }
+
+        .style-card.selected .sp-line {
+            animation: spType 1.8s ease-in-out infinite;
+        }
+
+        .style-card.selected .sp-line:nth-child(2) { animation-delay: 0.15s; }
+        .style-card.selected .sp-line:nth-child(3) { animation-delay: 0.3s; }
+        .style-card.selected .sp-line:nth-child(4) { animation-delay: 0.45s; }
+        .style-card.selected .sp-line:nth-child(5) { animation-delay: 0.6s; }
+
+        @keyframes spType {
+            0%, 100% { opacity: 0.45; }
+            50% { opacity: 1; }
+        }
+
+        .style-preview-modern::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 20% 120%, rgba(255, 255, 255, 0.4), transparent 55%);
+            opacity: 0.6;
+        }
+
+        .style-card-name {
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .style-card-desc {
+            font-size: 0.78125rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .style-card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: auto;
+        }
+
+        .style-tag {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: var(--radius-full);
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid var(--color-border);
+            color: var(--text-secondary);
+        }
+
+        .ai-badge {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 8px 14px;
+            border-radius: var(--radius-full);
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid var(--color-border);
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+        }
+
+        .ai-badge.active { display: inline-flex; }
+
+        .ai-badge.done {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: var(--brand-success);
+        }
+
         /* ===== CONTRACT BOX - Стартап стиль ===== */
         .contract-box {
             background: #ffffff;
@@ -1630,6 +1862,190 @@
             opacity: 0.8;
         }
 
+        /* ===== КЛАССИЧЕСКИЙ БЛАНК ДОГОВОРА (официальный вид) ===== */
+        .contract-box.classic {
+            font-family: 'Times New Roman', 'Liberation Serif', Georgia, serif;
+            font-size: 0.9375rem;
+            line-height: 1.65;
+            color: #111827;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .contract-box.classic::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+        }
+
+        .cls-doc {
+            padding: 48px 56px 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .cls-title {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .cls-number {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .cls-place {
+            display: flex;
+            justify-content: space-between;
+            margin: 28px 0 24px;
+            font-size: 0.9375rem;
+        }
+
+        .cls-rule {
+            border: 0;
+            border-top: 1px solid #111827;
+            margin: 0 0 24px;
+        }
+
+        .cls-preamble {
+            text-align: justify;
+            text-indent: 2em;
+            margin-bottom: 18px;
+        }
+
+        .cls-basis {
+            border: 1px solid #cbd5e1;
+            border-left: 4px solid #334155;
+            background: #f8fafc;
+            padding: 12px 16px;
+            margin-bottom: 26px;
+            font-size: 0.84rem;
+            line-height: 1.6;
+            color: #334155;
+        }
+
+        .cls-basis-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+            color: #0f172a;
+        }
+
+        .cls-basis ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .cls-section {
+            margin-bottom: 22px;
+            break-inside: avoid;
+        }
+
+        .cls-section-title {
+            text-align: center;
+            font-size: 0.9375rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 10px;
+        }
+
+        .cls-clause {
+            margin: 0 0 8px;
+            text-align: justify;
+            text-indent: 2em;
+        }
+
+        .cls-clause-num {
+            font-weight: 700;
+            margin-right: 4px;
+        }
+
+        .cls-list {
+            margin: 4px 0 8px 2em;
+            padding: 0;
+            list-style: none;
+        }
+
+        .cls-list li {
+            margin-bottom: 4px;
+            text-align: justify;
+        }
+
+        .cls-sign-title {
+            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 34px 0 16px;
+        }
+
+        .cls-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .cls-table td {
+            vertical-align: top;
+            width: 50%;
+            padding: 10px 14px;
+            border: 1px solid #94a3b8;
+        }
+
+        .cls-table td.no-border {
+            border: 0;
+            padding: 10px 14px 10px 0;
+        }
+
+        .cls-party-title {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8125rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .cls-req-row {
+            margin-bottom: 3px;
+        }
+
+        .cls-sign-line {
+            margin-top: 26px;
+            border-top: 1px solid #111827;
+            padding-top: 4px;
+            font-size: 0.75rem;
+            color: #475569;
+        }
+
+        .cls-stamp {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .cls-footnote {
+            margin-top: 32px;
+            padding-top: 12px;
+            border-top: 1px solid #cbd5e1;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .cls-doc { padding: 28px 20px; }
+            .cls-place { flex-direction: column; gap: 6px; }
+            .cls-table, .cls-table tbody, .cls-table tr, .cls-table td { display: block; width: 100%; }
+            .cls-table td { margin-bottom: 10px; }
+        }
+
         /* Legacy for markdown support */
         .contract-box h1,
         .contract-box h2,
@@ -2089,6 +2505,50 @@
             .nav { flex-direction: column; }
         }
 
+        /* ===== ПЕЧАТЬ: на бумагу уходит только сам договор ===== */
+        @media print {
+            body {
+                background: #fff !important;
+                color: #000 !important;
+            }
+
+            .header,
+            .progress,
+            .main > .page,
+            .loader,
+            .result-actions,
+            .result-header,
+            .ai-badge,
+            .modal,
+            .toast,
+            .theme-switcher,
+            .profile-wrapper,
+            .bg-gradient,
+            .bg-orb {
+                display: none !important;
+            }
+
+            .main { padding: 0 !important; max-width: none !important; }
+
+            .result {
+                display: block !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            .contract-box {
+                max-height: none !important;
+                overflow: visible !important;
+                border: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+            }
+
+            .cls-doc { padding: 0 !important; }
+            .cls-section { page-break-inside: avoid; }
+            .cls-table { page-break-inside: avoid; }
+        }
+
         .hidden { display: none !important; }
 
         :focus-visible {
@@ -2109,11 +2569,11 @@
 <body>
 @php
     $currentUser = auth()->user();
-    $userName = $currentUser?->name ?: 'Пользователь';
+    $userName = $currentUser?->name ?: __('generate.default_user');
     $userEmail = $currentUser?->email ?: 'email@example.com';
     $nameParts = preg_split('/\s+/u', trim($userName), -1, PREG_SPLIT_NO_EMPTY) ?: [];
     $userInitials = collect($nameParts)->take(2)->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->implode('');
-    $userInitials = $userInitials ?: 'П';
+    $userInitials = $userInitials ?: __('generate.default_initial');
 @endphp
 
     <!-- Background -->
@@ -2126,19 +2586,19 @@
     <div class="header-brand">
         <div class="header-logo">⚖️</div>
         <div>
-            <h1 class="header-title">AI Конструктор Договоров<span class="header-badge">PRO v5.0</span></h1>
+            <h1 class="header-title">{{ __('generate.header_title') }}<span class="header-badge">PRO v5.0</span></h1>
         </div>
     </div>
 
     <nav class="header-nav">
-        <a href="{{ route('welcome') }}" class="header-link">Главная</a>
-        <a href="{{ route('dashboard') }}" class="header-link">Дашборд</a>
+        <a href="{{ route('welcome') }}" class="header-link">{{ __('generate.nav_home') }}</a>
+        <a href="{{ route('dashboard') }}" class="header-link">{{ __('generate.nav_dashboard') }}</a>
 
         <!-- Theme Switcher -->
         <div class="theme-switcher" id="themeSwitcher">
             <button class="theme-btn" id="themeBtn" onclick="toggleThemeDropdown(event)">
                 <i class="fas fa-palette"></i>
-                <span>Тема</span>
+                <span>{{ __('generate.theme') }}</span>
             </button>
             <div class="theme-dropdown" id="themeDropdown">
                 <div class="theme-option active" data-theme="dark" onclick="setTheme('dark')">
@@ -2167,7 +2627,7 @@
 
     <!-- Profile -->
     <div class="profile-wrapper" id="profileContainer">
-        <button class="profile-btn" id="profileButton" aria-label="Профиль" aria-expanded="false" onclick="toggleProfile()">
+        <button class="profile-btn" id="profileButton" aria-label="{{ __('generate.profile_aria') }}" aria-expanded="false" onclick="toggleProfile()">
             <div class="profile-avatar">{{ $userInitials }}</div>
             <div class="profile-info">
                 <span class="profile-name">{{ $userName }}</span>
@@ -2193,15 +2653,15 @@
             <div class="profile-dropdown-menu">
                 <a href="{{ route('profile.edit') }}" class="profile-dropdown-item">
                     <i class="fas fa-user"></i>
-                    <span>Профиль</span>
+                    <span>{{ __('generate.profile') }}</span>
                 </a>
                 <a href="#" class="profile-dropdown-item">
                     <i class="fas fa-cog"></i>
-                    <span>Настройки</span>
+                    <span>{{ __('generate.settings') }}</span>
                 </a>
                 <a href="#" class="profile-dropdown-item">
                     <i class="fas fa-file-alt"></i>
-                    <span>Мои документы</span>
+                    <span>{{ __('generate.my_documents') }}</span>
                 </a>
             </div>
 
@@ -2210,7 +2670,7 @@
                     @csrf
                     <button type="submit" class="profile-dropdown-item logout">
                         <i class="fas fa-sign-out-alt"></i>
-                        <span>Выйти</span>
+                        <span>{{ __('generate.logout') }}</span>
                     </button>
                 </form>
             </div>
@@ -2228,42 +2688,42 @@
         <div class="page-header">
             <div class="page-icon">✍️</div>
             <div>
-                <h2 class="page-title">Описание сделки</h2>
-                <p class="page-subtitle">Расскажите ИИ о вашей сделке — он автоматически извлечёт реквизиты и ключевые условия</p>
+                <h2 class="page-title">{{ __('generate.step1_title') }}</h2>
+                <p class="page-subtitle">{{ __('generate.step1_subtitle') }}</p>
             </div>
         </div>
 
         <div class="field">
             <label class="field-label">
-                Суть договора
+                {{ __('generate.deal_essence') }}
                 <span class="field-required">*</span>
             </label>
             <textarea
                 id="f_desc"
                 class="field-textarea"
-                placeholder="Пример: ООО «СтройМастер» заказывает у ИП Смирнова ремонт офиса 50 м². Срок: 1 месяц, цена: 300 000₽. Оплата: 50% предоплата."
+                placeholder="{{ __('generate.deal_placeholder') }}"
                 maxlength="1000"
             ></textarea>
             <div class="field-hint">
                 <i class="fas fa-lightbulb"></i>
-                Чем подробнее описание — тем точнее результат. Макс. 1000 символов
+                {{ __('generate.deal_hint') }}
             </div>
         </div>
 
         <div class="setup-box">
-            <strong>⚙️ Настройки ИИ</strong>
+            <strong>{{ __('generate.ai_settings') }}</strong>
             <code>OLLAMA_ORIGINS="*" ollama serve</code>
             <div class="toggle-row">
                 <input type="checkbox" id="useOllama" checked>
-                <label for="useOllama">Использовать локальную Ollama</label>
+                <label for="useOllama">{{ __('generate.use_local_ollama') }}</label>
             </div>
             <div class="toggle-row">
                 <select id="aiModel" class="field-select" style="width: auto; padding: 6px 12px; font-size: 0.8125rem;">
-                    <option value="llama3.1:8b">⚡ llama3.1:8b (быстро)</option>
-                    <option value="llama3">🧠 Llama 3 (качественно)</option>
-                    <option value="mixtral">🚀 Mixtral (макс. точность)</option>
+                    <option value="llama3.1:8b">{{ __('generate.model_fast') }}</option>
+                    <option value="llama3">{{ __('generate.model_quality') }}</option>
+                    <option value="mixtral">{{ __('generate.model_max') }}</option>
                 </select>
-                <span style="color: var(--text-muted); font-size: 0.75rem;">Модель анализа</span>
+                <span style="color: var(--text-muted); font-size: 0.75rem;">{{ __('generate.analysis_model') }}</span>
             </div>
         </div>
 
@@ -2271,7 +2731,7 @@
             <div></div>
             <button class="btn btn-next" onclick="analyzeAndNext()">
                 <i class="fas fa-bolt"></i>
-                Анализировать и продолжить
+                {{ __('generate.analyze_and_continue') }}
             </button>
         </div>
     </section>
@@ -2281,30 +2741,30 @@
         <div class="page-header">
             <div class="page-icon">🔍</div>
             <div>
-                <h2 class="page-title">Проверка данных</h2>
-                <p class="page-subtitle">ИИ распознал информацию — отредактируйте при необходимости</p>
+                <h2 class="page-title">{{ __('generate.step2_title') }}</h2>
+                <p class="page-subtitle">{{ __('generate.step2_subtitle') }}</p>
             </div>
         </div>
 
         <div class="ai-analysis" id="aiAnalysis">
-            <h4><i class="fas fa-robot"></i> Распознано ИИ:</h4>
+            <h4><i class="fas fa-robot"></i> {{ __('generate.recognized_by_ai') }}</h4>
             <div class="detected" id="detectedInfo"></div>
         </div>
 
         <div class="grid-2">
             <div class="field">
-                <label class="field-label">Тип договора</label>
+                <label class="field-label">{{ __('generate.contract_type') }}</label>
                 <select id="f_type" class="field-select">
-                    <option value="оказания услуг">Оказания услуг</option>
-                    <option value="подряда">Подряда</option>
-                    <option value="аренды">Аренды</option>
-                    <option value="купли-продажи">Купли-продажи</option>
-                    <option value="поставки">Поставки</option>
-                    <option value="лицензионный">Лицензионный</option>
+                    <option value="оказания услуг">{{ __('generate.type_services') }}</option>
+                    <option value="подряда">{{ __('generate.type_work') }}</option>
+                    <option value="аренды">{{ __('generate.type_lease') }}</option>
+                    <option value="купли-продажи">{{ __('generate.type_sale') }}</option>
+                    <option value="поставки">{{ __('generate.type_supply') }}</option>
+                    <option value="лицензионный">{{ __('generate.type_license') }}</option>
                 </select>
             </div>
             <div class="field">
-                <label class="field-label">Сумма (₽)</label>
+                <label class="field-label">{{ __('generate.amount_label') }}</label>
                 <input type="number" id="f_amount" class="field-input" placeholder="300000" min="0" inputmode="numeric">
             </div>
         </div>
@@ -2312,53 +2772,53 @@
         <div class="grid-2">
             <div class="field">
                 <label class="field-label">
-                    Сторона 1
+                    {{ __('generate.party1') }}
                     <span class="field-required">*</span>
                 </label>
-                <input type="text" id="f_p1" class="field-input" placeholder="ООО «Ромашка»" maxlength="100">
+                <input type="text" id="f_p1" class="field-input" placeholder="{{ __('generate.p1_placeholder') }}" maxlength="100">
             </div>
             <div class="field">
                 <label class="field-label">
-                    Сторона 2
+                    {{ __('generate.party2') }}
                     <span class="field-required">*</span>
                 </label>
-                <input type="text" id="f_p2" class="field-input" placeholder="ИП Петров" maxlength="100">
+                <input type="text" id="f_p2" class="field-input" placeholder="{{ __('generate.p2_placeholder') }}" maxlength="100">
             </div>
         </div>
 
         <div class="grid-2">
             <div class="field">
-                <label class="field-label">Роль Стороны 1</label>
+                <label class="field-label">{{ __('generate.role_party1') }}</label>
                 <select id="f_role1" class="field-select">
-                    <option value="Заказчик">Заказчик</option>
-                    <option value="Покупатель">Покупатель</option>
-                    <option value="Арендатор">Арендатор</option>
-                    <option value="Лицензиат">Лицензиат</option>
+                    <option value="Заказчик">{{ __('generate.role_customer') }}</option>
+                    <option value="Покупатель">{{ __('generate.role_buyer') }}</option>
+                    <option value="Арендатор">{{ __('generate.role_tenant') }}</option>
+                    <option value="Лицензиат">{{ __('generate.role_licensee') }}</option>
                 </select>
             </div>
             <div class="field">
-                <label class="field-label">Роль Стороны 2</label>
+                <label class="field-label">{{ __('generate.role_party2') }}</label>
                 <select id="f_role2" class="field-select">
-                    <option value="Исполнитель">Исполнитель</option>
-                    <option value="Продавец">Продавец</option>
-                    <option value="Арендодатель">Арендодатель</option>
-                    <option value="Лицензиар">Лицензиар</option>
+                    <option value="Исполнитель">{{ __('generate.role_contractor') }}</option>
+                    <option value="Продавец">{{ __('generate.role_seller') }}</option>
+                    <option value="Арендодатель">{{ __('generate.role_landlord') }}</option>
+                    <option value="Лицензиар">{{ __('generate.role_licensor') }}</option>
                 </select>
             </div>
         </div>
 
         <div class="field">
-            <label class="field-label">Предмет договора</label>
-            <textarea id="f_subject" class="field-textarea" placeholder="Что именно предоставляется или выполняется?" maxlength="500" style="min-height: 80px;"></textarea>
+            <label class="field-label">{{ __('generate.contract_subject') }}</label>
+            <textarea id="f_subject" class="field-textarea" placeholder="{{ __('generate.subject_placeholder') }}" maxlength="500" style="min-height: 80px;"></textarea>
         </div>
 
         <div class="nav">
             <button class="btn btn-back" onclick="goStep(1)">
                 <i class="fas fa-arrow-left"></i>
-                Назад
+                {{ __('generate.back') }}
             </button>
             <button class="btn btn-next" onclick="goStep(3)">
-                Продолжить
+                {{ __('generate.continue') }}
                 <i class="fas fa-arrow-right"></i>
             </button>
         </div>
@@ -2369,80 +2829,81 @@
         <div class="page-header">
             <div class="page-icon">⚖️</div>
             <div>
-                <h2 class="page-title">Юридические условия</h2>
-                <p class="page-subtitle">Настройте важные параметры договора под вашу сделку</p>
+                <h2 class="page-title">{{ __('generate.step3_title') }}</h2>
+                <p class="page-subtitle">{{ __('generate.step3_subtitle') }}</p>
             </div>
         </div>
 
         <div class="legal-grid">
             <div class="legal-card">
-                <h4><i class="fas fa-coins"></i> Оплата</h4>
+                <h4><i class="fas fa-coins"></i> {{ __('generate.payment') }}</h4>
                 <div class="field">
-                    <input type="text" id="f_pay" class="field-input" placeholder="50% предоплата, 50% по акту" maxlength="100">
+                    <input type="text" id="f_pay" class="field-input" placeholder="{{ __('generate.pay_placeholder') }}" maxlength="100">
                 </div>
                 <div class="field">
                     <select id="f_vat" class="field-select">
-                        <option value="не указано">НДС не указан</option>
-                        <option value="в т.ч. НДС 20%">в т.ч. НДС 20%</option>
-                        <option value="без НДС">без НДС</option>
+                        <option value="не указано">{{ __('generate.vat_none') }}</option>
+                        <option value="в т.ч. НДС 20%">{{ __('generate.vat_incl') }}</option>
+                        <option value="без НДС">{{ __('generate.vat_without') }}</option>
                     </select>
                 </div>
-                <div class="field-hint">Условия и порядок расчётов</div>
+                <div class="field-hint">{{ __('generate.payment_hint') }}</div>
             </div>
 
             <div class="legal-card">
-                <h4><i class="fas fa-calendar"></i> Сроки</h4>
+                <h4><i class="fas fa-calendar"></i> {{ __('generate.terms') }}</h4>
                 <div class="field">
-                    <input type="text" id="f_duration" class="field-input" placeholder="30 календарных дней" maxlength="50">
+                    <input type="text" id="f_duration" class="field-input" placeholder="{{ __('generate.duration_placeholder') }}" maxlength="50">
                 </div>
                 <div class="field">
                     <input type="date" id="f_date" class="field-input">
                 </div>
-                <div class="field-hint">Срок исполнения и дата договора</div>
+                <div class="field-hint">{{ __('generate.terms_hint') }}</div>
             </div>
 
             <div class="legal-card">
-                <h4><i class="fas fa-shield-alt"></i> Безопасность</h4>
+                <h4><i class="fas fa-shield-alt"></i> {{ __('generate.security') }}</h4>
                 <div class="field">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-secondary);">
                         <input type="checkbox" id="f_conf" style="width: 16px; height: 16px; margin: 0; accent-color: var(--brand-primary);">
-                        <span>Конфиденциальность</span>
+                        <span>{{ __('generate.confidentiality') }}</span>
                     </label>
                 </div>
                 <div class="field">
-                    <input type="text" id="f_penalty" class="field-input" placeholder="0.1% в день" value="0.1% в день" maxlength="30">
+                    <input type="text" id="f_penalty" class="field-input" placeholder="{{ __('generate.penalty_placeholder') }}" value="0.1%" maxlength="30">
                 </div>
-                <div class="field-hint">Неустойка и защита данных</div>
+                <div class="field-hint">{{ __('generate.security_hint') }}</div>
             </div>
 
             <div class="legal-card">
-                <h4><i class="fas fa-gavel"></i> Споры</h4>
+                <h4><i class="fas fa-gavel"></i> {{ __('generate.disputes') }}</h4>
                 <div class="field">
                     <select id="f_dispute" class="field-select">
-                        <option value="арбитражный суд">Арбитражный суд</option>
-                        <option value="третейский суд">Третейский суд</option>
-                        <option value="переговоры">Только переговоры</option>
+                        <option value="экономический суд">{{ __('generate.dispute_economic') }}</option>
+                        <option value="арбитражный суд">{{ __('generate.dispute_arbitration') }}</option>
+                        <option value="третейский суд">{{ __('generate.dispute_tribunal') }}</option>
+                        <option value="переговоры">{{ __('generate.dispute_negotiation') }}</option>
                     </select>
                 </div>
                 <div class="field">
-                    <input type="text" id="f_city" class="field-input" placeholder="г. Москва" value="г. Москва" maxlength="50">
+                    <input type="text" id="f_city" class="field-input" placeholder="{{ __('generate.city_placeholder') }}" value="{{ __('generate.city_default') }}" maxlength="50">
                 </div>
-                <div class="field-hint">Подсудность и место подписания</div>
+                <div class="field-hint">{{ __('generate.disputes_hint') }}</div>
             </div>
         </div>
 
         <div class="field">
-            <label class="field-label">Особые условия</label>
-            <textarea id="f_extra" class="field-textarea" placeholder="Гарантии, форс-мажор, дополнительные обязательства..." maxlength="300" style="min-height: 80px;"></textarea>
+            <label class="field-label">{{ __('generate.special_terms') }}</label>
+            <textarea id="f_extra" class="field-textarea" placeholder="{{ __('generate.extra_placeholder') }}" maxlength="300" style="min-height: 80px;"></textarea>
         </div>
 
         <div class="nav">
             <button class="btn btn-back" onclick="goStep(2)">
                 <i class="fas fa-arrow-left"></i>
-                Назад
+                {{ __('generate.back') }}
             </button>
             <button class="btn btn-next" onclick="goStep(4)">
-                Продолжить
+                {{ __('generate.continue') }}
                 <i class="fas fa-arrow-right"></i>
             </button>
         </div>
@@ -2453,26 +2914,71 @@
         <div class="page-header">
             <div class="page-icon">✅</div>
             <div>
-                <h2 class="page-title">Финальная проверка</h2>
-                <p class="page-subtitle">Подтвердите данные перед генерацией документа</p>
+                <h2 class="page-title">{{ __('generate.step4_title') }}</h2>
+                <p class="page-subtitle">{{ __('generate.step4_subtitle') }}</p>
             </div>
         </div>
 
         <div class="summary" id="summary"></div>
 
+        <!-- Выбор оформления договора -->
+        <div class="style-picker-block">
+            <div class="style-picker-head">
+                <span class="style-picker-title">{{ __('generate.style_title') }}</span>
+                <span class="style-picker-hint">{{ __('generate.style_hint') }}</span>
+            </div>
+            <div class="style-picker" role="radiogroup" aria-label="{{ __('generate.style_title') }}">
+                <button type="button" class="style-card selected" id="styleCard_classic" data-style="classic"
+                        role="radio" aria-checked="true" onclick="selectStyle('classic')">
+                    <span class="style-card-check"><i class="fas fa-check"></i></span>
+                    <span class="style-preview style-preview-classic">
+                        <span class="sp-line sp-title"></span>
+                        <span class="sp-line"></span>
+                        <span class="sp-line sp-mid"></span>
+                        <span class="sp-line"></span>
+                        <span class="sp-line sp-short"></span>
+                    </span>
+                    <span class="style-card-name"><i class="fas fa-scroll"></i> {{ __('generate.style_classic_name') }}</span>
+                    <span class="style-card-desc">{{ __('generate.style_classic_desc') }}</span>
+                    <span class="style-card-tags">
+                        <span class="style-tag">{{ __('generate.style_tag_rt') }}</span>
+                        <span class="style-tag">{{ __('generate.style_tag_print') }}</span>
+                    </span>
+                </button>
+
+                <button type="button" class="style-card" id="styleCard_modern" data-style="modern"
+                        role="radio" aria-checked="false" onclick="selectStyle('modern')">
+                    <span class="style-card-check"><i class="fas fa-check"></i></span>
+                    <span class="style-preview style-preview-modern">
+                        <span class="sp-line sp-title"></span>
+                        <span class="sp-line sp-mid"></span>
+                        <span class="sp-line"></span>
+                        <span class="sp-line sp-short"></span>
+                        <span class="sp-line sp-mid"></span>
+                    </span>
+                    <span class="style-card-name"><i class="fas fa-wand-magic-sparkles"></i> {{ __('generate.style_modern_name') }}</span>
+                    <span class="style-card-desc">{{ __('generate.style_modern_desc') }}</span>
+                    <span class="style-card-tags">
+                        <span class="style-tag">{{ __('generate.style_tag_animated') }}</span>
+                        <span class="style-tag">{{ __('generate.style_tag_screen') }}</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+
         <div class="setup-box">
-            <strong>💡 Совет:</strong> После генерации вы сможете отредактировать текст вручную или создать новый черновик на основе этого договора. Данные сохраняются в кэш браузера.
+            <strong>{{ __('generate.tip_label') }}</strong> {{ __('generate.tip_text') }}
         </div>
 
         <button class="btn btn-generate" id="genBtn" onclick="generate()">
             <i class="fas fa-magic"></i>
-            Сгенерировать договор
+            {{ __('generate.generate_contract') }}
         </button>
 
         <div class="nav" style="margin-top: 16px;">
             <button class="btn btn-back" onclick="goStep(3)">
                 <i class="fas fa-arrow-left"></i>
-                Изменить условия
+                {{ __('generate.change_terms') }}
             </button>
         </div>
     </section>
@@ -2480,8 +2986,8 @@
     <!-- Loader -->
     <div class="loader" id="loader">
         <div class="spinner"></div>
-        <div class="loader-text">ИИ составляет юридический документ...</div>
-        <span class="loader-subtext">Обычно 15-45 секунд</span>
+        <div class="loader-text">{{ __('generate.loader_text') }}</div>
+        <span class="loader-subtext">{{ __('generate.loader_subtext') }}</span>
     </div>
 
     <!-- Result -->
@@ -2489,16 +2995,16 @@
         <div class="result-header">
             <h2 class="result-title">
                 <i class="fas fa-file-contract"></i>
-                Договор готов
+                {{ __('generate.contract_ready') }}
             </h2>
             <div class="result-actions">
                 <button class="btn-sm" onclick="copyText()">
                     <i class="fas fa-copy"></i>
-                    Копировать
+                    {{ __('generate.copy') }}
                 </button>
                 <button class="btn-sm" onclick="window.print()">
                     <i class="fas fa-print"></i>
-                    Печать
+                    {{ __('generate.print') }}
                 </button>
                 <button class="btn-sm" onclick="exportToPdf()">
                     <i class="fas fa-file-pdf"></i>
@@ -2514,13 +3020,17 @@
                 </button>
                 <button class="btn-sm" onclick="showHistoryModal()">
                     <i class="fas fa-history"></i>
-                    История
+                    {{ __('generate.history') }}
                 </button>
                 <button class="btn-sm" onclick="startOver()">
                     <i class="fas fa-redo"></i>
-                    Заново
+                    {{ __('generate.start_over') }}
                 </button>
             </div>
+        </div>
+        <div class="ai-badge" id="aiBadge">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <span id="aiBadgeText">{{ __('generate.ai_polishing') }}</span>
         </div>
         <div class="contract-box" id="contractOutput"></div>
     </div>
@@ -2530,8 +3040,8 @@
 <div class="modal" id="historyModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 class="modal-title">📚 История черновиков</h3>
-            <button class="modal-close" onclick="closeHistoryModal()" aria-label="Закрыть">
+            <h3 class="modal-title">{{ __('generate.history_modal_title') }}</h3>
+            <button class="modal-close" onclick="closeHistoryModal()" aria-label="{{ __('generate.close') }}">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -2539,9 +3049,9 @@
         <div class="modal-footer">
             <button class="btn-sm btn-sm-danger" onclick="clearAllHistory()">
                 <i class="fas fa-trash"></i>
-                Очистить всё
+                {{ __('generate.clear_all') }}
             </button>
-            <button class="btn-sm" onclick="closeHistoryModal()">Закрыть</button>
+            <button class="btn-sm" onclick="closeHistoryModal()">{{ __('generate.close') }}</button>
         </div>
     </div>
 </div>
@@ -2550,6 +3060,16 @@
 <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
 <script>
+    // ===== I18N (server-driven, follows the app locale) =====
+    const T = @json(__('generate.js'));
+    const tr = (str, params = {}) => Object.entries(params).reduce((acc, [k, v]) => acc.split(':' + k).join(v), str || '');
+    const typeName = t => (T.types && T.types[t]) || t || T.doc_type_default;
+    const roleName = r => (T.roles && T.roles[r]) || r || '';
+    const roleGen = r => (T.roles_gen && T.roles_gen[r]) || roleName(r);
+    const roleDat = r => (T.roles_dat && T.roles_dat[r]) || roleName(r);
+    const vatName = v => (T.vat && T.vat[v]) || v || '';
+    const disputeName = v => (T.dispute && T.dispute[v]) || v || '';
+
     // ===== Configuration =====
     const CONFIG = {
         OLLAMA_URL: 'http://localhost:11434/api/chat',
@@ -2558,6 +3078,7 @@
         API_CACHE_KEY: 'contract_builder_api_cache_v2',
         FORM_CACHE_KEY: 'contract_builder_form_state_v1',
         THEME_KEY: 'contract_builder_theme_v1',
+        STYLE_KEY: 'contract_builder_style_v1',
         MAX_HISTORY: 10,
         MAX_API_CACHE: 20,
         API_CACHE_TTL: 24 * 60 * 60 * 1000,
@@ -2589,6 +3110,28 @@
     let contractHtml = '';
     let requestCache = new Map();
     let ollamaStatus = 'unknown';
+    let contractStyle = 'classic';
+
+    // ===== Стиль оформления договора (классический / с анимацией) =====
+    function selectStyle(style, silent = false) {
+        if (style !== 'classic' && style !== 'modern') style = 'classic';
+        contractStyle = style;
+
+        document.querySelectorAll('.style-card').forEach(card => {
+            const isActive = card.dataset.style === style;
+            card.classList.toggle('selected', isActive);
+            card.setAttribute('aria-checked', isActive ? 'true' : 'false');
+        });
+
+        try { localStorage.setItem(CONFIG.STYLE_KEY, style); } catch (e) { /* noop */ }
+
+        const summaryStyle = document.getElementById('summaryStyle');
+        if (summaryStyle) summaryStyle.textContent = styleName(style);
+
+        if (!silent) toast(tr(T.ok_style_selected, { style: styleName(style) }), 'success');
+    }
+
+    const styleName = s => (T.styles && T.styles[s]) || s;
 
     // ===== Theme System =====
     function setTheme(theme) {
@@ -2599,7 +3142,7 @@
             opt.classList.toggle('active', opt.dataset.theme === theme);
         });
 
-        toast(`🎨 Тема "${getThemeName(theme)}" активирована`, 'success');
+        toast(tr(T.theme_activated, { name: getThemeName(theme) }), 'success');
     }
 
     function getThemeName(theme) {
@@ -2731,13 +3274,7 @@
 
     // ===== Progress Bar =====
     function buildProgress() {
-        const steps = [
-            { n: 1, l: 'Описание' },
-            { n: 2, l: 'Данные' },
-            { n: 3, l: 'Условия' },
-            { n: 4, l: 'Проверка' },
-            { n: 5, l: 'Готово' }
-        ];
+        const steps = T.steps.map((label, i) => ({ n: i + 1, l: label }));
 
         const bar = document.getElementById('progressBar');
         let html = '';
@@ -2761,11 +3298,11 @@
 
         if (n > currentStep) {
             if (currentStep === 1 && !document.getElementById('f_desc').value.trim()) {
-                toast('⚠️ Введите описание сделки', 'warning');
+                toast(T.warn_enter_description, 'warning');
                 return;
             }
             if (currentStep === 2 && (!document.getElementById('f_p1').value.trim() || !document.getElementById('f_p2').value.trim())) {
-                toast('⚠️ Укажите обе стороны договора', 'warning');
+                toast(T.warn_both_parties, 'warning');
                 return;
             }
         }
@@ -2854,7 +3391,7 @@
     }
 
     async function ollamaChat(system, user, model = 'llama3.1:8b') {
-        if (!model) throw new Error('Модель не выбрана');
+        if (!model) throw new Error(T.err_model_not_selected);
 
         const cacheKey = simpleHash(`${model}:${system}:${user}`);
         const cached = requestCache.get(cacheKey);
@@ -2886,15 +3423,15 @@
 
             if (!res.ok) {
                 if (res.status === 404) {
-                    throw new Error(`Модель "${model}" не найдена. Выполните: ollama pull ${model}`);
+                    throw new Error(tr(T.err_model_not_found, { model }));
                 }
-                throw new Error(`API ошибка: ${res.status}`);
+                throw new Error(tr(T.err_api, { status: res.status }));
             }
 
             const json = await res.json();
             const content = json.message?.content?.trim() || '';
 
-            if (!content) throw new Error('Пустой ответ от Ollama');
+            if (!content) throw new Error(T.err_empty_response);
 
             requestCache.set(cacheKey, { data: content, ts: Date.now() });
             saveApiCache();
@@ -2903,10 +3440,10 @@
         } catch (e) {
             clearTimeout(timeout);
 
-            if (e.name === 'AbortError') throw new Error('Таймаут запроса');
+            if (e.name === 'AbortError') throw new Error(T.err_timeout);
 
             if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
-                throw new Error('Не удалось подключиться к Ollama');
+                throw new Error(T.err_connect);
             }
 
             throw e;
@@ -2917,7 +3454,7 @@
     async function analyzeAndNext() {
         const desc = document.getElementById('f_desc').value.trim();
         if (!desc) {
-            toast('⚠️ Введите описание сделки', 'warning');
+            toast(T.warn_enter_description, 'warning');
             return;
         }
 
@@ -2935,27 +3472,14 @@
                 if (ollamaStatus === 'disconnected') await checkOllamaConnection();
 
                 if (ollamaStatus === 'disconnected') {
-                    throw new Error('Ollama недоступна');
+                    throw new Error(T.err_ollama_unavailable);
                 }
 
                 if (ollamaStatus === 'no-model') {
-                    throw new Error('Нет установленных моделей Ollama');
+                    throw new Error(T.err_no_models);
                 }
 
-                const prompt = `Ты — эксперт по анализу сделок. Извлеки данные для договора.
-Верни ТОЛЬКО валидный JSON без пояснений:
-{
-  "type": "оказания услуг|подряда|аренды|купли-продажи|поставки",
-  "party1": {"name": "строка", "role": "Заказчик|Покупатель|Арендатор"},
-  "party2": {"name": "строка", "role": "Исполнитель|Продавец|Арендодатель"},
-  "subject": "строка",
-  "amount": число_или_null,
-  "city": "строка",
-  "duration": "строка",
-  "payment": "строка"
-}
-
-Текст: ${desc}`;
+                const prompt = `${T.prompt_extract}\n\n${desc}`;
 
                 const resp = await ollamaChat(prompt, '', model);
                 const clean = resp.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
@@ -2968,7 +3492,7 @@
             fillForm(data);
             loader.classList.remove('active');
             goStep(2);
-            toast('✅ Данные успешно извлечены', 'success');
+            toast(T.ok_extracted, 'success');
         } catch (e) {
             loader.classList.remove('active');
             document.querySelector('.page[data-step="1"]')?.classList.add('active');
@@ -2980,11 +3504,11 @@
     function mockAnalyze(desc) {
         const d = {
             type: 'оказания услуг',
-            party1: { name: 'Заказчик', role: 'Заказчик' },
-            party2: { name: 'Исполнитель', role: 'Исполнитель' },
+            party1: { name: roleName('Заказчик'), role: 'Заказчик' },
+            party2: { name: roleName('Исполнитель'), role: 'Исполнитель' },
             subject: '',
             amount: null,
-            city: 'г. Душанбе',
+            city: '',
             duration: '',
             payment: ''
         };
@@ -3039,14 +3563,14 @@
             });
 
             const labels = {
-                party1: 'Сторона 1',
-                party2: 'Сторона 2',
-                amount: 'Сумма',
-                payment: 'Оплата',
-                duration: 'Срок',
-                type: 'Тип',
-                subject: 'Предмет',
-                city: 'Город'
+                party1: T.lbl_party1,
+                party2: T.lbl_party2,
+                amount: T.lbl_amount,
+                payment: T.lbl_payment,
+                duration: T.lbl_duration,
+                type: T.lbl_type,
+                subject: T.lbl_subject,
+                city: T.lbl_city
             };
 
             info.innerHTML = items.length ?
@@ -3056,7 +3580,7 @@
                         (v.name ? `${v.name} (${v.role})` : JSON.stringify(v).replace(/[{}"]/g, '')) : v;
                     return `<strong>${lbl}:</strong> ${val}<br>`;
                 }).join('') :
-                '<em style="opacity: 0.8">Данные не распознаны — заполните вручную</em>';
+                `<em style="opacity: 0.8">${T.not_recognized}</em>`;
         }
 
         debounceSaveForm();
@@ -3069,23 +3593,24 @@
 
         const amountVal = g('f_amount');
         const amountDisplay = amountVal !== '—' ?
-            `${parseInt(amountVal).toLocaleString('ru-RU')} сомон` : '—';
+            `${parseInt(amountVal).toLocaleString(T.intl_locale)} ${T.currency}` : '—';
 
         const vatChip = gs('f_vat') !== 'не указано' ?
-            `<span class="chip ${gs('f_vat').includes('НДС') ? 'success' : ''}">${gs('f_vat')}</span>` : '';
+            `<span class="chip success">${vatName(gs('f_vat'))}</span>` : '';
 
         document.getElementById('summary').innerHTML = `
-            <div><strong>Тип:</strong> ${gs('f_type')}</div>
-            <div><strong>${gs('f_role1')}:</strong> ${g('f_p1')}</div>
-            <div><strong>${gs('f_role2')}:</strong> ${g('f_p2')}</div>
-            <div><strong>Сумма:</strong> ${amountDisplay} ${vatChip}</div>
-            <div><strong>Оплата:</strong> ${g('f_pay')}</div>
-            <div><strong>Срок:</strong> ${g('f_duration')}</div>
-            ${g('f_subject') !== '—' ? `<div><strong>Предмет:</strong> ${g('f_subject')}</div>` : ''}
-            <div><strong>Неустойка:</strong> ${g('f_penalty')}</div>
-            <div><strong>Конфиденциальность:</strong> ${document.getElementById('f_conf')?.checked ? '✅ Да' : '❌ Нет'}</div>
-            <div><strong>Подсудность:</strong> ${gs('f_dispute')} | ${g('f_city')}</div>
-            ${g('f_extra') !== '—' ? `<div><strong>Доп.:</strong> ${g('f_extra')}</div>` : ''}
+            <div><strong>${T.lbl_type}:</strong> ${typeName(gs('f_type'))}</div>
+            <div><strong>${roleName(gs('f_role1'))}:</strong> ${g('f_p1')}</div>
+            <div><strong>${roleName(gs('f_role2'))}:</strong> ${g('f_p2')}</div>
+            <div><strong>${T.lbl_amount}:</strong> ${amountDisplay} ${vatChip}</div>
+            <div><strong>${T.lbl_payment}:</strong> ${g('f_pay')}</div>
+            <div><strong>${T.lbl_duration}:</strong> ${g('f_duration')}</div>
+            ${g('f_subject') !== '—' ? `<div><strong>${T.lbl_subject}:</strong> ${g('f_subject')}</div>` : ''}
+            <div><strong>${T.lbl_penalty}:</strong> ${g('f_penalty')}</div>
+            <div><strong>${T.lbl_confidentiality}:</strong> ${document.getElementById('f_conf')?.checked ? T.yes : T.no}</div>
+            <div><strong>${T.lbl_jurisdiction}:</strong> ${disputeName(gs('f_dispute'))} | ${g('f_city')}</div>
+            ${g('f_extra') !== '—' ? `<div><strong>${T.lbl_extra}:</strong> ${g('f_extra')}</div>` : ''}
+            <div><strong>${T.lbl_style}:</strong> <span id="summaryStyle">${styleName(contractStyle)}</span></div>
         `;
     }
 
@@ -3111,66 +3636,42 @@
         };
 
         if (!data.p1 || !data.p2) {
-            toast('⚠️ Укажите обе стороны договора', 'warning');
+            toast(T.warn_both_parties, 'warning');
             return;
         }
 
+        data.style = contractStyle;
+
         const btn = document.getElementById('genBtn');
         const loader = document.getElementById('loader');
+        const badge = document.getElementById('aiBadge');
+        const startedAt = performance.now();
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Генерация...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + T.generating;
 
         document.querySelector('.page[data-step="4"]')?.classList.remove('active');
+        badge?.classList.remove('active', 'done');
         loader.classList.add('active');
 
+        const loaderText = loader.querySelector('.loader-text');
+        if (loaderText) loaderText.textContent = tr(T.loader_building, { style: styleName(contractStyle) });
+
         try {
-            let html;
+            // 1) Документ собирается мгновенно из выверенного шаблона по законодательству РТ
+            await new Promise(r => setTimeout(r, 420));
 
-            if (document.getElementById('useOllama').checked) {
-                if (ollamaStatus === 'disconnected' || ollamaStatus === 'unknown') {
-                    await checkOllamaConnection();
-                }
+            const html = contractStyle === 'classic'
+                ? buildClassicContract(data)
+                : buildStartupContract(data);
 
-                if (ollamaStatus === 'disconnected') {
-                    throw new Error('Ollama недоступна');
-                }
-
-                const model = document.getElementById('aiModel').value;
-                const prompt = `Ты — корпоративный юрист Республики Таджикистан. Составь договор.
-Данные:
-• Тип: ${data.type}
-• ${data.role1}: ${data.p1}
-• ${data.role2}: ${data.p2}
-• Сумма: ${data.amount ? `${parseInt(data.amount).toLocaleString('ru')} сомон` : '[не указана]'} ${data.vat || ''}
-• Оплата: ${data.pay || 'По соглашению'}
-• Срок: ${data.duration || '[не указан]'}
-• Город: ${data.city || '__________'}
-• Неустойка: ${data.penalty || '0.1%/день'}
-• Конфиденциальность: ${data.conf ? 'Да' : 'Нет'}
-• Подсудность: ${data.dispute || 'Арбитражный суд'}
-• Предмет: ${data.subject || data.type}
-
-Верни структурированный текст договора со всеми необходимыми пунктами.`;
-
-                const textContent = await ollamaChat(
-                    'Ты — корпоративный юрист Республики Таджикистан.',
-                    prompt,
-                    model
-                );
-                contractText = textContent;
-                html = buildStartupContract(data, textContent);
-            } else {
-                await new Promise(r => setTimeout(r, 600));
-                html = buildStartupContract(data);
-                contractText = generateTextVersion(data);
-            }
-
+            contractText = generateTextVersion(data);
             contractHtml = html;
             loader.classList.remove('active');
 
             const output = document.getElementById('contractOutput');
             if (output) {
+                output.className = contractStyle === 'classic' ? 'contract-box classic' : 'contract-box';
                 output.innerHTML = html;
                 output.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
@@ -3183,7 +3684,12 @@
             }
 
             saveHistory(data, contractText);
-            toast('✅ Договор успешно создан!', 'success');
+            toast(tr(T.ok_contract_created_in, { secs: ((performance.now() - startedAt) / 1000).toFixed(1) }), 'success');
+
+            // 2) ИИ дорабатывает формулировки в фоне — документ уже доступен пользователю
+            if (document.getElementById('useOllama')?.checked) {
+                polishWithAI(data);
+            }
         } catch (e) {
             loader.classList.remove('active');
             document.querySelector('.page[data-step="4"]')?.classList.add('active');
@@ -3191,20 +3697,83 @@
             console.error('Generation error:', e);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-magic"></i> Сгенерировать договор';
+            btn.innerHTML = '<i class="fas fa-magic"></i> ' + T.btn_generate_contract;
+        }
+    }
+
+    // ===== Промпт для ИИ: строго по законодательству Республики Таджикистан =====
+    function buildContractPrompt(d) {
+        return `${T.prompt_build_intro}
+${T.prompt_data}
+• ${T.lbl_style}: ${styleName(d.style || contractStyle)}
+• ${T.lbl_type}: ${typeName(d.type)}
+• ${roleName(d.role1)}: ${d.p1}
+• ${roleName(d.role2)}: ${d.p2}
+• ${T.lbl_amount}: ${d.amount ? `${parseInt(d.amount).toLocaleString(T.intl_locale)} ${T.currency}` : T.prompt_not_specified_f} ${vatName(d.vat) || ''}
+• ${T.lbl_payment}: ${d.pay || T.prompt_by_agreement}
+• ${T.lbl_duration}: ${d.duration || T.prompt_not_specified_m}
+• ${T.lbl_city}: ${d.city || '__________'}
+• ${T.lbl_penalty}: ${d.penalty || T.txt_default_penalty}
+• ${T.lbl_confidentiality}: ${d.conf ? T.yes : T.no}
+• ${T.lbl_jurisdiction}: ${disputeName(d.dispute) || T.txt_default_dispute}
+• ${T.lbl_subject}: ${d.subject || typeName(d.type)}
+• ${T.lbl_legal_basis}: ${legalBasisFor(d.type)}
+
+${T.prompt_rt_rules}
+
+${T.prompt_outro}`;
+    }
+
+    // ===== Фоновая доработка текста договора ИИ =====
+    async function polishWithAI(d) {
+        const badge = document.getElementById('aiBadge');
+        const badgeText = document.getElementById('aiBadgeText');
+        if (!badge) return;
+
+        badge.classList.remove('done');
+        badge.classList.add('active');
+        badge.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> <span id="aiBadgeText">${T.ai_polishing}</span>`;
+
+        try {
+            if (ollamaStatus === 'disconnected' || ollamaStatus === 'unknown') {
+                await checkOllamaConnection();
+            }
+            if (ollamaStatus === 'disconnected') throw new Error(T.err_ollama_unavailable);
+
+            const model = document.getElementById('aiModel')?.value;
+            const aiText = await ollamaChat(T.prompt_system, buildContractPrompt(d), model);
+
+            if (aiText) {
+                contractText = aiText;
+                updateLatestHistoryText(aiText);
+                badge.classList.add('done');
+                badge.innerHTML = `<i class="fas fa-check-circle"></i> <span id="aiBadgeText">${T.ai_polished}</span>`;
+            } else {
+                badge.classList.remove('active');
+            }
+        } catch (e) {
+            badge.classList.remove('active');
+            console.warn('AI polish skipped:', e.message);
+            toast(tr(T.ai_polish_failed, { reason: e.message }), 'warning');
         }
     }
 
     // ===== Красивый Стартап-шаблон договора =====
     function buildStartupContract(d, aiContent = '') {
         const dt = new Date(d.date || Date.now());
-        const dateStr = dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        const dateStr = dt.toLocaleDateString(T.intl_locale, { day: 'numeric', month: 'long', year: 'numeric' });
         const contractNumber = `№ ${Math.floor(Math.random() * 9000) + 1000}/${dt.getFullYear()}`;
         const amt = d.amount ? parseInt(d.amount) : null;
-        const amtW = amt ? numWords(amt) : 'сумма прописью';
-        const amtF = amt ? amt.toLocaleString('ru-RU') : '—';
-        const typeUpper = (d.type || 'услуг').toUpperCase();
+        const amtW = amt ? numWords(amt) : T.doc_amount_in_words_placeholder;
+        const amtF = amt ? amt.toLocaleString(T.intl_locale) : '—';
+        const typeLocal = typeName(d.type);
+        const typeUpper = typeLocal.toUpperCase();
         const typeIcon = getTypeIcon(d.type);
+        const role1 = roleName(d.role1);
+        const role2 = roleName(d.role2);
+        const gen1 = roleGen(d.role1);
+        const gen2 = roleGen(d.role2);
+        const dat1 = roleDat(d.role1);
          return `
             <!-- HERO HEADER -->
             <div class="contract-hero">
@@ -3212,24 +3781,24 @@
                     <div class="contract-brand-logo">⚖️</div>
                     <div class="contract-brand-name">LEGAL PRO · CONTRACT</div>
                 </div>
-                <div class="contract-title">ДОГОВОР ${typeUpper}</div>
-                <div class="contract-subtitle">Юридически обязывающее соглашение между сторонами</div>
+                <div class="contract-title">${tr(T.doc_title, { type: typeUpper })}</div>
+                <div class="contract-subtitle">${T.doc_subtitle}</div>
                 <div class="contract-meta">
                     <div class="contract-meta-item">
-                        <span class="contract-meta-label">Номер</span>
+                        <span class="contract-meta-label">${T.doc_number}</span>
                         <span class="contract-meta-value">${contractNumber}</span>
                     </div>
                     <div class="contract-meta-item">
-                        <span class="contract-meta-label">Дата</span>
+                        <span class="contract-meta-label">${T.doc_date}</span>
                         <span class="contract-meta-value">${dateStr}</span>
                     </div>
                     <div class="contract-meta-item">
-                        <span class="contract-meta-label">Город</span>
-                        <span class="contract-meta-value">${d.city || 'г. __________'}</span>
+                        <span class="contract-meta-label">${T.doc_city}</span>
+                        <span class="contract-meta-value">${d.city || T.doc_city_blank}</span>
                     </div>
                     <div class="contract-meta-item">
-                        <span class="contract-meta-label">Тип</span>
-                        <span class="contract-meta-value">${typeIcon} ${d.type || 'услуг'}</span>
+                        <span class="contract-meta-label">${T.doc_type}</span>
+                        <span class="contract-meta-value">${typeIcon} ${typeLocal}</span>
                     </div>
                 </div>
             </div>
@@ -3238,46 +3807,48 @@
             <div class="contract-body">
                 <!-- PARTIES -->
                 <div class="contract-parties">
-                    <div class="contract-parties-title">🤝 Стороны договора</div>
+                    <div class="contract-parties-title">${T.doc_parties_title}</div>
                     <div class="contract-parties-grid">
                         <div class="contract-party">
-                            <div class="contract-party-role">${d.role1}</div>
+                            <div class="contract-party-role">${role1}</div>
                             <div class="contract-party-name">${d.p1}</div>
                         </div>
                         <div class="contract-party-vs">⇄</div>
                         <div class="contract-party">
-                            <div class="contract-party-role">${d.role2}</div>
+                            <div class="contract-party-role">${role2}</div>
                             <div class="contract-party-name">${d.p2}</div>
                         </div>
                     </div>
                 </div>
 
                 <p class="contract-text" style="font-size: 1rem; margin-bottom: 32px; color: #475569;">
-                    <strong style="color: #0f172a;">${d.p1}</strong>, именуемый в дальнейшем «<strong>${d.role1}</strong>», с одной стороны, и
-                    <strong style="color: #0f172a;">${d.p2}</strong>, именуемый в дальнейшем «<strong>${d.role2}</strong>», с другой стороны,
-                    совместно именуемые «Стороны», а по отдельности — «Сторона», руководствуясь Гражданским кодексом Республики Таджикистан,
-                    заключили настоящий Договор о нижеследующем:
+                    ${tr(T.doc_preamble, {
+                        p1: `<strong style="color: #0f172a;">${d.p1}</strong>`,
+                        p2: `<strong style="color: #0f172a;">${d.p2}</strong>`,
+                        role1: `<strong>${role1}</strong>`,
+                        role2: `<strong>${role2}</strong>`
+                    })}
                 </p>
 
                 <!-- DEAL SUMMARY CARD -->
                 <div class="contract-summary">
-                    <div class="contract-summary-title">DEAL SUMMARY · Ключевые условия</div>
+                    <div class="contract-summary-title">${T.doc_summary_title}</div>
                     <div class="contract-summary-grid">
                         <div class="contract-summary-item">
-                            <div class="contract-summary-label">💰 Сумма</div>
-                            <div class="contract-summary-value highlight">${amtF}${amt ? ' сом.' : ''}</div>
+                            <div class="contract-summary-label">${T.doc_sum_amount}</div>
+                            <div class="contract-summary-value highlight">${amtF}${amt ? ' ' + T.currency_short : ''}</div>
                         </div>
                         <div class="contract-summary-item">
-                            <div class="contract-summary-label">📅 Срок</div>
-                            <div class="contract-summary-value">${d.duration || '30 дней'}</div>
+                            <div class="contract-summary-label">${T.doc_sum_term}</div>
+                            <div class="contract-summary-value">${d.duration || T.doc_default_duration}</div>
                         </div>
                         <div class="contract-summary-item">
-                            <div class="contract-summary-label">💳 Оплата</div>
-                            <div class="contract-summary-value">${d.pay || 'По соглашению'}</div>
+                            <div class="contract-summary-label">${T.doc_sum_payment}</div>
+                            <div class="contract-summary-value">${d.pay || T.doc_default_payment}</div>
                         </div>
                         <div class="contract-summary-item">
-                            <div class="contract-summary-label">🏛️ НДС</div>
-                            <div class="contract-summary-value">${d.vat || 'не указан'}</div>
+                            <div class="contract-summary-label">${T.doc_sum_vat}</div>
+                            <div class="contract-summary-value">${vatName(d.vat) || T.doc_vat_not_specified}</div>
                         </div>
                     </div>
                 </div>
@@ -3287,27 +3858,26 @@
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-bullseye"></i></div>
                         <div>
-                            <div class="contract-section-title">Предмет договора</div>
+                            <div class="contract-section-title">${T.doc_s1_title}</div>
                             <div class="contract-section-number">§ 1</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">1.1.</span>
                         <span class="contract-clause-text">
-                            ${d.role2} обязуется по заданию ${d.role1} оказать услуги (выполнить работы) по предмету:
-                            <strong>${d.subject || d.type}</strong>, а ${d.role1} обязуется принять и оплатить результат.
+                            ${tr(T.doc_s1_1, { gen1: gen1, role1: role1, role2: role2, subject: d.subject || typeLocal })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">1.2.</span>
                         <span class="contract-clause-text">
-                            Качество услуг должно соответствовать условиям договора и обычным требованиям делового оборота Республики Таджикистан.
+                            ${T.doc_s1_2}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">1.3.</span>
                         <span class="contract-clause-text">
-                            Результат услуг передаётся ${d.role1} по Акту сдачи-приёмки, подписываемому обеими Сторонами.
+                            ${tr(T.doc_s1_3, { dat1: dat1 })}
                         </span>
                     </div>
                 </div>
@@ -3317,31 +3887,25 @@
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-balance-scale"></i></div>
                         <div>
-                            <div class="contract-section-title">Права и обязанности</div>
+                            <div class="contract-section-title">${T.doc_s2_title}</div>
                             <div class="contract-section-number">§ 2</div>
                         </div>
                     </div>
                     <div class="contract-highlight">
                         <div class="contract-highlight-icon">👤</div>
                         <div class="contract-highlight-content">
-                            <div class="contract-highlight-title">Обязанности ${d.role2}:</div>
+                            <div class="contract-highlight-title">${tr(T.doc_s2_duties_b, { gen2: gen2 })}</div>
                             <div class="contract-highlight-text">
-                                • Выполнить услуги лично, качественно и в установленный срок<br>
-                                • Предоставлять ${d.role1} отчёты о ходе исполнения<br>
-                                • Соблюдать режим конфиденциальности<br>
-                                • Немедленно уведомлять о невозможности исполнения
+                                ${tr(T.doc_s2_b_list, { dat1: dat1 })}
                             </div>
                         </div>
                     </div>
                     <div class="contract-info">
                         <div class="contract-info-icon">👤</div>
                         <div class="contract-info-content">
-                            <div class="contract-info-title">Обязанности ${d.role1}:</div>
+                            <div class="contract-info-title">${tr(T.doc_s2_duties_a, { gen1: gen1 })}</div>
                             <div class="contract-info-text">
-                                • Предоставить необходимую информацию и документацию<br>
-                                • Принять оказанные услуги по Акту в течение 5 рабочих дней<br>
-                                • Своевременно и в полном объёме оплатить услуги<br>
-                                • Обеспечить доступ к объекту/ресурсам при необходимости
+                                ${T.doc_s2_a_list}
                             </div>
                         </div>
                     </div>
@@ -3352,27 +3916,26 @@
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-coins"></i></div>
                         <div>
-                            <div class="contract-section-title">Стоимость и порядок расчётов</div>
+                            <div class="contract-section-title">${T.doc_s3_title}</div>
                             <div class="contract-section-number">§ 3</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">3.1.</span>
                         <span class="contract-clause-text">
-                            Общая стоимость услуг по настоящему Договору составляет
-                            <strong>${amtF} (${amtW}) сомони</strong>${d.vat !== 'не указано' ? `, ${d.vat}` : ''}.
+                            ${tr(T.doc_s3_1, { amount: amtF, words: amtW, vat: d.vat !== 'не указано' ? `, ${vatName(d.vat)}` : '' })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">3.2.</span>
                         <span class="contract-clause-text">
-                            Порядок оплаты: <strong>${d.pay || 'По соглашению Сторон'}</strong>.
+                            ${tr(T.doc_s3_2, { payment: d.pay || T.doc_s3_by_agreement })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">3.3.</span>
                         <span class="contract-clause-text">
-                            Оплата производится в безналичном порядке путём перечисления денежных средств на расчётный счёт ${d.role2}.
+                            ${tr(T.doc_s3_3, { gen2: gen2 })}
                         </span>
                     </div>
                 </div>
@@ -3382,26 +3945,26 @@
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-calendar-alt"></i></div>
                         <div>
-                            <div class="contract-section-title">Сроки исполнения</div>
+                            <div class="contract-section-title">${T.doc_s4_title}</div>
                             <div class="contract-section-number">§ 4</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">4.1.</span>
                         <span class="contract-clause-text">
-                            Срок оказания услуг: <strong>${d.duration || '30 календарных дней'}</strong> с момента подписания Договора.
+                            ${tr(T.doc_s4_1, { duration: d.duration || T.doc_s4_default_duration })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">4.2.</span>
                         <span class="contract-clause-text">
-                            Приёмка результатов: ${d.role1} обязан рассмотреть Акт в течение 5 рабочих дней. При отсутствии мотивированного отказа услуги считаются принятыми.
+                            ${tr(T.doc_s4_2, { role1: role1 })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">4.3.</span>
                         <span class="contract-clause-text">
-                            Сроки могут быть изменены по соглашению Сторон путём подписания дополнительного соглашения.
+                            ${T.doc_s4_3}
                         </span>
                     </div>
                 </div>
@@ -3411,30 +3974,29 @@
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-shield-alt"></i></div>
                         <div>
-                            <div class="contract-section-title">Ответственность сторон</div>
+                            <div class="contract-section-title">${T.doc_s5_title}</div>
                             <div class="contract-section-number">§ 5</div>
                         </div>
                     </div>
                     <div class="contract-highlight">
                         <div class="contract-highlight-icon">⚠️</div>
                         <div class="contract-highlight-content">
-                            <div class="contract-highlight-title">Неустойка</div>
+                            <div class="contract-highlight-title">${T.doc_s5_penalty_title}</div>
                             <div class="contract-highlight-text">
-                                За нарушение сроков оплаты или исполнения обязательств Сторона уплачивает пеню в размере
-                                <strong>${d.penalty || '0,1%'}</strong> от суммы задолженности за каждый день просрочки.
+                                ${tr(T.doc_s5_1, { penalty: d.penalty || '0,1%' })}
                             </div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">5.1.</span>
                         <span class="contract-clause-text">
-                            Уплата неустойки не освобождает Сторону от исполнения основного обязательства.
+                            ${T.doc_s5_2}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">5.2.</span>
                         <span class="contract-clause-text">
-                            Совокупная ответственность Сторон ограничивается суммой настоящего Договора, за исключением случаев умысла.
+                            ${T.doc_s5_3}
                         </span>
                     </div>
                 </div>
@@ -3444,20 +4006,20 @@
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-cloud-bolt"></i></div>
                         <div>
-                            <div class="contract-section-title">Обстоятельства непреодолимой силы</div>
+                            <div class="contract-section-title">${T.doc_s6_title}</div>
                             <div class="contract-section-number">§ 6</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">6.1.</span>
                         <span class="contract-clause-text">
-                            Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств, если оно вызвано обстоятельствами непреодолимой силы (форс-мажор): стихийные бедствия, войны, акты государственных органов и др.
+                            ${T.doc_s6_1}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">6.2.</span>
                         <span class="contract-clause-text">
-                            Сторона, для которой создалась невозможность исполнения, обязана уведомить другую Сторону в течение 3 (трёх) рабочих дней с момента наступления таких обстоятельств.
+                            ${T.doc_s6_2}
                         </span>
                     </div>
                 </div>
@@ -3468,20 +4030,20 @@
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-lock"></i></div>
                         <div>
-                            <div class="contract-section-title">Конфиденциальность</div>
+                            <div class="contract-section-title">${T.doc_s7_title}</div>
                             <div class="contract-section-number">§ 7</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">7.1.</span>
                         <span class="contract-clause-text">
-                            Стороны обязуются сохранять конфиденциальность условий Договора, а также любой информации, полученной в ходе его исполнения.
+                            ${T.doc_s7_1}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">7.2.</span>
                         <span class="contract-clause-text">
-                            Режим конфиденциальности действует в течение 3 (трёх) лет после прекращения Договора.
+                            ${T.doc_s7_2}
                         </span>
                     </div>
                 </div>
@@ -3492,20 +4054,20 @@
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-gavel"></i></div>
                         <div>
-                            <div class="contract-section-title">Разрешение споров</div>
+                            <div class="contract-section-title">${T.doc_s8_title}</div>
                             <div class="contract-section-number">§ ${d.conf ? 8 : 7}</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '8' : '7'}.1.</span>
                         <span class="contract-clause-text">
-                            Все споры решаются путём переговоров. Претензионный порядок обязателен. Срок ответа на претензию — 30 календарных дней.
+                            ${T.doc_s8_1}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '8' : '7'}.2.</span>
                         <span class="contract-clause-text">
-                            При недостижении согласия спор передаётся на рассмотрение в <strong>${d.dispute || 'арбитражный суд'}</strong> в соответствии с законодательством Республики Таджикистан.
+                            ${tr(T.doc_s8_2, { dispute: `<strong>${disputeName(d.dispute) || T.doc_s8_default}</strong>` })}
                         </span>
                     </div>
                 </div>
@@ -3515,97 +4077,97 @@
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-file-signature"></i></div>
                         <div>
-                            <div class="contract-section-title">Заключительные положения</div>
+                            <div class="contract-section-title">${T.doc_s9_title}</div>
                             <div class="contract-section-number">§ ${d.conf ? 9 : 8}</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '9' : '8'}.1.</span>
                         <span class="contract-clause-text">
-                            Договор вступает в силу с момента подписания и действует до полного исполнения Сторонами своих обязательств.
+                            ${T.doc_s9_1}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '9' : '8'}.2.</span>
                         <span class="contract-clause-text">
-                            Любые изменения и дополнения действительны лишь при условии, что они совершены в письменной форме и подписаны уполномоченными представителями Сторон.
+                            ${T.doc_s9_2}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '9' : '8'}.3.</span>
                         <span class="contract-clause-text">
-                            Договор составлен в 2 (двух) экземплярах, имеющих равную юридическую силу, по одному для каждой из Сторон.
+                            ${T.doc_s9_3}
                         </span>
                     </div>
                     ${d.extra ? `
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '9' : '8'}.4.</span>
-                        <span class="contract-clause-text"><strong>Особые условия:</strong> ${d.extra}</span>
+                        <span class="contract-clause-text">${tr(T.doc_s9_extra, { extra: d.extra })}</span>
                     </div>
                     ` : ''}
                 </div>
 
                 <!-- SIGNATURES -->
                 <div class="contract-signatures">
-                    <div class="contract-signatures-title">✒️ Подписи сторон</div>
+                    <div class="contract-signatures-title">${T.doc_signatures_title}</div>
                     <div class="contract-signatures-grid">
                         <div class="contract-signature">
-                            <div class="contract-signature-party">${d.role1}</div>
+                            <div class="contract-signature-party">${role1}</div>
                             <div class="contract-signature-name">${d.p1}</div>
                             <div class="contract-signature-line">
                                 _________________________ / _________________ /
                             </div>
-                            <div style="font-size: 0.75rem; color: #94a3b8;">(подпись / расшифровка)</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">${T.doc_signature_hint}</div>
                         </div>
                         <div class="contract-signature">
-                            <div class="contract-signature-party">${d.role2}</div>
+                            <div class="contract-signature-party">${role2}</div>
                             <div class="contract-signature-name">${d.p2}</div>
                             <div class="contract-signature-line">
                                 _________________________ / _________________ /
                             </div>
-                            <div style="font-size: 0.75rem; color: #94a3b8;">(подпись / расшифровка)</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">${T.doc_signature_hint}</div>
                         </div>
                     </div>
 
                     <!-- Requisites -->
                     <div class="contract-requisites">
-                        <div class="contract-requisites-title">📋 Банковские реквизиты</div>
+                        <div class="contract-requisites-title">${T.doc_requisites_title}</div>
                         <div class="contract-requisites-grid">
                             <div class="contract-requisites-col">
-                                <h5>${d.role1}: ${d.p1}</h5>
+                                <h5>${role1}: ${d.p1}</h5>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">Адрес:</span>
+                                    <span class="contract-requisites-label">${T.doc_req_address}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">ИНН/ОГРН:</span>
+                                    <span class="contract-requisites-label">${T.doc_req_inn}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">Р/счёт:</span>
+                                    <span class="contract-requisites-label">${T.doc_req_account}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">Банк:</span>
+                                    <span class="contract-requisites-label">${T.doc_req_bank}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                             </div>
                             <div class="contract-requisites-col">
-                                <h5>${d.role2}: ${d.p2}</h5>
+                                <h5>${role2}: ${d.p2}</h5>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">Адрес:</span>
+                                    <span class="contract-requisites-label">${T.doc_req_address}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">ИНН/ОГРН:</span>
+                                    <span class="contract-requisites-label">${T.doc_req_inn}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">Р/счёт:</span>
+                                    <span class="contract-requisites-label">${T.doc_req_account}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">Банк:</span>
+                                    <span class="contract-requisites-label">${T.doc_req_bank}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                             </div>
@@ -3618,8 +4180,152 @@
             <div class="contract-footer">
                 <div class="contract-footer-brand">⚖️ LEGAL PRO · CONTRACT</div>
                 <div class="contract-footer-text">
-                    Документ сгенерирован с помощью AI Contract Builder PRO<br>
-                    ${dateStr} · Все права защищены · ${contractNumber}
+                    ${T.doc_footer_1}<br>
+                    ${dateStr} · ${T.doc_footer_2} · ${contractNumber}
+                </div>
+            </div>
+        `;
+    }
+
+    // Институт ГК РТ, регулирующий выбранный тип договора
+    function legalBasisFor(type) {
+        return (T.legal_basis && (T.legal_basis[type] || T.legal_basis._default)) || '';
+    }
+
+    // Стабильный номер договора: одни и те же данные дают один и тот же номер
+    function contractNo(d, year) {
+        const src = `${d.p1 || ''}|${d.p2 || ''}|${d.type || ''}|${d.date || ''}`;
+        let hash = 0;
+        for (let i = 0; i < src.length; i++) hash = ((hash << 5) - hash + src.charCodeAt(i)) | 0;
+        return `№ ${Math.abs(hash) % 9000 + 1000}/${year}`;
+    }
+
+    // ===== Классический бланк договора (официальное оформление, право РТ) =====
+    function buildClassicContract(d, aiContent = '') {
+        const dt = new Date(d.date || Date.now());
+        const dateStr = dt.toLocaleDateString(T.intl_locale, { day: 'numeric', month: 'long', year: 'numeric' });
+        const contractNumber = contractNo(d, dt.getFullYear());
+        const amt = d.amount ? parseInt(d.amount) : null;
+        const amtW = amt ? numWords(amt) : T.doc_amount_in_words_placeholder;
+        const amtF = amt ? amt.toLocaleString(T.intl_locale) : '—';
+        const typeLocal = typeName(d.type);
+        const role1 = roleName(d.role1);
+        const role2 = roleName(d.role2);
+        const gen1 = roleGen(d.role1);
+        const gen2 = roleGen(d.role2);
+        const dat1 = roleDat(d.role1);
+        const listItems = str => (str || '').split('<br>')
+            .map(s => s.replace(/^\s*[•·-]\s*/, '').trim())
+            .filter(Boolean);
+
+        let n = 0;
+        const section = (title, clauses) => {
+            n++;
+            const body = clauses.filter(Boolean).map((c, i) =>
+                `<div class="cls-clause"><span class="cls-clause-num">${n}.${i + 1}.</span> ${c}</div>`
+            ).join('');
+            return `<div class="cls-section"><h3 class="cls-section-title">${n}. ${title}</h3>${body}</div>`;
+        };
+
+        const duties = (title, list) =>
+            `${title}<ul class="cls-list">${listItems(list).map(li => `<li>— ${li}</li>`).join('')}</ul>`;
+
+        const requisites = (role, name) => `
+            <div class="cls-party-title">${role}</div>
+            <div class="cls-req-row"><strong>${name}</strong></div>
+            <div class="cls-req-row">${T.doc_req_address} _____________________</div>
+            <div class="cls-req-row">${T.doc_req_inn} _____________________</div>
+            <div class="cls-req-row">${T.doc_req_account} _____________________</div>
+            <div class="cls-req-row">${T.doc_req_bank} _____________________</div>
+            <div class="cls-sign-line">_________________ / _________________ /</div>
+            <div class="cls-stamp">${T.doc_signature_hint} ${T.cls_stamp}</div>
+        `;
+
+        return `
+            <div class="cls-doc">
+                <div class="cls-title">${tr(T.doc_title, { type: typeLocal.toUpperCase() })}</div>
+                <div class="cls-number">${contractNumber}</div>
+                <div class="cls-place">
+                    <span>${d.city || T.doc_city_blank}</span>
+                    <span>${dateStr}</span>
+                </div>
+                <hr class="cls-rule">
+
+                <p class="cls-preamble">
+                    ${tr(T.doc_preamble, {
+                        p1: `<strong>${d.p1}</strong>`,
+                        p2: `<strong>${d.p2}</strong>`,
+                        role1: `<strong>${role1}</strong>`,
+                        role2: `<strong>${role2}</strong>`
+                    })}
+                </p>
+
+                <div class="cls-basis">
+                    <div class="cls-basis-title">${T.cls_basis_title}</div>
+                    <div>${tr(T.cls_basis_lead, { basis: legalBasisFor(d.type) })}</div>
+                    <ul>${(T.cls_basis_acts || []).map(a => `<li>${a}</li>`).join('')}</ul>
+                </div>
+
+                ${section(T.doc_s1_title.toUpperCase(), [
+                    tr(T.doc_s1_1, { gen1: gen1, role1: role1, role2: role2, subject: d.subject || typeLocal }),
+                    T.doc_s1_2,
+                    tr(T.doc_s1_3, { dat1: dat1 })
+                ])}
+
+                ${section(T.doc_s2_title.toUpperCase(), [
+                    duties(tr(T.doc_s2_duties_b, { gen2: gen2 }), tr(T.doc_s2_b_list, { dat1: dat1 })),
+                    duties(tr(T.doc_s2_duties_a, { gen1: gen1 }), T.doc_s2_a_list)
+                ])}
+
+                ${section(T.doc_s3_title.toUpperCase(), [
+                    tr(T.doc_s3_1, { amount: amtF, words: amtW, vat: d.vat !== 'не указано' ? `, ${vatName(d.vat)}` : '' }),
+                    tr(T.doc_s3_2, { payment: d.pay || T.doc_s3_by_agreement }),
+                    tr(T.doc_s3_3, { gen2: gen2 }),
+                    T.cls_currency_clause,
+                    T.cls_tax_clause
+                ])}
+
+                ${section(T.doc_s4_title.toUpperCase(), [
+                    tr(T.doc_s4_1, { duration: d.duration || T.doc_s4_default_duration }),
+                    tr(T.doc_s4_2, { role1: role1 }),
+                    T.doc_s4_3
+                ])}
+
+                ${section(T.doc_s5_title.toUpperCase(), [
+                    tr(T.doc_s5_1, { penalty: d.penalty || '0,1%' }),
+                    T.doc_s5_2,
+                    T.doc_s5_3
+                ])}
+
+                ${section(T.doc_s6_title.toUpperCase(), [T.doc_s6_1, T.doc_s6_2])}
+
+                ${d.conf ? section(T.doc_s7_title.toUpperCase(), [T.doc_s7_1, T.doc_s7_2]) : ''}
+
+                ${section(T.doc_s8_title.toUpperCase(), [
+                    T.doc_s8_1,
+                    tr(T.doc_s8_2, { dispute: `<strong>${disputeName(d.dispute) || T.doc_s8_default}</strong>` })
+                ])}
+
+                ${section(T.doc_s9_title.toUpperCase(), [
+                    T.doc_s9_1,
+                    T.doc_s9_2,
+                    T.doc_s9_3,
+                    T.cls_language_clause,
+                    d.extra ? tr(T.doc_s9_extra, { extra: d.extra }) : ''
+                ])}
+
+                <div class="cls-sign-title">${T.cls_signatures_title}</div>
+                <table class="cls-table">
+                    <tbody>
+                        <tr>
+                            <td>${requisites(role1, d.p1)}</td>
+                            <td>${requisites(role2, d.p2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="cls-footnote">
+                    ${T.cls_footnote} · ${contractNumber} · ${dateStr}
                 </div>
             </div>
         `;
@@ -3639,75 +4345,76 @@
 
     function generateTextVersion(d) {
         const dt = new Date(d.date || Date.now());
-        const dateStr = dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+        const dateStr = dt.toLocaleDateString(T.intl_locale, { day: 'numeric', month: 'long', year: 'numeric' });
         const amt = d.amount ? parseInt(d.amount) : null;
-        const amtW = amt ? numWords(amt) : '[сумма прописью]';
-        const amtF = amt ? amt.toLocaleString('ru-RU') : '[сумма]';
+        const amtW = amt ? numWords(amt) : T.txt_words_placeholder;
+        const amtF = amt ? amt.toLocaleString(T.intl_locale) : T.txt_amount_placeholder;
+        const typeLocal = typeName(d.type);
+        const role1 = roleName(d.role1);
+        const role2 = roleName(d.role2);
+        const dat1 = roleDat(d.role1);
 
-        return `ДОГОВОР ${d.type.toUpperCase()}
+        return `${tr(T.txt_header, { type: typeLocal.toUpperCase() })}
 
-${d.city || 'г. ____________'} | ${dateStr}
+${d.city || T.txt_city_blank} | ${dateStr}
 
-${d.p1}, именуемый «${d.role1}», и ${d.p2}, именуемый «${d.role2}», заключили настоящий договор:
+${tr(T.txt_preamble, { p1: d.p1, p2: d.p2, role1: role1, role2: role2 })}
 
-1. ПРЕДМЕТ ДОГОВОРА
-1.1. ${d.role2} обязуется оказать ${d.role1} услуги: ${d.subject || d.type}.
+${T.txt_s1}
+${tr(T.txt_s1_1, { dat1: dat1, role1: role1, role2: role2, subject: d.subject || typeLocal })}
 
-2. СТОИМОСТЬ И ОПЛАТА
-2.1. Цена: ${amtF} (${amtW}) сомон ${d.vat !== 'не указано' ? d.vat : ''}.
-2.2. Оплата: ${d.pay || 'По соглашению'}.
+${T.txt_s2}
+${tr(T.txt_s2_1, { amount: amtF, words: amtW, vat: d.vat !== 'не указано' ? vatName(d.vat) : '' })}
+${tr(T.txt_s2_2, { payment: d.pay || T.doc_default_payment })}
 
-3. СРОКИ
-3.1. Срок: ${d.duration || '30 календарных дней'}.
+${T.txt_s3}
+${tr(T.txt_s3_1, { duration: d.duration || T.doc_s4_default_duration })}
 
-4. ОТВЕТСТВЕННОСТЬ
-4.1. Неустойка: ${d.penalty || '0.1%/день'}.
+${T.txt_s4}
+${tr(T.txt_s4_1, { penalty: d.penalty || T.txt_default_penalty })}
 
-5. ПОДСУДНОСТЬ
-5.1. ${d.dispute || 'Арбитражный суд'}.
+${T.txt_s5}
+${tr(T.txt_s5_1, { dispute: disputeName(d.dispute) || T.txt_default_dispute })}
 
-ПОДПИСИ:
-${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
+${T.txt_signatures}
+${role1}: ${d.p1} ___________    ${role2}: ${d.p2} ___________`;
     }
 
     function numWords(n) {
-        if (!n) return '[сумма прописью]';
+        if (!n) return T.txt_words_placeholder;
         n = Math.floor(n);
-        if (n === 0) return 'ноль сомони';
+        if (n === 0) return T.num_zero + ' ' + T.currency;
 
-        const ones = ['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'];
-        const teens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
-        const tens = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
-        const hunds = ['', 'сто', 'двести', 'триста', 'четыреста', 'пятьсот', 'шестьсот', 'семьсот', 'восемьсот', 'девятьсот'];
+        const ones = T.num_ones, teens = T.num_teens, tens = T.num_tens, hunds = T.num_hunds;
+        const sep = T.num_sep || ' ';
 
         const formatGroup = (num) => {
             if (num === 0) return '';
-            let h = Math.floor(num / 100) % 10,
+            const h = Math.floor(num / 100) % 10,
                 t = Math.floor(num / 10) % 10,
-                o = num % 10,
-                s = '';
-            if (h) s += hunds[h] + ' ';
-            if (t === 1) s += teens[o];
+                o = num % 10;
+            const parts = [];
+            if (h) parts.push(hunds[h]);
+            if (t === 1) parts.push(teens[o]);
             else {
-                if (t) s += tens[t] + ' ';
-                if (o) s += ones[o];
+                if (t) parts.push(tens[t]);
+                if (o) parts.push(ones[o]);
             }
-            return s.trim();
+            return parts.filter(Boolean).join(sep);
         };
 
-        let result = [],
-            x = n;
-        let th = Math.floor(x / 1000) % 1000;
+        const result = [];
+        const x = n;
+        const th = Math.floor(x / 1000) % 1000;
         if (th > 0) {
-            let s = formatGroup(th);
-            let f = (th % 10 === 1 && th % 100 !== 11) ? 'тысяча' :
-                ((th % 10 >= 2 && th % 10 <= 4 && (th % 100 < 10 || th % 100 > 20)) ? 'тысячи' : 'тысяч');
-            result.push(s + ' ' + f);
+            const f = (th % 10 === 1 && th % 100 !== 11) ? T.num_thousand_one :
+                ((th % 10 >= 2 && th % 10 <= 4 && (th % 100 < 10 || th % 100 > 20)) ? T.num_thousand_few : T.num_thousand_many);
+            result.push(formatGroup(th) + ' ' + f);
         }
-        let u = formatGroup(x % 1000);
+        const u = formatGroup(x % 1000);
         if (u || th === 0) result.push(u);
 
-        return result.filter(s => s).join(' ').trim() + ' сомони';
+        return result.filter(Boolean).join(sep).trim() + ' ' + T.currency;
     }
 
     // ===== History =====
@@ -3726,13 +4433,13 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
             localStorage.setItem(CONFIG.HISTORY_KEY, JSON.stringify(h));
             recordCabinetActivity({
                 type: 'generation',
-                title: 'Генерация договора',
-                details: `${data.type || 'Договор'} | ${data.p1 || 'Сторона 1'} - ${data.p2 || 'Сторона 2'}`,
-                file_name: `Договор_${new Date().toISOString().slice(0, 10)}.txt`,
-                summary: `${data.type || 'Договор'}: ${data.p1 || 'Сторона 1'} - ${data.p2 || 'Сторона 2'}`,
+                title: T.hist_title,
+                details: `${typeName(data.type) || T.hist_contract} | ${data.p1 || T.lbl_party1} - ${data.p2 || T.lbl_party2}`,
+                file_name: `${T.hist_file_name}_${new Date().toISOString().slice(0, 10)}.txt`,
+                summary: `${typeName(data.type) || T.hist_contract}: ${data.p1 || T.lbl_party1} - ${data.p2 || T.lbl_party2}`,
                 result: text || '',
                 status: 'completed',
-                contract_type: data.type || 'Договор',
+                contract_type: typeName(data.type) || T.hist_contract,
                 metadata: {
                     model: document.getElementById('useOllama')?.checked ? document.getElementById('aiModel')?.value : 'template',
                     amount: data.amount,
@@ -3745,11 +4452,24 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
         }
     }
 
+    // Заменяет текст последнего черновика доработанной ИИ версией (без дубля в истории)
+    function updateLatestHistoryText(text) {
+        try {
+            const h = JSON.parse(localStorage.getItem(CONFIG.HISTORY_KEY) || '[]');
+            if (!h.length) return;
+            h[0].contract = text;
+            localStorage.setItem(CONFIG.HISTORY_KEY, JSON.stringify(h));
+            updateHistoryUI();
+        } catch (e) {
+            console.warn('History update error:', e);
+        }
+    }
+
     function loadHistory(id) {
         const h = JSON.parse(localStorage.getItem(CONFIG.HISTORY_KEY) || '[]');
         const entry = h.find(e => e.id === id);
         if (!entry) {
-            toast('❌ Не найдено', 'error');
+            toast(T.hist_not_found, 'error');
             return;
         }
 
@@ -3773,9 +4493,14 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
 
         if (entry.contract) {
             contractText = entry.contract;
-            const html = buildStartupContract(d);
+            selectStyle(d.style || 'classic', true);
+            const html = contractStyle === 'classic' ? buildClassicContract(d) : buildStartupContract(d);
+            contractHtml = html;
             const output = document.getElementById('contractOutput');
-            if (output) output.innerHTML = html;
+            if (output) {
+                output.className = contractStyle === 'classic' ? 'contract-box classic' : 'contract-box';
+                output.innerHTML = html;
+            }
             document.getElementById('result')?.classList.add('active');
             goStep(4);
         } else {
@@ -3783,7 +4508,7 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
         }
 
         closeHistoryModal();
-        toast('📂 Черновик загружен', 'success');
+        toast(T.hist_loaded, 'success');
     }
 
     function deleteHistory(id) {
@@ -3792,14 +4517,14 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
         h = h.filter(e => e.id !== id);
         localStorage.setItem(CONFIG.HISTORY_KEY, JSON.stringify(h));
         updateHistoryUI();
-        toast(`🗑️ Удалено (${len - h.length})`, 'success');
+        toast(tr(T.hist_deleted, { count: len - h.length }), 'success');
     }
 
     function clearAllHistory() {
-        if (confirm('Удалить ВСЮ историю черновиков?')) {
+        if (confirm(T.hist_confirm_clear)) {
             localStorage.removeItem(CONFIG.HISTORY_KEY);
             updateHistoryUI();
-            toast('🗑️ История очищена', 'success');
+            toast(T.hist_cleared, 'success');
         }
     }
 
@@ -3810,14 +4535,14 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
         const h = JSON.parse(localStorage.getItem(CONFIG.HISTORY_KEY) || '[]');
 
         if (!h.length) {
-            c.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 48px 24px; font-size: 0.9375rem;">📭 История пуста</p>';
+            c.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 48px 24px; font-size: 0.9375rem;">${T.hist_empty}</p>`;
             return;
         }
 
         c.innerHTML = h.map(e => {
             const dt = new Date(e.ts);
-            const ds = dt.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const tm = dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            const ds = dt.toLocaleDateString(T.intl_locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const tm = dt.toLocaleTimeString(T.intl_locale, { hour: '2-digit', minute: '2-digit' });
 
             return `
                 <div class="history-item" onclick="loadHistory(${e.id})">
@@ -3825,11 +4550,11 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
                         <span class="history-item-title">${e.preview}</span>
                         <span class="history-item-date">${ds} ${tm}</span>
                     </div>
-                    ${e.amount ? `<div class="history-item-amount">💰 ${parseInt(e.amount).toLocaleString('ru-RU')} сом.</div>` : ''}
+                    ${e.amount ? `<div class="history-item-amount">💰 ${parseInt(e.amount).toLocaleString(T.intl_locale)} ${T.currency_short}</div>` : ''}
                     <div class="history-item-actions" onclick="event.stopPropagation()">
                         <button class="btn-sm" onclick="loadHistory(${e.id})">
                             <i class="fas fa-download"></i>
-                            Загрузить
+                            ${T.hist_load}
                         </button>
                         <button class="btn-sm btn-sm-danger" onclick="deleteHistory(${e.id})">
                             <i class="fas fa-trash"></i>
@@ -3871,12 +4596,12 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
     // ===== Export =====
     function copyText() {
         if (!contractText) {
-            toast('⚠️ Нечего копировать', 'warning');
+            toast(T.warn_nothing_to_copy, 'warning');
             return;
         }
         navigator.clipboard.writeText(contractText)
-            .then(() => toast('📋 Скопировано в буфер обмена', 'success'))
-            .catch(() => toast('❌ Ошибка копирования', 'error'));
+            .then(() => toast(T.ok_copied, 'success'))
+            .catch(() => toast(T.err_copy, 'error'));
     }
 
     function downloadTxt() {
@@ -3884,18 +4609,18 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
         const blob = new Blob([contractText], { type: 'text/plain;charset=utf-8' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `Договор_${new Date().toISOString().slice(0, 10)}.txt`;
+        a.download = `${T.hist_file_name}_${new Date().toISOString().slice(0, 10)}.txt`;
         a.click();
         URL.revokeObjectURL(a.href);
-        toast('💾 TXT файл скачан', 'success');
+        toast(T.ok_txt_downloaded, 'success');
     }
 
     async function exportToDocx() {
         if (!contractText) {
-            toast('⚠️ Сначала сгенерируйте договор', 'warning');
+            toast(T.warn_generate_first, 'warning');
             return;
         }
-        toast('🔄 Создаю DOCX...', 'warning');
+        toast(T.creating_docx, 'warning');
         try {
             const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } = window.docx;
             const lines = contractText.split('\n');
@@ -3905,7 +4630,7 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
                 const t = line.trim();
                 if (!t) continue;
 
-                if (t.match(/^[А-Я0-9\s]{5,}$/)) {
+                if (t.match(/^[A-ZА-ЯЁЎҚҒҲҶӢӮ0-9\s]{5,}$/)) {
                     children.push(new Paragraph({
                         text: t,
                         heading: HeadingLevel.HEADING_1,
@@ -3932,7 +4657,7 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
 
             const doc = new Document({
                 creator: 'AI Contract Builder PRO',
-                title: 'Договор',
+                title: T.hist_contract,
                 sections: [{
                     properties: {
                         page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } }
@@ -3944,10 +4669,10 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
             const blob = await Packer.toBlob(doc);
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `Договор_${new Date().toISOString().slice(0, 10)}.docx`;
+            a.download = `${T.hist_file_name}_${new Date().toISOString().slice(0, 10)}.docx`;
             a.click();
             URL.revokeObjectURL(a.href);
-            toast('📄 DOCX файл скачан', 'success');
+            toast(T.ok_docx_downloaded, 'success');
         } catch (e) {
             toast(`❌ DOCX: ${e.message}`, 'error');
             console.error('DOCX error:', e);
@@ -3956,14 +4681,14 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
 
     async function exportToPdf() {
         if (!contractHtml && !contractText) {
-            toast('⚠️ Сначала сгенерируйте договор', 'warning');
+            toast(T.warn_generate_first, 'warning');
             return;
         }
-        toast('🔄 Создаю PDF...', 'warning');
+        toast(T.creating_pdf, 'warning');
         try {
             const { jsPDF } = window.jspdf;
             const el = document.getElementById('contractOutput');
-            if (!el) throw new Error('Элемент не найден');
+            if (!el) throw new Error(T.err_element_not_found);
 
             const oldMax = el.style.maxHeight;
             el.style.maxHeight = 'none';
@@ -3994,10 +4719,10 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
                 h -= ph;
             }
 
-            pdf.save(`Договор_${new Date().toISOString().slice(0, 10)}.pdf`);
-            toast('📕 PDF файл скачан', 'success');
+            pdf.save(`${T.hist_file_name}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            toast(T.ok_pdf_downloaded, 'success');
         } catch (e) {
-            toast('⚠️ PDF: используем печать', 'warning');
+            toast(T.warn_pdf_print, 'warning');
             setTimeout(() => window.print(), 400);
             console.error('PDF error:', e);
         }
@@ -4011,13 +4736,13 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
 
         document.querySelectorAll('input:not([type="checkbox"]), textarea, select').forEach(el => {
             if (el.id === 'f_date') el.valueAsDate = new Date();
-            else if (el.id === 'f_city') el.value = 'г. Москва';
+            else if (el.id === 'f_city') el.value = @json(__('generate.city_default'));
             else if (el.id === 'f_type') el.value = 'оказания услуг';
             else if (el.id === 'f_role1') el.value = 'Заказчик';
             else if (el.id === 'f_role2') el.value = 'Исполнитель';
             else if (el.id === 'f_vat') el.value = 'не указано';
-            else if (el.id === 'f_dispute') el.value = 'арбитражный суд';
-            else if (el.id === 'f_penalty') el.value = '0.1% в день';
+            else if (el.id === 'f_dispute') el.value = 'экономический суд';
+            else if (el.id === 'f_penalty') el.value = '0.1%';
             else el.value = '';
         });
 
@@ -4027,9 +4752,12 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
         const detectedInfo = document.getElementById('detectedInfo');
         if (detectedInfo) detectedInfo.innerHTML = '';
 
+        const badge = document.getElementById('aiBadge');
+        if (badge) badge.classList.remove('active', 'done');
+
         localStorage.removeItem(CONFIG.FORM_CACHE_KEY);
         goStep(1);
-        toast('🔄 Начато заново', 'success');
+        toast(T.ok_restarted, 'success');
     }
 
     function toast(msg, type = 'success') {
@@ -4045,9 +4773,13 @@ ${d.role1}: ${d.p1} ___________    ${d.role2}: ${d.p2} ___________`;
         loadTheme();
         loadApiCache();
 
+        let savedStyle = 'classic';
+        try { savedStyle = localStorage.getItem(CONFIG.STYLE_KEY) || 'classic'; } catch (e) { /* noop */ }
+        selectStyle(savedStyle, true);
+
         const isRestored = restoreFormState();
         if (isRestored && document.getElementById('f_desc')?.value) {
-            toast('💾 Данные восстановлены из кэша', 'success');
+            toast(T.ok_cache_restored, 'success');
         }
 
         if (!document.getElementById('f_date')?.value) {

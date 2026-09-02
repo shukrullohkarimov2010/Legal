@@ -20,9 +20,13 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    public const ROLE_USER = 'user';
+    public const ROLE_ADMIN = 'admin';
+
     protected $fillable = [
         'name',
         'email',
+        'role',
         'password',
         'provider',
         'provider_id',
@@ -39,7 +43,21 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'face_signature',
     ];
+
+    /**
+     * Задачи пользователя.
+     */
+    public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
 
     /**
      * Get the attributes that should be cast.

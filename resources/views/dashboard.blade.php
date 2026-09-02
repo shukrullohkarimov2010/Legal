@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
-    <title>LegalAI Pro — AI-платформа для юридических документов</title>
+    <title>{{ __('dashboard.page_title') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1742,7 +1742,7 @@
     // Определяем их здесь, ДО navbar, чтобы они были доступны во всём шаблоне
 
     $currentUser = auth()->user();
-    $userName = $currentUser?->name ?: 'Пользователь';
+    $userName = $currentUser?->name ?: __('dashboard.default_user');
     $userEmail = $currentUser?->email ?: 'email@example.com';
 
     // Инициалы для аватара
@@ -1751,7 +1751,7 @@
         ->take(2)
         ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
         ->implode('');
-    $userInitials = $userInitials !== '' ? $userInitials : 'П';
+    $userInitials = $userInitials !== '' ? $userInitials : __('dashboard.default_initial');
 
     // Первое имя для greeting
     $firstName = $nameParts[0] ?? $userName;
@@ -1760,29 +1760,18 @@
     $hour = (int) date('H');
     if ($hour >= 5 && $hour < 12) {
         $timeEmoji = '🌅';
-        $timeRu = 'Доброе утро';
-        $timeEn = 'Good morning';
-        $timeTj = 'Субҳ ба хайр';
         $timeOfDay = 'morning';
     } elseif ($hour >= 12 && $hour < 18) {
         $timeEmoji = '☀️';
-        $timeRu = 'Добрый день';
-        $timeEn = 'Good afternoon';
-        $timeTj = 'Рӯз ба хайр';
         $timeOfDay = 'afternoon';
     } elseif ($hour >= 18 && $hour < 23) {
         $timeEmoji = '🌆';
-        $timeRu = 'Добрый вечер';
-        $timeEn = 'Good evening';
-        $timeTj = 'Бегоҳ ба хайр';
         $timeOfDay = 'evening';
     } else {
         $timeEmoji = '🌙';
-        $timeRu = 'Доброй ночи';
-        $timeEn = 'Good night';
-        $timeTj = 'Шаб ба хайр';
         $timeOfDay = 'night';
     }
+    $timeGreeting = __('dashboard.greeting_' . $timeOfDay);
 @endphp
 
     <!-- ============ DYNAMIC AMBIENT BACKGROUND ============ -->
@@ -1835,9 +1824,9 @@
 
                 <!-- Desktop Nav -->
                 <div class="d-none d-lg-flex align-items-center gap-1">
-                    <a href="{{ route('welcome') }}" class="nav-link-premium active" data-i18n="nav_home">Главная</a>
-                    <a href="{{ route('dashboard') }}" class="nav-link-premium" data-i18n="nav_dashboard">Рабочий стол</a>
-                    <a href="#features" class="nav-link-premium" data-i18n="nav_features">Возможности</a>
+                    <a href="{{ route('welcome') }}" class="nav-link-premium active">{{ __('dashboard.nav_home') }}</a>
+                    <a href="{{ route('dashboard') }}" class="nav-link-premium">{{ __('dashboard.nav_dashboard') }}</a>
+                    <a href="#features" class="nav-link-premium">{{ __('dashboard.nav_features') }}</a>
                 </div>
                 <!-- Right actions -->
                 <div class="d-flex align-items-center gap-2">
@@ -1846,37 +1835,37 @@
 
                     <!-- Notifications -->
                     <div class="position-relative d-none d-md-block">
-                        <button onclick="toggleNotifications()" class="icon-btn" title="Уведомления">
+                        <button onclick="toggleNotifications()" class="icon-btn" title="{{ __('dashboard.notifications') }}">
                             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                             <span class="notification-dot"></span>
                         </button>
                         <div id="notificationPanel" class="dropdown-premium d-none" style="right:0; top: calc(100% + 8px); width: 340px;">
                             <div class="dropdown-header">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <strong style="font-size: 0.9375rem;" data-i18n="notif_title">Уведомления</strong>
-                                    <span class="feature-badge blue"><span class="dot"></span>3 новых</span>
+                                    <strong style="font-size: 0.9375rem;">{{ __('dashboard.notifications') }}</strong>
+                                    <span class="feature-badge blue"><span class="dot"></span>{{ __('dashboard.notif_new', ['count' => 3]) }}</span>
                                 </div>
                             </div>
                             <div style="max-height: 320px; overflow-y: auto;">
                                 <div class="notification-item">
                                     <div class="notification-dot-indicator" style="background: #2563eb;"></div>
                                     <div class="flex-grow-1">
-                                        <div class="notification-text" data-i18n="notif_1">Новый шаблон договора доступен</div>
-                                        <div class="notification-time">2 мин назад</div>
+                                        <div class="notification-text">{{ __('dashboard.notif_1') }}</div>
+                                        <div class="notification-time">{{ __('dashboard.notif_time_1') }}</div>
                                     </div>
                                 </div>
                                 <div class="notification-item">
                                     <div class="notification-dot-indicator" style="background: #ea580c;"></div>
                                     <div class="flex-grow-1">
-                                        <div class="notification-text" data-i18n="notif_2">Обновлена база кодексов</div>
-                                        <div class="notification-time">1 час назад</div>
+                                        <div class="notification-text">{{ __('dashboard.notif_2') }}</div>
+                                        <div class="notification-time">{{ __('dashboard.notif_time_2') }}</div>
                                     </div>
                                 </div>
                                 <div class="notification-item">
                                     <div class="notification-dot-indicator" style="background: #059669;"></div>
                                     <div class="flex-grow-1">
-                                        <div class="notification-text" data-i18n="notif_3">AI улучшил точность анализа</div>
-                                        <div class="notification-time">Вчера</div>
+                                        <div class="notification-text">{{ __('dashboard.notif_3') }}</div>
+                                        <div class="notification-time">{{ __('dashboard.notif_time_3') }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -1884,7 +1873,7 @@
                     </div>
 
                     <!-- Theme toggle -->
-                    <button onclick="toggleTheme()" class="icon-btn theme-toggle d-none d-md-flex" title="Тема">
+                    <button onclick="toggleTheme()" class="icon-btn theme-toggle d-none d-md-flex" title="{{ __('dashboard.theme_toggle') }}">
                         <svg class="icon-sun" fill="currentColor" viewBox="0 0 24 24" style="color: #fbbf24;"><path d="M12 3V1m0 22v-2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 7a5 5 0 100 10 5 5 0 000-10z"/></svg>
                         <svg class="icon-moon" fill="currentColor" viewBox="0 0 24 24" style="color: #60a5fa;"><path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
                     </button>
@@ -1912,19 +1901,19 @@
                             <div style="padding: 0.5rem;">
                                 <a href="{{ route('profile.edit') }}" class="dropdown-item-premium">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                    <span data-i18n="menu_profile">Мой профиль</span>
+                                    <span>{{ __('dashboard.menu_profile') }}</span>
                                 </a>
                                 <a href="{{ route('users.index') }}" class="dropdown-item-premium">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M16 12a4 4 0 100 8 4 4 0 000-8z"/></svg>
-                                    <span data-i18n="menu_users">Пользователи</span>
+                                    <span>{{ __('dashboard.menu_users') }}</span>
                                 </a>
                                 <a href="#" class="dropdown-item-premium">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                    <span data-i18n="menu_settings">Настройки</span>
+                                    <span>{{ __('dashboard.menu_settings') }}</span>
                                 </a>
                                 <a href="#" class="dropdown-item-premium">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                    <span data-i18n="menu_docs">Документы</span>
+                                    <span>{{ __('dashboard.menu_docs') }}</span>
                                 </a>
                             </div>
                             <div style="padding: 0.5rem; border-top: 1px solid var(--line-subtle); margin-top: 0.5rem;">
@@ -1955,14 +1944,14 @@
                                             />
                                         </svg>
 
-                                        <span data-i18n="menu_logout">Выйти</span>
+                                        <span>{{ __('dashboard.menu_logout') }}</span>
                                     </button>
                                 </form>
                             </div>                        </div>
                     </div>
 
                     <!-- Mobile menu -->
-                    <button onclick="toggleMobileMenu()" class="icon-btn d-lg-none" title="Меню">
+                    <button onclick="toggleMobileMenu()" class="icon-btn d-lg-none" title="{{ __('dashboard.menu_aria') }}">
                         <svg id="mobileMenuIcon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                 </div>
@@ -1971,8 +1960,8 @@
             <!-- Mobile Menu -->
             <div id="mobileMenu" class="d-none d-lg-none" style="padding: 1rem 0; border-top: 1px solid var(--line-subtle);">
                 <div class="d-flex flex-column gap-1">
-                    <a href="#" class="nav-link-premium" data-i18n="nav_home">Главная</a>
-                    <a href="#features" class="nav-link-premium" data-i18n="nav_features">Возможности</a>
+                    <a href="{{ route('welcome') }}" class="nav-link-premium">{{ __('dashboard.nav_home') }}</a>
+                    <a href="#features" class="nav-link-premium">{{ __('dashboard.nav_features') }}</a>
                     <div class="d-flex justify-content-between align-items-center mt-2 pt-2" style="border-top: 1px solid var(--line-subtle);">
                         <button onclick="toggleTheme()" class="icon-btn theme-toggle">
                             <svg class="icon-sun" fill="currentColor" viewBox="0 0 24 24" style="color: #fbbf24;"><path d="M12 3V1m0 22v-2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 7a5 5 0 100 10 5 5 0 000-10z"/></svg>
@@ -2001,38 +1990,38 @@
                             <div class="greeting-avatar-sm">{{ $userInitials }}</div>
                             <div class="greeting-text">
                                 <span class="emoji">{{ $timeEmoji }}</span>
-                                <span class="time-context" data-i18n="greeting_time">{{ $timeRu }}</span>
+                                <span class="time-context">{{ $timeGreeting }}</span>
                                 <span class="divider">·</span>
-                                <span data-i18n="greeting_welcome_short">Привет,</span>
+                                <span>{{ __('dashboard.greeting_hello') }}</span>
                                 <span class="user-name">{{ $firstName }}</span>
                             </div>
                         </div>
 
                         <h1 class="hero-title">
-                            <span data-i18n="hero_title_1">Юридические документы</span><br>
-                            <span class="gradient-word" data-i18n="hero_title_2">с интеллектом AI</span>
+                            <span>{{ __('dashboard.hero_title_1') }}</span><br>
+                            <span class="gradient-word">{{ __('dashboard.hero_title_2') }}</span>
                         </h1>
                         <!-- ... остальной код hero без изменений ... -->
-                        <p class="hero-subtitle" data-i18n="hero_text">
-                            Конструктор договоров, AI-анализ рисков, генератор, чат, Сравнение договора, калькулятор и база знаний — семь инструментов в одной платформе.
+                        <p class="hero-subtitle">
+                            {{ __('dashboard.hero_text') }}
                         </p>
                         <div class="hero-actions">
                             <button onclick="openModal('builder')" class="btn-primary-premium">
-                                <span data-i18n="hero_cta_start">Начать бесплатно</span>
+                                <span>{{ __('dashboard.hero_cta_start') }}</span>
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                             </button>
                             <a href="#features" class="btn-ghost-premium">
-                                <span data-i18n="hero_cta_learn">Узнать больше</span>
+                                <span>{{ __('dashboard.hero_cta_learn') }}</span>
                             </a>
                         </div>
                         <div class="hero-chips">
-                            <span class="hero-chip" data-i18n="chip_builder">Конструктор</span>
-                            <span class="hero-chip" data-i18n="chip_ai">AI-анализ</span>
-                            <span class="hero-chip" data-i18n="chip_gen">Генератор</span>
-                            <span class="hero-chip" data-i18n="chip_chat">AI Чат</span>
-                            <span class="hero-chip" data-i18n="chip_calc">Калькулятор</span>
-                            <span class="hero-chip" data-i18n="chip_kb">База знаний</span>
-                            <span class="hero-chip" data-i18n="chip_compare">Сравнение Договора</span>
+                            <span class="hero-chip">{{ __('dashboard.chip_builder') }}</span>
+                            <span class="hero-chip">{{ __('dashboard.chip_ai') }}</span>
+                            <span class="hero-chip">{{ __('dashboard.chip_gen') }}</span>
+                            <span class="hero-chip">{{ __('dashboard.chip_chat') }}</span>
+                            <span class="hero-chip">{{ __('dashboard.chip_calc') }}</span>
+                            <span class="hero-chip">{{ __('dashboard.chip_kb') }}</span>
+                            <span class="hero-chip">{{ __('dashboard.chip_compare') }}</span>
 
                         </div>
                     </div>
@@ -2042,14 +2031,14 @@
                             <!-- Compact dashboard -->
                             <div class="dashboard-card-compact">
                                 <div class="dashboard-compact-header">
-                                    <div class="dashboard-compact-title" data-i18n="dashboard_title">Активность сегодня</div>
-                                    <div class="live-indicator" data-i18n="live">Live</div>
+                                    <div class="dashboard-compact-title">{{ __('dashboard.today_activity') }}</div>
+                                    <div class="live-indicator">{{ __('dashboard.live') }}</div>
                                 </div>
                                 <div class="dashboard-grid">
                                     <div class="mini-stat">
                                         <div class="mini-stat-label">
                                             <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="color: #60a5fa;"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                            <span data-i18n="stat_docs">Документы</span>
+                                            <span>{{ __('dashboard.stat_docs_short') }}</span>
                                         </div>
                                         <div class="mini-stat-value">12,480<span style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">+</span></div>
                                         <div class="mini-stat-trend">↑ 24%</div>
@@ -2057,7 +2046,7 @@
                                     <div class="mini-stat">
                                         <div class="mini-stat-label">
                                             <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="color: #a78bfa;"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                            <span data-i18n="stat_risks">Риски</span>
+                                            <span>{{ __('dashboard.stat_risks_short') }}</span>
                                         </div>
                                         <div class="mini-stat-value">8,320</div>
                                         <div class="mini-stat-trend">↑ 18%</div>
@@ -2065,7 +2054,7 @@
                                     <div class="mini-stat">
                                         <div class="mini-stat-label">
                                             <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="color: #fb923c;"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                            <span data-i18n="stat_templates">Шаблоны</span>
+                                            <span>{{ __('dashboard.stat_templates') }}</span>
                                         </div>
                                         <div class="mini-stat-value">45<span style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">+</span></div>
                                         <div class="mini-stat-trend">↑ 6</div>
@@ -2073,7 +2062,7 @@
                                     <div class="mini-stat">
                                         <div class="mini-stat-label">
                                             <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24" style="color: #34d399;"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                            <span data-i18n="stat_accuracy">Точность</span>
+                                            <span>{{ __('dashboard.stat_accuracy') }}</span>
                                         </div>
                                         <div class="mini-stat-value">97.3<span style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">%</span></div>
                                         <div class="mini-stat-trend">Premium</div>
@@ -2087,7 +2076,7 @@
         </section>
         <!-- ============ TRUSTED BY ============ -->
         <section class="trust-section container" style="max-width: 1280px;">
-            <div class="trust-label" data-i18n="trust_label">Нам доверяют юридические команды по всему СНГ</div>
+            <div class="trust-label">{{ __('dashboard.trust_label') }}</div>
             <div class="trust-logos">
                 <div class="trust-logo">LexCorps</div>
                 <div class="trust-logo">•</div>
@@ -2104,15 +2093,15 @@
         <!-- ============ FEATURES / BENTO GRID ============ -->
         <section id="features" class="container py-5" style="max-width: 1280px;">
             <div class="text-center mb-5 reveal">
-        <span class="section-eyebrow" data-i18n="features_eyebrow">
+        <span class="section-eyebrow">
             <span class="dot" style="width: 5px; height: 5px; border-radius: 50%; background: currentColor;"></span>
-            Семь инструментов
+            {{ __('dashboard.features_eyebrow') }}
         </span>
-                <h2 class="section-title mt-3 mb-3" data-i18n="features_title">
-                    Всё для работы с <span class="gradient-word">юридическими документами</span>
+                <h2 class="section-title mt-3 mb-3">
+                    {{ __('dashboard.features_title') }} <span class="gradient-word">{{ __('dashboard.features_title_accent') }}</span>
                 </h2>
-                <p class="section-subtitle mx-auto" data-i18n="features_text">
-                    Полный набор инструментов для создания, анализа и работы с юридическими документами
+                <p class="section-subtitle mx-auto">
+                    {{ __('dashboard.features_text') }}
                 </p>
             </div>
 
@@ -2120,30 +2109,30 @@
 
                 <!-- LARGE CARD: Builder -->
                 <div class="bento-card bento-card-lg reveal stagger-1" onclick="openModal('builder')">
-                    <div class="feature-badge blue mb-3"><span class="dot"></span><span data-i18n="builder_badge">Конструктор</span></div>
+                    <div class="feature-badge blue mb-3"><span class="dot"></span><span>{{ __('dashboard.builder_badge') }}</span></div>
                     <div class="feature-icon-box blue">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </div>
-                    <h3 class="feature-title" data-i18n="builder_title">Конструктор договоров</h3>
-                    <p class="feature-desc" data-i18n="builder_text">Интерактивный сборщик документов с выбором шаблонов, живым предпросмотром и экспортом в любой формат.</p>
+                    <h3 class="feature-title">{{ __('dashboard.builder_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.builder_text') }}</p>
 
                     <ul class="feature-list">
                         <li>
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="color: var(--accent-blue);"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
-                            <span data-i18n="builder_feat1">3 типа договоров с гибкой настройкой</span>
+                            <span>{{ __('dashboard.builder_feat1') }}</span>
                         </li>
                         <li>
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="color: var(--accent-blue);"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
-                            <span data-i18n="builder_feat2">Live-предпросмотр в реальном времени</span>
+                            <span>{{ __('dashboard.builder_feat2') }}</span>
                         </li>
                         <li>
                             <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="color: var(--accent-blue);"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
-                            <span data-i18n="builder_feat3">Экспорт в Word, PDF, TXT</span>
+                            <span>{{ __('dashboard.builder_feat3') }}</span>
                         </li>
                     </ul>
 
-                    <a href="{{ route('contract.create') }}" class="feature-link" onclick="event.stopPropagation();" data-i18n="try_now">
-                        Попробовать
+                    <a href="{{ route('contract.create') }}" class="feature-link" onclick="event.stopPropagation();">
+                        {{ __('dashboard.try_now') }}
                         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                     </a>
 
@@ -2158,16 +2147,16 @@
 
                 <!-- MD CARD: AI Analysis -->
                 <div class="bento-card bento-card-md reveal stagger-2" onclick="openModal('ai-analysis')">
-                    <div class="feature-badge purple mb-3"><span class="dot"></span><span data-i18n="ai_badge">AI Анализ</span></div>
+                    <div class="feature-badge purple mb-3"><span class="dot"></span><span>{{ __('dashboard.ai_badge') }}</span></div>
                     <div class="feature-icon-box purple">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
                     </div>
-                    <h3 class="feature-title" data-i18n="ai_title">AI анализ договоров</h3>
-                    <p class="feature-desc" data-i18n="ai_text">Мгновенный анализ рисков и рекомендации по правкам.</p>
+                    <h3 class="feature-title">{{ __('dashboard.ai_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.ai_text') }}</p>
 
                     <div class="d-flex align-items-center justify-content-between mt-auto">
                         <a href="{{ route('contract.form') }}" class="feature-link" style="color: var(--accent-purple);" onclick="event.stopPropagation();">
-                            <span data-i18n="try_now">Попробовать</span>
+                            <span>{{ __('dashboard.try_now') }}</span>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </a>
                         <div class="d-flex align-items-center gap-2">
@@ -2181,16 +2170,16 @@
 
                 <!-- WIDE CARD: Generator -->
                 <div class="bento-card bento-card-wide reveal stagger-3" onclick="openModal('generator')">
-                    <div class="feature-badge green mb-3"><span class="dot"></span><span data-i18n="gen_badge">Генератор</span></div>
+                    <div class="feature-badge green mb-3"><span class="dot"></span><span>{{ __('dashboard.gen_badge') }}</span></div>
                     <div class="feature-icon-box green">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
-                    <h3 class="feature-title" data-i18n="gen_title">Генератор договоров</h3>
-                    <p class="feature-desc" data-i18n="gen_text">Опишите что вам нужно и получите готовый договор за секунды.</p>
+                    <h3 class="feature-title">{{ __('dashboard.gen_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.gen_text') }}</p>
 
                     <div class="d-flex align-items-center justify-content-between mt-auto">
                         <a href="{{ route('contract.generate') }}" class="feature-link" style="color: var(--accent-green);" onclick="event.stopPropagation();">
-                            <span data-i18n="try_now">Попробовать</span>
+                            <span>{{ __('dashboard.try_now') }}</span>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </a>
                         <div class="d-flex align-items-center gap-2">
@@ -2204,16 +2193,16 @@
 
                 <!-- WIDE CARD: AI Chat -->
                 <div class="bento-card bento-card-wide reveal stagger-4" onclick="openModal('ai-chat')">
-                    <div class="feature-badge orange mb-3"><span class="dot"></span><span data-i18n="chat_badge">AI Чат</span></div>
+                    <div class="feature-badge orange mb-3"><span class="dot"></span><span>{{ __('dashboard.chat_badge') }}</span></div>
                     <div class="feature-icon-box orange">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                     </div>
-                    <h3 class="feature-title" data-i18n="chat_title">Юридический AI-чат</h3>
-                    <p class="feature-desc" data-i18n="chat_text">Задайте любой юридический вопрос и получите экспертный ответ со ссылками на законы.</p>
+                    <h3 class="feature-title">{{ __('dashboard.chat_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.chat_text') }}</p>
 
                     <div class="d-flex align-items-center justify-content-between mt-auto">
                         <a href="{{ route('tasks.chat') }}" class="feature-link" style="color: var(--accent-orange);" onclick="event.stopPropagation();">
-                            <span data-i18n="try_now">Попробовать</span>
+                            <span>{{ __('dashboard.try_now') }}</span>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </a>
                         <div class="d-flex align-items-center gap-2">
@@ -2227,17 +2216,17 @@
 
                 <!-- SM CARD: Calculator -->
                 <div class="bento-card bento-card-sm reveal stagger-5" onclick="openModal('calculator')">
-                    <div class="feature-badge cyan mb-3"><span class="dot"></span><span data-i18n="calc_badge">Калькулятор</span></div>
+                    <div class="feature-badge cyan mb-3"><span class="dot"></span><span>{{ __('dashboard.calc_badge') }}</span></div>
                     <div class="feature-icon-box cyan">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                     </div>
-                    <h3 class="feature-title" data-i18n="calc_title">Юридический калькулятор</h3>
-                    <p class="feature-desc" data-i18n="calc_text">Госпошлины, пени, неустойки, сроки давности.</p>
+                    <h3 class="feature-title">{{ __('dashboard.calc_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.calc_text') }}</p>
 
                     <div class="d-flex align-items-center justify-content-between mt-auto">
                         <a href="{{ route('tasks.calc') }}" class="feature-link" style="color: #0891b2;" onclick="event.stopPropagation();">
-                            <span data-i18n="try_now">Попробовать</span>
-                            <svg width="16" height="16" fill="none" stroke="currentColor" ВыviewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                            <span>{{ __('dashboard.try_now') }}</span>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </a>
                         <div class="d-flex align-items-center gap-2">
                             <span style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--ink-tertiary);">85%</span>
@@ -2250,16 +2239,16 @@
 
                 <!-- SM CARD: Knowledge Base -->
                 <div class="bento-card bento-card-sm reveal stagger-6" onclick="openModal('knowledge-base')">
-                    <div class="feature-badge pink mb-3"><span class="dot"></span><span data-i18n="kb_badge">База знаний</span></div>
+                    <div class="feature-badge pink mb-3"><span class="dot"></span><span>{{ __('dashboard.kb_badge') }}</span></div>
                     <div class="feature-icon-box pink">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                     </div>
-                    <h3 class="feature-title" data-i18n="kb_title">База знаний</h3>
-                    <p class="feature-desc" data-i18n="kb_text">Справочник законов и кодексов с AI-поиском.</p>
+                    <h3 class="feature-title">{{ __('dashboard.kb_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.kb_text') }}</p>
 
                     <div class="d-flex align-items-center justify-content-between mt-auto">
                         <a href="{{ route('contract.codex') }}" class="feature-link" style="color: var(--accent-pink);" onclick="event.stopPropagation();">
-                            <span data-i18n="try_now">Попробовать</span>
+                            <span>{{ __('dashboard.try_now') }}</span>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </a>
                         <div class="d-flex align-items-center gap-2">
@@ -2277,12 +2266,12 @@
                     <div class="feature-icon-box purple">
                         <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
                     </div>
-                    <h3 class="feature-title">Сравнение договоров</h3>
-                    <p class="feature-desc">Детальный анализ различий и юридических несоответствий.</p>
+                    <h3 class="feature-title">{{ __('dashboard.compare_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.compare_text') }}</p>
 
                     <div class="d-flex align-items-center justify-content-between mt-auto">
                         <a href="{{ route('contract.compare') }}" class="feature-link" style="color: var(--accent-purple);" onclick="event.stopPropagation();">
-                            <span>Сравнить</span>
+                            <span>{{ __('dashboard.compare_btn') }}</span>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </a>
                         <div class="d-flex align-items-center gap-2">
@@ -2300,15 +2289,15 @@
         <section class="container py-5" style="max-width: 1280px;">
             <div class="process-card reveal">
                 <div class="text-center mb-5">
-            <span class="section-eyebrow" data-i18n="process_eyebrow">
+            <span class="section-eyebrow">
                 <span class="dot" style="width: 5px; height: 5px; border-radius: 50%; background: currentColor;"></span>
-                Процесс
+                {{ __('dashboard.process_eyebrow') }}
             </span>
-                    <h2 class="section-title mt-3 mb-3" data-i18n="process_title">
-                        Как это <span class="gradient-word">работает</span>
+                    <h2 class="section-title mt-3 mb-3">
+                        {{ __('dashboard.process_title') }} <span class="gradient-word">{{ __('dashboard.process_title_accent') }}</span>
                     </h2>
-                    <p class="section-subtitle mx-auto" data-i18n="process_text">
-                        Три простых шага от идеи до готового юридического документа
+                    <p class="section-subtitle mx-auto">
+                        {{ __('dashboard.process_text') }}
                     </p>
                 </div>
 
@@ -2317,8 +2306,8 @@
                         <div class="process-step">
                             <div class="step-number">01</div>
                             <div>
-                                <div class="step-title" data-i18n="step1_title">Выберите инструмент</div>
-                                <p class="step-text" data-i18n="step1_text">6 профессиональных инструментов для любой юридической задачи</p>
+                                <div class="step-title">{{ __('dashboard.step1_title') }}</div>
+                                <p class="step-text">{{ __('dashboard.step1_text') }}</p>
                             </div>
                         </div>
                     </div>
@@ -2326,8 +2315,8 @@
                         <div class="process-step">
                             <div class="step-number">02</div>
                             <div>
-                                <div class="step-title" data-i18n="step2_title">Заполните параметры</div>
-                                <p class="step-text" data-i18n="step2_text">Введите данные и условия в удобном интерфей</p>
+                                <div class="step-title">{{ __('dashboard.step2_title') }}</div>
+                                <p class="step-text">{{ __('dashboard.step2_text') }}</p>
                             </div>
                         </div>
                     </div>
@@ -2335,8 +2324,8 @@
                         <div class="process-step">
                             <div class="step-number">03</div>
                             <div>
-                                <div class="step-title" data-i18n="step3_title">Получите результат</div>
-                                <p class="step-text" data-i18n="step3_text">Готовый документ, экспертный ответ или точный расчёт</p>
+                                <div class="step-title">{{ __('dashboard.step3_title') }}</div>
+                                <p class="step-text">{{ __('dashboard.step3_text') }}</p>
                             </div>
                         </div>
                     </div>
@@ -2353,7 +2342,7 @@
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
                         <div class="stat-value-premium"><span id="stat-docs">0</span></div>
-                        <div class="stat-label-premium" data-i18n="stat_docs">Документов создано</div>
+                        <div class="stat-label-premium">{{ __('dashboard.stat_docs') }}</div>
                         <div class="stat-trend">
                             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                             +24%
@@ -2366,7 +2355,7 @@
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                         </div>
                         <div class="stat-value-premium"><span id="stat-users">0</span><span class="suffix">K+</span></div>
-                        <div class="stat-label-premium" data-i18n="stat_users">Активных пользователей</div>
+                        <div class="stat-label-premium">{{ __('dashboard.stat_users') }}</div>
                         <div class="stat-trend">
                             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                             +18%
@@ -2379,7 +2368,7 @@
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         </div>
                         <div class="stat-value-premium"><span id="stat-risks">0</span><span class="suffix">K+</span></div>
-                        <div class="stat-label-premium" data-i18n="stat_risks">Рисков выявлено</div>
+                        <div class="stat-label-premium">{{ __('dashboard.stat_risks') }}</div>
                         <div class="stat-trend">
                             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                             +32%
@@ -2392,7 +2381,7 @@
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
                         <div class="stat-value-premium"><span id="stat-time">0</span></div>
-                        <div class="stat-label-premium" data-i18n="stat_time">Часов сэкономлено</div>
+                        <div class="stat-label-premium">{{ __('dashboard.stat_time') }}</div>
                         <div class="stat-trend">
                             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                             +45%
@@ -2409,19 +2398,19 @@
                 <div class="hero-aurora hero-aurora-2"></div>
 
                 <div style="position: relative; z-index: 2;">
-                    <h2 class="cta-title" data-i18n="cta_title">
-                        Готовы <span class="gradient-word">начать?</span>
+                    <h2 class="cta-title">
+                        {{ __('dashboard.cta_title') }} <span class="gradient-word">{{ __('dashboard.cta_title_accent') }}</span>
                     </h2>
-                    <p class="cta-subtitle" data-i18n="cta_text">
-                        Присоединяйтесь к тысячам юристов, которые уже используют LegalAI Pro для ежедневной работы
+                    <p class="cta-subtitle">
+                        {{ __('dashboard.cta_text') }}
                     </p>
                     <div class="cta-actions">
                         <button onclick="openModal('builder')" class="btn-primary-premium">
-                            <span data-i18n="cta_btn1">Создать договор</span>
+                            <span>{{ __('dashboard.cta_btn1') }}</span>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </button>
                         <button onclick="openModal('ai-chat')" class="btn-ghost-premium">
-                            <span data-i18n="cta_btn2">Задать вопрос AI</span>
+                            <span>{{ __('dashboard.cta_btn2') }}</span>
                         </button>
                     </div>
                 </div>
@@ -2449,23 +2438,23 @@
                         </svg>
                         <span class="footer-brand">LegalAI Pro</span>
                     </div>
-                    <p style="color: var(--ink-tertiary); font-size: 0.875rem; max-width: 400px;" data-i18n="footer_desc">
-                        AI-платформа нового поколения для создания и анализа юридических документов
+                    <p style="color: var(--ink-tertiary); font-size: 0.875rem; max-width: 400px;">
+                        {{ __('dashboard.footer_desc') }}
                     </p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <div class="d-flex flex-wrap justify-content-md-end gap-2 mb-3">
-                        <button class="lang-pill active" onclick="switchLang('ru')" data-lang="ru">RU</button>
-                        <button class="lang-pill" onclick="switchLang('en')" data-lang="en">EN</button>
-                        <button class="lang-pill" onclick="switchLang('tj')" data-lang="tj">TJ</button>
+                        @foreach (config('app.supported_locales', []) as $localeCode => $localeLabel)
+                            <a class="lang-pill {{ app()->getLocale() === $localeCode ? 'active' : '' }}" href="{{ route('locale.switch', $localeCode) }}">{{ $localeLabel }}</a>
+                        @endforeach
                     </div>
                     <div class="d-flex flex-wrap gap-3 justify-content-md-end mb-3">
-                        <a href="#" class="footer-link" data-i18n="footer_privacy">Политика</a>
-                        <a href="#" class="footer-link" data-i18n="footer_terms">Условия</a>
-                        <a href="#" class="footer-link" data-i18n="footer_support">Поддержка</a>
+                        <a href="#" class="footer-link">{{ __('dashboard.footer_privacy') }}</a>
+                        <a href="#" class="footer-link">{{ __('dashboard.footer_terms') }}</a>
+                        <a href="#" class="footer-link">{{ __('dashboard.footer_support') }}</a>
                     </div>
                     <p style="color: var(--ink-quaternary); font-size: 0.8125rem;">
-                        © 2025 LegalAI Pro. <span data-i18n="footer_rights">Все права защищены.</span>
+                        © 2025 LegalAI Pro. <span>{{ __('dashboard.footer_rights') }}</span>
                     </p>
                 </div>
             </div>
@@ -2485,208 +2474,9 @@
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 
 <script>
-    // ===== I18N DATA =====
-    const i18nData = {
-        ru: {
-            greeting_time_morning: "Доброе утро",
-            greeting_time_afternoon: "Добрый день",
-            greeting_time_evening: "Добрый вечер",
-            greeting_time_night: "Доброй ночи",
-            greeting_welcome: "Добро пожаловать,",
-            greeting_streak: "Серия",
-            nav_home: "Главная", nav_dashboard: "Рабочий стол", nav_features: "Возможности",
-            hero_badge: "AI-платформа нового поколения",
-            hero_title_1: "Юридические документы",
-            hero_title_2: "с интеллектом AI",
-            hero_text: "Конструктор договоров, AI-анализ рисков, генератор документов, Сравнение договора, AI-чат, калькулятор и база знаний — семь мощных инструментов в одной платформе.",
-            hero_cta_start: "Начать бесплатно", hero_cta_learn: "Узнать больше",
-            chip_builder: "Конструктор", chip_ai: "AI-анализ", chip_gen: "Генератор",
-            chip_chat: "AI Чат", chip_calc: "Калькулятор", chip_kb: "База знаний",
-            trust_label: "Нам доверяют юридические команды",
-            features_eyebrow: "Семь инструментов",
-            features_title: "Всё для работы с юридическими документами",
-            features_text: "Полный набор инструментов для создания, анализа и работы с юридическими документами",
-            builder_badge: "Конструктор", builder_title: "Конструктор договоров",
-            builder_text: "Интерактивный сборщик документов с выбором шаблонов, живым предпросмотром и экспортом в любой формат.",
-            builder_feat1: "3 типа договоров с гибкой настройкой",
-            builder_feat2: "Live-предпросмотр в реальном времени",
-            builder_feat3: "Экспорт в Word, PDF, TXT",
-            ai_badge: "AI Анализ", ai_title: "AI анализ договоров",
-            ai_text: "Мгновенный анализ рисков и рекомендации по правкам.",
-            gen_badge: "Генератор", gen_title: "Генератор договоров",
-            gen_text: "Опишите что вам нужно и получите готовый договор за секунды.",
-            chat_badge: "AI Чат", chat_title: "Юридический AI-чат",
-            chat_text: "Задайте любой юридический вопрос и получите экспертный ответ со ссылками на законы.",
-            calc_badge: "Калькулятор", calc_title: "Юридический калькулятор",
-            calc_text: "Госпошлины, пени, неустойки, сроки давности.",
-            kb_badge: "База знаний", kb_title: "База знаний",
-            kb_text: "Справочник законов и кодексов с AI-поиском.",
-            try_now: "Попробовать",
-            process_eyebrow: "Процесс", process_title: "Как это работает",
-            process_text: "Три простых шага от идеи до готового юридического документа",
-            step1_title: "Выберите инструмент", step1_text: "6 профессиональных инструментов для любой юридической задачи",
-            step2_title: "Заполните параметры", step2_text: "Введите данные и условия в удобном интерфей",
-            step3_title: "Получите результат", step3_text: "Готовый документ, экспертный ответ или точный расчёт",
-            stat_docs: "Документов создано", stat_users: "Активных пользователей",
-            stat_risks: "Рисков выявлено", stat_time: "Часов сэкономлено",
-            cta_title: "Готовы начать?", cta_text: "Присоединяйтесь к тысячам юристов",
-            cta_btn1: "Создать договор", cta_btn2: "Задать вопрос AI",
-            footer_desc: "AI-платформа нового поколения для создания и анализа юридических документов",
-            footer_privacy: "Политика", footer_terms: "Условия", footer_support: "Поддержка",
-            footer_rights: "Все права защищены.",
-            menu_profile: "Мой профиль", menu_users: "Пользователи",
-            menu_settings: "Настройки", menu_docs: "Документы", menu_logout: "Выйти",
-            notif_title: "Уведомления",
-            notif_1: "Новый шаблон договора доступен",
-            notif_2: "Обновлена база кодексов",
-            notif_3: "AI улучшил точность анализа",
-            modal_builder_title: "Конструктор договоров",
-            modal_builder_text: "Выберите шаблон и заполните параметры",
-            modal_ai_title: "AI анализ договоров",
-            modal_ai_text: "Вставьте текст договора для анализа",
-            modal_gen_title: "Генератор договоров"
-        },
-        en: {
-            greeting_time_morning: "Good morning",
-            greeting_time_afternoon: "Good afternoon",
-            greeting_time_evening: "Good evening",
-            greeting_time_night: "Good night",
-            greeting_welcome: "Welcome back,",
-            greeting_streak: "Streak",
-            nav_home: "Home", nav_dashboard: "Dashboard", nav_features: "Features",
-            hero_badge: "Next-gen AI platform",
-            hero_title_1: "Legal documents",
-            hero_title_2: "powered by AI",
-            hero_text: "Contract builder, AI risk analysis, document generator, AI chat, calculator and knowledge base — six powerful tools in one platform.",
-            hero_cta_start: "Start free", hero_cta_learn: "Learn more",
-            chip_builder: "Builder", chip_ai: "AI Analysis", chip_gen: "Generator",
-            chip_chat: "AI Chat", chip_calc: "Calculator", chip_kb: "Knowledge Base",
-            trust_label: "Trusted by legal teams",
-            features_eyebrow: "Six tools",
-            features_title: "Everything for legal documents",
-            features_text: "Complete toolkit for creating, analyzing and working with legal documents",
-            builder_badge: "Builder", builder_title: "Contract Builder",
-            builder_text: "Interactive document builder with templates, live preview and multi-format export.",
-            builder_feat1: "3 contract types with flexible settings",
-            builder_feat2: "Real-time live preview",
-            builder_feat3: "Export to Word, PDF, TXT",
-            ai_badge: "AI Analysis", ai_title: "AI Contract Analysis",
-            ai_text: "Instant risk analysis and recommendations.",
-            gen_badge: "Generator", gen_title: "Contract Generator",
-            gen_text: "Describe what you need and get a ready contract in seconds.",
-            chat_badge: "AI Chat", chat_title: "Legal AI Chat",
-            chat_text: "Ask any legal question and get an expert answer with law references.",
-            calc_badge: "Calculator", calc_title: "Legal Calculator",
-            calc_text: "Court fees, penalties, deadlines.",
-            kb_badge: "Knowledge Base", kb_title: "Knowledge Base",
-            kb_text: "Laws and codes with AI search.",
-            try_now: "Try now",
-            process_eyebrow: "Process", process_title: "How it works",
-            process_text: "Three simple steps from idea to finished legal document",
-            step1_title: "Choose a tool", step1_text: "6 professional tools for any legal task",
-            step2_title: "Fill parameters", step2_text: "Enter data and conditions in a convenient interface",
-            step3_title: "Get results", step3_text: "Ready document, expert answer or accurate calculation",
-            stat_docs: "Documents created", stat_users: "Active users",
-            stat_risks: "Risks detected", stat_time: "Hours saved",
-            cta_title: "Ready to start?", cta_text: "Join thousands of lawyers",
-            cta_btn1: "Create contract", cta_btn2: "Ask AI",
-            footer_desc: "Next-gen AI platform for legal documents",
-            footer_privacy: "Privacy", footer_terms: "Terms", footer_support: "Support",
-            footer_rights: "All rights reserved.",
-            menu_profile: "My profile", menu_users: "Users",
-            menu_settings: "Settings", menu_docs: "Documents", menu_logout: "Sign out",
-            notif_title: "Notifications",
-            notif_1: "New contract template available",
-            notif_2: "Code database updated",
-            notif_3: "AI improved analysis accuracy",
-            modal_builder_title: "Contract Builder",
-            modal_builder_text: "Choose template and fill parameters",
-            modal_ai_title: "AI Contract Analysis",
-            modal_ai_text: "Paste contract text for analysis",
-            modal_gen_title: "Contract Generator"
-        },
-        tj: {
-            greeting_time_morning: "Субҳ ба хайр",
-            greeting_time_afternoon: "Рӯз ба хайр",
-            greeting_time_evening: "Бегоҳ ба хайр",
-            greeting_time_night: "Шаб ба хайр",
-            greeting_welcome: "Хуш омадед,",
-            greeting_streak: "Силсила",
-            nav_home: "Асосӣ", nav_dashboard: "Мизи корӣ", nav_features: "Имкониятҳо",
-            hero_badge: "Платформаи AI насли нав",
-            hero_title_1: "Ҳуҷҷатҳои ҳуқуқӣ",
-            hero_title_2: "бо зеҳни AI",
-            hero_text: "Сохтмони шартномаҳо, таҳлили хавфҳо, генератор, чати AI, калкулятор ва базаи дониш.",
-            hero_cta_start: "Ройгон оғоз", hero_cta_learn: "Бештар бидонед",
-            chip_builder: "Сохтмон", chip_ai: "Таҳлили AI", chip_gen: "Генератор",
-            chip_chat: "Чати AI", chip_calc: "Калкулятор", chip_kb: "Базаи дониш",
-            trust_label: "Ба мо боварӣ мекунанд",
-            features_eyebrow: "Шаш абзор",
-            features_title: "Ҳама барои ҳуҷҷатҳои ҳуқуқӣ",
-            features_text: "Маҷмӯи пурраи абзорҳо",
-            builder_badge: "Сохтмон", builder_title: "Сохтмони шартномаҳо",
-            builder_text: "Сохтмони интерактивии ҳуҷҷатҳо.",
-            builder_feat1: "3 намуди шартнома",
-            builder_feat2: "Пешнамоиши зинда",
-            builder_feat3: "Содирот Word, PDF, TXT",
-            ai_badge: "Таҳлили AI", ai_title: "Таҳлили AI",
-            ai_text: "Таҳлили фаврии хавфҳо.",
-            gen_badge: "Генератор", gen_title: "Генератори шартномаҳо",
-            gen_text: "Тавсиф кунед ва гиред.",
-            chat_badge: "Чати AI", chat_title: "Чати ҳуқуқӣ",
-            chat_text: "Саволи ҳуқуқӣ пурсед.",
-            calc_badge: "Калкулятор", calc_title: "Калкулятори ҳуқуқӣ",
-            calc_text: "Ҳисобҳо.",
-            kb_badge: "Базаи дониш", kb_title: "Базаи дониш",
-            kb_text: "Қонунҳо бо ҷустуҷӯи AI.",
-            try_now: "Санҷед",
-            process_eyebrow: "Раванд", process_title: "Чӣ тавр кор мекунад",
-            process_text: "Се қадами оддӣ",
-            step1_title: "Интихоб кунед", step1_text: "6 абзор",
-            step2_title: "Пур кунед", step2_text: "Маълумот",
-            step3_title: "Натиҷа", step3_text: "Ҳуҷҷат ё ҷавоб",
-            stat_docs: "Ҳуҷҷатҳо", stat_users: "Истифодабарандагон",
-            stat_risks: "Хавфҳо", stat_time: "Соатҳо",
-            cta_title: "Омодаед?", cta_text: "Ҳамроҳ шавед",
-            cta_btn1: "Эҷод кунед", cta_btn2: "Савол пурсед",
-            footer_desc: "Платформаи AI",
-            footer_privacy: "Махфият", footer_terms: "Шартҳо", footer_support: "Дастгирӣ",
-            footer_rights: "Ҳамаи ҳуқуқҳо.",
-            menu_profile: "Профил", menu_users: "Корбарон",
-            menu_settings: "Танзимот", menu_docs: "Ҳуҷҷатҳо", menu_logout: "Баромад",
-            notif_title: "Огоҳиҳо",
-            notif_1: "Шаблон нав", notif_2: "Навсозӣ", notif_3: "AI беҳтар шуд",
-            modal_builder_title: "Сохтмони шартномаҳо",
-            modal_builder_text: "Шаблонро интихоб кунед",
-            modal_ai_title: "Таҳлили AI",
-            modal_ai_text: "Матнро ворид кунед",
-            modal_gen_title: "Генератори шартномаҳо"
-        }
-    };
-
-    let currentLang = 'ru';
-
-    function switchLang(lang) {
-        currentLang = lang;
-        document.documentElement.lang = lang;
-        localStorage.setItem('legalai-lang', lang);
-
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.getAttribute('data-i18n');
-            if (i18nData[lang] && i18nData[lang][key]) {
-                el.textContent = i18nData[lang][key];
-            }
-        });
-
-        document.querySelectorAll('.lang-pill').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
-        });
-    }
-
-    function initLang() {
-        const saved = localStorage.getItem('legalai-lang');
-        if (saved && i18nData[saved]) switchLang(saved); else switchLang('ru');
-    }
+    // ===== I18N (server-driven, follows the app locale) =====
+    const T = @json(__('dashboard.js'));
+    const APP_LOCALE = @json(app()->getLocale());
 
     function initTheme() {
         const saved = localStorage.getItem('legalai-theme');
@@ -2702,7 +2492,6 @@
     }
 
     initTheme();
-    initLang();
 
     // ===== NAVBAR SCROLL EFFECT =====
     const mainNav = document.getElementById('mainNav');
@@ -2782,11 +2571,11 @@
 
     // ===== BUILDER =====
     const builderState = { template: 'service' };
-    const templateLabels = { service: 'Договор услуг', supply: 'Договор поставки', nda: 'NDA' };
+    const templateLabels = { service: T.tpl_service, supply: T.tpl_supply, nda: T.tpl_nda };
     const templateRoles = {
-        service: { roleA: 'Заказчик', roleB: 'Исполнитель' },
-        supply: { roleA: 'Покупатель', roleB: 'Поставщик' },
-        nda: { roleA: 'Раскрывающая сторона', roleB: 'Принимающая сторона' }
+        service: { roleA: T.role_customer, roleB: T.role_contractor },
+        supply: { roleA: T.role_buyer, roleB: T.role_supplier },
+        nda: { roleA: T.role_disclosing, roleB: T.role_receiving }
     };
 
     function selectTemplate(el) {
@@ -2796,20 +2585,22 @@
         previewBuilder();
     }
 
-    function formatAmount(val) { return new Intl.NumberFormat('ru-RU').format(Number(val || 0)) + ' ₽'; }
-    function formatDate(val) { if (!val) return 'не указана'; return new Intl.DateTimeFormat('ru-RU').format(new Date(val)); }
+    function formatAmount(val) { return new Intl.NumberFormat(T.intl_locale).format(Number(val || 0)) + ' ₽'; }
+    function formatDate(val) { if (!val) return T.date_not_set; return new Intl.DateTimeFormat(T.intl_locale).format(new Date(val)); }
 
     function previewBuilder() {
         const t = builderState.template, roles = templateRoles[t], label = templateLabels[t];
-        const num = document.getElementById('b-contractNumber')?.value || 'б/н';
-        const city = document.getElementById('b-contractCity')?.value || 'не указан';
-        const customer = document.getElementById('b-customer')?.value || 'Сторона 1';
-        const contractor = document.getElementById('b-contractor')?.value || 'Сторона 2';
+        const num = document.getElementById('b-contractNumber')?.value || T.no_number;
+        const city = document.getElementById('b-contractCity')?.value || T.city_not_set;
+        const customer = document.getElementById('b-customer')?.value || T.party1;
+        const contractor = document.getElementById('b-contractor')?.value || T.party2;
         const amount = document.getElementById('b-amount')?.value || '0';
         const startD = document.getElementById('b-startDate')?.value;
         const endD = document.getElementById('b-endDate')?.value;
 
-        const text = `${label} № ${num}\nг. ${city}\n${formatDate(startD)}\n\n${customer}, «${roles.roleA}», и ${contractor}, «${roles.roleB}»:\n\n1. Предмет\n${roles.roleB} обязуется выполнить работы, ${roles.roleA} — принять и оплатить.\n\n2. Цена: ${formatAmount(amount)}\nОплата в течение 5 дней.\n\n3. Ответственность: неустойка 0,1%/день\n\n4. Срок: с ${formatDate(startD)} до ${formatDate(endD)}\n\n5. Реквизиты\n${roles.roleA}: ${customer}\n${roles.roleB}: ${contractor}`;
+        const subjectBody = T.subject_body.replace(':roleB', roles.roleB).replace(':roleA', roles.roleA);
+        const termLine = T.section_term.replace(':from', formatDate(startD)).replace(':to', formatDate(endD));
+        const text = `${label} № ${num}\n${T.city_prefix} ${city}\n${formatDate(startD)}\n\n${customer}, «${roles.roleA}», ${contractor}, «${roles.roleB}»:\n\n${T.section_subject}\n${subjectBody}\n\n${T.section_price} ${formatAmount(amount)}\n${T.payment_days}\n\n${T.section_liability}\n\n${termLine}\n\n${T.section_requisites}\n${roles.roleA}: ${customer}\n${roles.roleB}: ${contractor}`;
 
         const previewText = document.getElementById('builder-preview-text');
         const preview = document.getElementById('builder-preview');
@@ -2828,17 +2619,17 @@
     // ===== AI ANALYSIS =====
     function analyzeContract() {
         const text = document.getElementById('ai-contract-text')?.value.trim();
-        if (!text) { alert('Введите текст договора'); return; }
+        if (!text) { alert(T.enter_contract_text); return; }
         const btn = document.getElementById('analyze-btn');
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Анализируем...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + T.analyzing;
         btn.disabled = true;
 
         setTimeout(() => {
             const risks = [], recommendations = [];
-            if (text.includes('50%')) { risks.push({level:'high',text:'Высокий штраф (50%)'}); recommendations.push('Уменьшите штраф до 0,1%-1%/день.'); }
-            if (text.includes('30 дней')) { risks.push({level:'medium',text:'Длительный срок оплаты'}); recommendations.push('Сократите до 5-10 дней.'); }
-            if (!text.includes('форс-мажор')) { risks.push({level:'medium',text:'Нет раздела о форс-мажоре'}); recommendations.push('Добавьте раздел о форс-мажоре.'); }
-            if (!risks.length) { risks.push({level:'low',text:'Критических рисков не найдено'}); recommendations.push('Документ корректен.'); }
+            if (text.includes('50%')) { risks.push({level:'high',text:T.risk_high_penalty}); recommendations.push(T.rec_reduce_penalty); }
+            if (text.includes(T.kw_30_days)) { risks.push({level:'medium',text:T.risk_long_payment}); recommendations.push(T.rec_shorten_payment); }
+            if (!text.toLowerCase().includes(T.kw_force_majeure)) { risks.push({level:'medium',text:T.risk_no_force_majeure}); recommendations.push(T.rec_add_force_majeure); }
+            if (!risks.length) { risks.push({level:'low',text:T.risk_none}); recommendations.push(T.rec_ok); }
 
             const score = Math.max(0, Math.min(100, 100 - risks.filter(r=>r.level==='high').length*15 - risks.filter(r=>r.level==='medium').length*8));
             document.getElementById('ai-score').textContent = score;
@@ -2849,11 +2640,11 @@
             rl.innerHTML = risks.map(r => `<div style="background: var(--bg-sunken); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.5rem; border-left: 3px solid ${r.level==='high'?'#dc2626':r.level==='medium'?'#ea580c':'#16a34a'}"><strong style="color: var(--ink-primary);">${r.text}</strong></div>`).join('');
 
             const rd = document.getElementById('ai-recommendations');
-            rd.innerHTML = '<div style="font-weight: 600; margin: 1rem 0 0.5rem; color: var(--ink-primary);">Рекомендации</div>' +
+            rd.innerHTML = '<div style="font-weight: 600; margin: 1rem 0 0.5rem; color: var(--ink-primary);">' + T.recommendations + '</div>' +
                 recommendations.map((rec,i) => `<div style="background: rgba(34,197,94,0.08); padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 0.5rem; font-size: 0.875rem;"><strong style="color: #16a34a;">${i+1}.</strong> ${rec}</div>`).join('');
 
             document.getElementById('ai-results').style.display = 'block';
-            btn.innerHTML = 'Запустить AI-анализ';
+            btn.innerHTML = T.run_analysis;
             btn.disabled = false;
         }, 1500);
     }
@@ -2861,17 +2652,17 @@
     // ===== GENERATOR =====
     function generateContract() {
         const prompt = document.getElementById('gen-prompt')?.value.trim();
-        if (!prompt) { alert('Опишите договор'); return; }
+        if (!prompt) { alert(T.describe_contract); return; }
         const btn = document.getElementById('generate-btn');
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Генерируем...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + T.generating;
         btn.disabled = true;
 
         setTimeout(() => {
             const type = document.getElementById('gen-type')?.value;
-            let contract = type === 'rent' ? 'ДОГОВОР АРЕНДЫ\n\n1. Предмет...\n2. Срок: 12 мес.' : type === 'service' ? 'ДОГОВОР УСЛУГ\n\n1. Предмет...\n2. Оплата...' : 'ДОГОВОР\n\n1. Предмет...';
+            let contract = type === 'rent' ? T.gen_rent : type === 'service' ? T.gen_service : T.gen_other;
             document.getElementById('gen-result-text').textContent = contract;
             document.getElementById('gen-results').style.display = 'block';
-            btn.innerHTML = 'Сгенерировать';
+            btn.innerHTML = T.generate;
             btn.disabled = false;
         }, 2000);
     }
@@ -2884,13 +2675,13 @@
 
     function copyGenerated() {
         const text = document.getElementById('gen-result-text')?.textContent;
-        navigator.clipboard.writeText(text).then(() => alert('Скопировано!'));
+        navigator.clipboard.writeText(text).then(() => alert(T.copied));
     }
 
     // ===== AI CHAT =====
     const chatResponses = {
-        'договор': 'Для заключения договора необходимо:\n\n1. Определить предмет\n2. Согласовать условия\n3. Подписать документ',
-        'default': 'Спасибо за вопрос! Задайте более конкретный юридический вопрос.'
+        [T.chat_kw_contract]: T.chat_answer_contract,
+        'default': T.chat_answer_default
     };
 
     function sendChatMessage() {
@@ -2937,13 +2728,13 @@
             let days = 0;
             if (startDate && endDate) days = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
             const penalty = debt * rate / 100 * days;
-            html = `<div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--line-subtle);"><span>Долг</span><strong>${debt.toLocaleString('ru-RU')} ₽</strong></div>
-                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--line-subtle);"><span>Дней</span><strong>${days}</strong></div>
-                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 1.125rem; font-weight: 700; color: var(--accent-blue);"><span>Итого</span><span>${(debt + penalty).toLocaleString('ru-RU')} ₽</span></div>`;
+            html = `<div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--line-subtle);"><span>${T.calc_debt}</span><strong>${debt.toLocaleString(T.intl_locale)} ₽</strong></div>
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--line-subtle);"><span>${T.calc_days}</span><strong>${days}</strong></div>
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 1.125rem; font-weight: 700; color: var(--accent-blue);"><span>${T.calc_total}</span><span>${(debt + penalty).toLocaleString(T.intl_locale)} ₽</span></div>`;
         } else if (type === 'court_fee') {
             const claim = Number(document.getElementById('calc-claim')?.value) || 0;
             let fee = claim * 0.04;
-            html = `<div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 1.125rem; font-weight: 700; color: var(--accent-blue);"><span>Госпошлина</span><span>${Math.round(fee).toLocaleString('ru-RU')} ₽</span></div>`;
+            html = `<div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 1.125rem; font-weight: 700; color: var(--accent-blue);"><span>${T.calc_fee}</span><span>${Math.round(fee).toLocaleString(T.intl_locale)} ₽</span></div>`;
         }
         resultDiv.innerHTML = html;
         resultDiv.style.display = 'block';

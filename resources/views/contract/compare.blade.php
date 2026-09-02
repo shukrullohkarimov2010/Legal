@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" class="scroll-smooth">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1096,20 +1096,20 @@
             <div class="flex items-center gap-3 flex-wrap">
                 <div id="ollamaStatusBadge" class="status-badge checking">
                     <span class="dot pulse-dot"></span>
-                    <span>Проверка Ollama...</span>
+                    <span>{{ __('compare.checking_ollama') }}</span>
                 </div>
                 <div id="cacheStatsBadge" class="status-badge" style="color: var(--accent-success); background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);">
                     <span class="dot"></span>
-                    <span id="cacheStatsText">Кэш: 0</span>
+                    <span id="cacheStatsText">{{ __('compare.cache_short') }}: 0</span>
                 </div>
-                <button onclick="toggleTheme()" id="themeToggle" class="w-10 h-10 rounded-xl flex items-center justify-center text-lg transition" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);" title="Сменить тему">
+                <button onclick="toggleTheme()" id="themeToggle" class="w-10 h-10 rounded-xl flex items-center justify-center text-lg transition" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);" title="{{ __('compare.theme_toggle') }}">
                     🌙
                 </button>
                 <button onclick="showHistory()" class="px-5 py-2.5 rounded-xl text-sm font-semibold transition" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);">
-                    📚 История
+                    {{ __('compare.history_btn') }}
                 </button>
                 <button onclick="showCacheManager()" class="px-5 py-2.5 rounded-xl text-sm font-semibold transition" style="background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary);">
-                    💾 Кэш
+                    {{ __('compare.cache_btn') }}
                 </button>
             </div>
         </div>
@@ -1123,18 +1123,18 @@
                     AI-POWERED · STREAMING · CACHED
                 </div>
                 <h2 class="text-5xl font-black tracking-tight mb-4" style="letter-spacing: -0.04em; line-height: 1.1;">
-                    Сравнение договоров<br>
-                    <span style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">с точностью юриста</span>
+                    {{ __('compare.hero_title_1') }}<br>
+                    <span style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">{{ __('compare.hero_title_2') }}</span>
                 </h2>
                 <p class="text-xl font-medium" style="color: var(--text-secondary); max-width: 700px; line-height: 1.6;">
-                    Загрузите два документа — получите профессиональный отчёт. <strong style="color: var(--accent-primary);">Повторные анализы мгновенные</strong> благодаря умному кэшированию.
+                    {{ __('compare.hero_text_1') }} <strong style="color: var(--accent-primary);">{{ __('compare.hero_text_strong') }}</strong> {{ __('compare.hero_text_2') }}
                 </p>
             </div>
             <div class="grid md:grid-cols-2 gap-6 mb-8">
                 <div>
                     <label class="flex items-center gap-3 mb-4">
                         <span class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-white" style="background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);">A</span>
-                        <span class="font-bold text-lg">Базовый договор (эталон)</span>
+                        <span class="font-bold text-lg">{{ __('compare.base_contract') }}</span>
                     </label>
                     <div id="dropZoneA" class="drop-zone p-10 min-h-[260px] flex flex-col items-center justify-center">
                         <input type="file" id="fileInputA" class="sr-only" accept=".pdf,.docx,.doc,.txt">
@@ -1143,8 +1143,8 @@
                                 <svg class="w-10 h-10" style="color: var(--accent-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                             </div>
                             <div>
-                                <p class="font-bold text-lg mb-2">Перетащите файл</p>
-                                <p class="text-sm" style="color: var(--text-tertiary);">или нажмите для выбора</p>
+                                <p class="font-bold text-lg mb-2">{{ __('compare.drop_file') }}</p>
+                                <p class="text-sm" style="color: var(--text-tertiary);">{{ __('compare.or_click') }}</p>
                             </div>
                             <p class="text-xs" style="color: var(--text-tertiary);">
                                 <span class="format-badge pdf">PDF</span>
@@ -1172,7 +1172,7 @@
                 <div>
                     <label class="flex items-center gap-3 mb-4">
                         <span class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-white" style="background: linear-gradient(135deg, var(--accent-secondary), #be185d); box-shadow: 0 8px 20px rgba(236, 72, 153, 0.4);">B</span>
-                        <span class="font-bold text-lg">Сравниваемый договор</span>
+                        <span class="font-bold text-lg">{{ __('compare.compared_contract') }}</span>
                     </label>
                     <div id="dropZoneB" class="drop-zone p-10 min-h-[260px] flex flex-col items-center justify-center">
                         <input type="file" id="fileInputB" class="sr-only" accept=".pdf,.docx,.doc,.txt">
@@ -1181,8 +1181,8 @@
                                 <svg class="w-10 h-10" style="color: var(--accent-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                             </div>
                             <div>
-                                <p class="font-bold text-lg mb-2">Перетащите файл</p>
-                                <p class="text-sm" style="color: var(--text-tertiary);">или нажмите для выбора</p>
+                                <p class="font-bold text-lg mb-2">{{ __('compare.drop_file') }}</p>
+                                <p class="text-sm" style="color: var(--text-tertiary);">{{ __('compare.or_click') }}</p>
                             </div>
                             <p class="text-xs" style="color: var(--text-tertiary);">
                                 <span class="format-badge pdf">PDF</span>
@@ -1215,27 +1215,27 @@
                             <span class="text-2xl">🤖</span>
                         </div>
                         <div>
-                            <h3 class="font-bold text-lg">AI-анализ через Ollama</h3>
-                            <p class="text-sm" style="color: var(--text-tertiary);">Streaming · Полный промпт · Кэш</p>
+                            <h3 class="font-bold text-lg">{{ __('compare.ai_via_ollama') }}</h3>
+                            <p class="text-sm" style="color: var(--text-tertiary);">{{ __('compare.ai_subtitle') }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 flex-wrap">
-                        <input type="text" id="ollamaUrl" value="http://localhost:11434" class="px-4 py-2.5 rounded-xl text-sm w-52" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary);" placeholder="URL Ollama">
+                        <input type="text" id="ollamaUrl" value="http://localhost:11434" class="px-4 py-2.5 rounded-xl text-sm w-52" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary);" placeholder="{{ __('compare.ollama_url_placeholder') }}">
                         <select id="ollamaModel" class="px-4 py-2.5 rounded-xl text-sm" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary);">
                             <option value="llama3.1:8b" selected>🦙 llama3.1:8b</option>
-                            <option value="llama3.2:3b">⚡ llama3.2:3b (быстрее)</option>
-                            <option value="phi3:mini">🚀 phi3:mini (самая быстрая)</option>
+                            <option value="llama3.2:3b">{{ __('compare.model_faster') }}</option>
+                            <option value="phi3:mini">{{ __('compare.model_fastest') }}</option>
                         </select>
                         <button onclick="checkOllamaConnection()" class="px-4 py-2.5 rounded-xl text-sm font-semibold transition" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary);">
-                            🔄 Проверить
+                            {{ __('compare.check_btn') }}
                         </button>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="useAI" checked class="w-5 h-5" style="accent-color: var(--accent-primary);">
-                            <span class="text-sm font-semibold">AI-анализ</span>
+                            <span class="text-sm font-semibold">{{ __('compare.ai_analysis') }}</span>
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="useCache" checked class="w-5 h-5" style="accent-color: var(--accent-primary);">
-                            <span class="text-sm font-semibold">Кэш</span>
+                            <span class="text-sm font-semibold">{{ __('compare.cache') }}</span>
                         </label>
                     </div>
                 </div>
@@ -1244,7 +1244,7 @@
             <div class="flex justify-center">
                 <button id="compareBtn" onclick="startComparison()" disabled class="btn-primary flex items-center gap-3 text-lg">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                    <span>Сравнить договоры</span>
+                    <span>{{ __('compare.compare_btn') }}</span>
                     <span class="text-sm opacity-70">⌘ + Enter</span>
                 </button>
             </div>
@@ -1255,7 +1255,7 @@
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center gap-4">
                         <div class="ai-thinking"><span></span><span></span><span></span></div>
-                        <span class="font-bold text-xl" id="progressLabel">Анализ документов...</span>
+                        <span class="font-bold text-xl" id="progressLabel">{{ __('compare.progress_label') }}</span>
                     </div>
                     <div class="flex items-center gap-5">
                         <span class="progress-timer font-bold" id="progressTimer">00:00</span>
@@ -1266,23 +1266,23 @@
                     <div id="progressBar" class="progress-fill" style="width: 0%;"></div>
                 </div>
                 <div class="grid grid-cols-4 gap-4 text-sm mb-5" style="color: var(--text-tertiary);">
-                    <div class="flex items-center gap-2"><span id="stage-read" class="w-3 h-3 rounded-full" style="background: var(--accent-primary);"></span>Чтение</div>
-                    <div class="flex items-center gap-2"><span id="stage-diff" class="w-3 h-3 rounded-full" style="background: var(--bg-tertiary);"></span>Diff</div>
-                    <div class="flex items-center gap-2"><span id="stage-ai" class="w-3 h-3 rounded-full" style="background: var(--bg-tertiary);"></span>AI-анализ</div>
-                    <div class="flex items-center gap-2"><span id="stage-report" class="w-3 h-3 rounded-full" style="background: var(--bg-tertiary);"></span>Отчёт</div>
+                    <div class="flex items-center gap-2"><span id="stage-read" class="w-3 h-3 rounded-full" style="background: var(--accent-primary);"></span>{{ __('compare.stage_read') }}</div>
+                    <div class="flex items-center gap-2"><span id="stage-diff" class="w-3 h-3 rounded-full" style="background: var(--bg-tertiary);"></span>{{ __('compare.stage_diff') }}</div>
+                    <div class="flex items-center gap-2"><span id="stage-ai" class="w-3 h-3 rounded-full" style="background: var(--bg-tertiary);"></span>{{ __('compare.stage_ai') }}</div>
+                    <div class="flex items-center gap-2"><span id="stage-report" class="w-3 h-3 rounded-full" style="background: var(--bg-tertiary);"></span>{{ __('compare.stage_report') }}</div>
                 </div>
                 <div id="streamingStats" class="streaming-stats hidden">
                     <div class="stat-chip">
                         <div class="stat-chip-value" id="tokenCount">0</div>
-                        <div class="stat-chip-label">Токенов</div>
+                        <div class="stat-chip-label">{{ __('compare.tokens') }}</div>
                     </div>
                     <div class="stat-chip">
                         <div class="stat-chip-value" id="tokenSpeed">0</div>
-                        <div class="stat-chip-label">Ток/сек</div>
+                        <div class="stat-chip-label">{{ __('compare.tokens_per_sec') }}</div>
                     </div>
                     <div class="stat-chip">
                         <div class="stat-chip-value" id="etaTime">--:--</div>
-                        <div class="stat-chip-label">Осталось</div>
+                        <div class="stat-chip-label">{{ __('compare.remaining') }}</div>
                     </div>
                 </div>
                 <div id="streamingPreview" class="streaming-preview hidden"></div>
@@ -1290,7 +1290,7 @@
                 <div class="mt-5 flex justify-center">
                     <button id="cancelBtn" onclick="cancelAnalysis()" class="btn-cancel flex items-center gap-3">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        <span>Отменить анализ</span>
+                        <span>{{ __('compare.cancel_analysis') }}</span>
                     </button>
                 </div>
             </div>
@@ -1304,18 +1304,18 @@
                         <div>
                             <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full text-xs font-bold mb-5" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3);">
                                 <span class="w-2 h-2 rounded-full pulse-dot" style="background: white;"></span>
-                                ОТЧЁТ О СРАВНЕНИИ
+                                {{ __('compare.report_badge') }}
                                 <span id="cacheIndicator" class="hidden" style="margin-left: 10px;">
 <span class="cache-badge" style="background: rgba(255,255,255,0.9); color: var(--accent-success); border-color: rgba(16, 185, 129, 0.5);">
 <span class="dot"></span>
-<span>Из кэша</span>
+<span>{{ __('compare.from_cache') }}</span>
 </span>
 </span>
                             </div>
                             <h2 class="text-5xl font-black mb-4 tracking-tight" style="letter-spacing: -0.04em; line-height: 1.1;">
-                                Сравнительный анализ<br>договоров
+                                {{ __('compare.report_title_1') }}<br>{{ __('compare.report_title_2') }}
                             </h2>
-                            <p class="text-lg font-medium text-white/90" id="reportSubtitle">Профессиональный юридический анализ</p>
+                            <p class="text-lg font-medium text-white/90" id="reportSubtitle">{{ __('compare.report_subtitle') }}</p>
                         </div>
                         <div class="text-right">
                             <div class="text-sm font-mono text-white/70 mb-2" id="reportNumber">CMP-000000</div>
@@ -1330,45 +1330,45 @@
                             <div class="score-ring" id="scoreRing" style="--score: 0; --ring-color: var(--accent-primary);">
                                 <div class="score-ring-inner">
                                     <span id="scorePercent" class="text-6xl font-black tabular-nums" style="letter-spacing: -0.05em;">0%</span>
-                                    <span class="text-sm font-bold uppercase tracking-wider mt-2" style="color: var(--text-tertiary);">Совместимость</span>
+                                    <span class="text-sm font-bold uppercase tracking-wider mt-2" style="color: var(--text-tertiary);">{{ __('compare.compatibility') }}</span>
                                 </div>
                             </div>
                             <div class="flex-1 min-w-[220px]">
                                 <div id="scoreLabel" class="text-4xl font-black mb-3 tracking-tight">—</div>
-                                <p class="text-base" style="color: var(--text-secondary);">Индекс сходства документов</p>
+                                <p class="text-base" style="color: var(--text-secondary);">{{ __('compare.similarity_index') }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="bento-item animate-in delay-2" style="grid-column: span 3;">
                         <div class="flex items-center justify-between mb-4">
-                            <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">Критические</span>
+                            <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">{{ __('compare.critical') }}</span>
                             <span class="text-2xl">🚨</span>
                         </div>
                         <div class="stat-number" id="kpiCritical">0</div>
-                        <p class="text-sm mt-3" style="color: var(--text-tertiary);">Юридических конфликтов</p>
+                        <p class="text-sm mt-3" style="color: var(--text-tertiary);">{{ __('compare.legal_conflicts') }}</p>
                     </div>
                     <div class="bento-item animate-in delay-3" style="grid-column: span 2;">
                         <div class="flex items-center justify-between mb-4">
-                            <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">Внимание</span>
+                            <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">{{ __('compare.attention') }}</span>
                             <span class="text-2xl">⚠️</span>
                         </div>
                         <div class="stat-number" id="kpiWarning">0</div>
-                        <p class="text-sm mt-3" style="color: var(--text-tertiary);">Требуют проверки</p>
+                        <p class="text-sm mt-3" style="color: var(--text-tertiary);">{{ __('compare.need_check') }}</p>
                     </div>
                     <div class="bento-item animate-in delay-4" style="grid-column: span 2;">
                         <div class="flex items-center justify-between mb-4">
-                            <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">Информация</span>
+                            <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">{{ __('compare.information') }}</span>
                             <span class="text-2xl">💡</span>
                         </div>
                         <div class="stat-number" id="kpiInfo">0</div>
-                        <p class="text-sm mt-3" style="color: var(--text-tertiary);">Незначительных</p>
+                        <p class="text-sm mt-3" style="color: var(--text-tertiary);">{{ __('compare.minor') }}</p>
                     </div>
                     <div class="bento-item animate-in delay-1" style="grid-column: span 6;">
                         <div class="grid md:grid-cols-2 gap-5">
                             <div class="p-5 rounded-xl" style="background: var(--bg-tertiary); border: 1px solid var(--border);">
                                 <div class="flex items-center gap-3 mb-3">
                                     <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">A</span>
-                                    <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">Базовый</span>
+                                    <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">{{ __('compare.base') }}</span>
                                 </div>
                                 <p id="docAName" class="font-bold text-lg truncate">—</p>
                                 <p id="docAInfo" class="text-sm mt-2" style="color: var(--text-tertiary);">—</p>
@@ -1376,7 +1376,7 @@
                             <div class="p-5 rounded-xl" style="background: var(--bg-tertiary); border: 1px solid var(--border);">
                                 <div class="flex items-center gap-3 mb-3">
                                     <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white" style="background: linear-gradient(135deg, var(--accent-secondary), #be185d);">B</span>
-                                    <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">Сравниваемый</span>
+                                    <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-tertiary);">{{ __('compare.compared') }}</span>
                                 </div>
                                 <p id="docBName" class="font-bold text-lg truncate">—</p>
                                 <p id="docBInfo" class="text-sm mt-2" style="color: var(--text-tertiary);">—</p>
@@ -1386,8 +1386,8 @@
                     <div class="bento-item animate-in delay-2" style="grid-column: span 6;">
                         <div class="flex items-center justify-between mb-5">
                             <div>
-                                <h3 class="font-bold text-lg">Карта рисков</h3>
-                                <p class="text-sm" style="color: var(--text-tertiary);">Распределение по категориям</p>
+                                <h3 class="font-bold text-lg">{{ __('compare.risk_map') }}</h3>
+                                <p class="text-sm" style="color: var(--text-tertiary);">{{ __('compare.risk_map_sub') }}</p>
                             </div>
                             <div class="flex items-center gap-4 text-xs">
                                 <div class="flex items-center gap-2"><span class="w-3 h-3 rounded" style="background: var(--accent-error); box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);"></span>Critical</div>
@@ -1404,11 +1404,11 @@
                             <span>📋</span>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-black tracking-tight">Краткое резюме</h3>
+                            <h3 class="text-2xl font-black tracking-tight">{{ __('compare.exec_summary') }}</h3>
                             <p class="text-base" style="color: var(--text-secondary);">Executive Summary</p>
                         </div>
                     </div>
-                    <p id="executiveSummary" class="text-lg leading-relaxed" style="color: var(--text-primary);">Документы проанализированы.</p>
+                    <p id="executiveSummary" class="text-lg leading-relaxed" style="color: var(--text-primary);">{{ __('compare.docs_analyzed') }}</p>
                 </div>
                 <div class="glass-strong rounded-2xl p-10 animate-in">
                     <div class="section-title">
@@ -1416,8 +1416,8 @@
                             <span>🔍</span>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-black tracking-tight">Выявленные различия</h3>
-                            <p class="text-base" style="color: var(--text-secondary);">Юридический анализ по категориям</p>
+                            <h3 class="text-2xl font-black tracking-tight">{{ __('compare.found_differences') }}</h3>
+                            <p class="text-base" style="color: var(--text-secondary);">{{ __('compare.legal_analysis_by_cat') }}</p>
                         </div>
                     </div>
                     <div id="findingsList"></div>
@@ -1429,15 +1429,15 @@
                                 <span>📄</span>
                             </div>
                             <div>
-                                <h3 class="text-2xl font-black tracking-tight">Построчное сравнение</h3>
-                                <p class="text-base" style="color: var(--text-secondary);">Визуализация изменений</p>
+                                <h3 class="text-2xl font-black tracking-tight">{{ __('compare.line_by_line') }}</h3>
+                                <p class="text-base" style="color: var(--text-secondary);">{{ __('compare.change_visualization') }}</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-3 flex-wrap">
-                            <div class="legend-item"><div class="legend-dot" style="background: var(--text-secondary);"></div>Совпадение</div>
-                            <div class="legend-item"><div class="legend-dot" style="background: var(--accent-warning);"></div>Изменено</div>
-                            <div class="legend-item"><div class="legend-dot" style="background: var(--accent-error);"></div>Удалено</div>
-                            <div class="legend-item"><div class="legend-dot" style="background: var(--accent-success);"></div>Добавлено</div>
+                            <div class="legend-item"><div class="legend-dot" style="background: var(--text-secondary);"></div>{{ __('compare.legend_match') }}</div>
+                            <div class="legend-item"><div class="legend-dot" style="background: var(--accent-warning);"></div>{{ __('compare.legend_modified') }}</div>
+                            <div class="legend-item"><div class="legend-dot" style="background: var(--accent-error);"></div>{{ __('compare.legend_deleted') }}</div>
+                            <div class="legend-item"><div class="legend-dot" style="background: var(--accent-success);"></div>{{ __('compare.legend_added') }}</div>
                         </div>
                     </div>
                     <div class="diff-container">
@@ -1445,7 +1445,7 @@
                             <div class="diff-pane-header">
                                 <div class="flex items-center gap-3">
                                     <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">A</span>
-                                    <span class="font-bold text-base" id="diffTitleA">Документ A</span>
+                                    <span class="font-bold text-base" id="diffTitleA">{{ __('compare.doc_a') }}</span>
                                 </div>
                             </div>
                             <div id="diffContentA" class="whitespace-pre-wrap"></div>
@@ -1454,7 +1454,7 @@
                             <div class="diff-pane-header">
                                 <div class="flex items-center gap-3">
                                     <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white" style="background: linear-gradient(135deg, var(--accent-secondary), #be185d);">B</span>
-                                    <span class="font-bold text-base" id="diffTitleB">Документ B</span>
+                                    <span class="font-bold text-base" id="diffTitleB">{{ __('compare.doc_b') }}</span>
                                 </div>
                             </div>
                             <div id="diffContentB" class="whitespace-pre-wrap"></div>
@@ -1467,8 +1467,8 @@
                             <span>💡</span>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-black tracking-tight">Рекомендации</h3>
-                            <p class="text-base" style="color: var(--text-secondary);">Приоритетные действия</p>
+                            <h3 class="text-2xl font-black tracking-tight">{{ __('compare.recommendations') }}</h3>
+                            <p class="text-base" style="color: var(--text-secondary);">{{ __('compare.priority_actions') }}</p>
                         </div>
                     </div>
                     <div id="recommendationsList"></div>
@@ -1476,18 +1476,18 @@
                 <div class="rounded-2xl p-6 flex gap-4 animate-in" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3);">
                     <svg class="w-6 h-6 flex-shrink-0 mt-0.5" style="color: var(--accent-warning);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     <p class="text-sm" style="color: var(--text-secondary);">
-                        <strong>Дисклеймер:</strong> Отчёт сгенерирован ИИ (llama3.1:8b). Для юридически значимых решений проконсультируйтесь с юристом.
+                        <strong>{{ __('compare.disclaimer_label') }}</strong> {{ __('compare.disclaimer_text') }}
                     </p>
                 </div>
             </div>
             <div class="glass-strong rounded-2xl p-8 no-print animate-in">
                 <div class="flex items-center justify-between mb-5 flex-wrap gap-4">
                     <div>
-                        <h3 class="font-bold text-lg">Экспорт отчёта</h3>
-                        <p class="text-sm" style="color: var(--text-tertiary);">Сохраните результат</p>
+                        <h3 class="font-bold text-lg">{{ __('compare.export_report') }}</h3>
+                        <p class="text-sm" style="color: var(--text-tertiary);">{{ __('compare.save_result') }}</p>
                     </div>
                     <button onclick="resetComparison()" class="px-5 py-2.5 rounded-xl text-sm font-bold transition" style="background: var(--text-primary); color: var(--bg-primary);">
-                        🔄 Новое сравнение
+                        {{ __('compare.new_comparison') }}
                     </button>
                 </div>
                 <div class="flex flex-wrap gap-3">
@@ -1505,7 +1505,7 @@
                     </button>
                     <button onclick="window.print()" class="px-5 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition" style="background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border);">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                        Печать
+                        {{ __('compare.print') }}
                     </button>
                 </div>
             </div>
@@ -1517,15 +1517,15 @@
 <div id="historyModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-6" style="background: rgba(0,0,0,0.7);">
     <div class="modal-content glass-strong rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col">
         <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--border);">
-            <h3 class="text-xl font-black">📚 История сравнений</h3>
+            <h3 class="text-xl font-black">{{ __('compare.history_modal_title') }}</h3>
             <button onclick="closeHistory()" class="p-3 rounded-xl transition" style="color: var(--text-tertiary);">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
         <div id="historyList" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
         <div class="p-5 border-t flex justify-between" style="border-color: var(--border);">
-            <button onclick="clearHistory()" class="px-5 py-2.5 text-sm rounded-xl transition" style="color: var(--accent-error);">🗑️ Очистить всё</button>
-            <button onclick="closeHistory()" class="px-5 py-2.5 text-sm rounded-xl" style="background: var(--bg-tertiary); color: var(--text-primary);">Закрыть</button>
+            <button onclick="clearHistory()" class="px-5 py-2.5 text-sm rounded-xl transition" style="color: var(--accent-error);">{{ __('compare.clear_all') }}</button>
+            <button onclick="closeHistory()" class="px-5 py-2.5 text-sm rounded-xl" style="background: var(--bg-tertiary); color: var(--text-primary);">{{ __('compare.close') }}</button>
         </div>
     </div>
 </div>
@@ -1533,7 +1533,7 @@
 <div id="cacheModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-6" style="background: rgba(0,0,0,0.7);">
     <div class="modal-content glass-strong rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col">
         <div class="flex items-center justify-between p-6 border-b" style="border-color: var(--border);">
-            <h3 class="text-xl font-black">💾 Управление кэшем</h3>
+            <h3 class="text-xl font-black">{{ __('compare.cache_modal_title') }}</h3>
             <button onclick="closeCacheManager()" class="p-3 rounded-xl transition" style="color: var(--text-tertiary);">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -1541,11 +1541,11 @@
         <div id="cacheList" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
         <div class="p-5 border-t flex justify-between items-center" style="border-color: var(--border);">
             <div class="text-sm" style="color: var(--text-secondary);">
-                <strong id="cacheSizeText">0 записей</strong> · <span id="cacheBytesText">0 КБ</span>
+                <strong id="cacheSizeText"></strong> · <span id="cacheBytesText"></span>
             </div>
             <div class="flex gap-3">
-                <button onclick="clearCache()" class="px-5 py-2.5 text-sm rounded-xl transition" style="color: var(--accent-error);">🗑️ Очистить кэш</button>
-                <button onclick="closeCacheManager()" class="px-5 py-2.5 text-sm rounded-xl" style="background: var(--bg-tertiary); color: var(--text-primary);">Закрыть</button>
+                <button onclick="clearCache()" class="px-5 py-2.5 text-sm rounded-xl transition" style="color: var(--accent-error);">{{ __('compare.clear_cache') }}</button>
+                <button onclick="closeCacheManager()" class="px-5 py-2.5 text-sm rounded-xl" style="background: var(--bg-tertiary); color: var(--text-primary);">{{ __('compare.close') }}</button>
             </div>
         </div>
     </div>
@@ -1561,6 +1561,12 @@
         const btn = document.getElementById('themeToggle');
         if (btn) btn.textContent = isLight ? '☀️' : '🌙';
     }
+
+    // =================================================================
+    // I18N (server-driven, follows the app locale)
+    // =================================================================
+    const T = @json(__('compare.js'));
+    const tr = (str, params = {}) => Object.entries(params).reduce((acc, [k, v]) => acc.split(':' + k).join(v), str || '');
 
     // =================================================================
     // STATE
@@ -1699,36 +1705,36 @@
         const entries = CacheManager.getAll();
         const size = CacheManager.getSize();
         const sizeKB = (size / 1024).toFixed(1);
-        document.getElementById('cacheStatsText').textContent = `Кэш: ${entries.length}`;
-        document.getElementById('cacheSizeText').textContent = `${entries.length} записей`;
-        document.getElementById('cacheBytesText').textContent = `${sizeKB} КБ`;
+        document.getElementById('cacheStatsText').textContent = tr(T.cache_count, { count: entries.length });
+        document.getElementById('cacheSizeText').textContent = tr(T.cache_records, { count: entries.length });
+        document.getElementById('cacheBytesText').textContent = tr(T.cache_kb, { size: sizeKB });
     }
     function showCacheManager() {
         const modal = document.getElementById('cacheModal');
         const list = document.getElementById('cacheList');
         const entries = CacheManager.getAll();
         if (entries.length === 0) {
-            list.innerHTML = '<div class="text-center py-12" style="color: var(--text-tertiary);">💾 Кэш пуст</div>';
+            list.innerHTML = `<div class="text-center py-12" style="color: var(--text-tertiary);">${T.cache_empty}</div>`;
         } else {
             list.innerHTML = entries.map(entry => {
-                const date = new Date(entry.timestamp).toLocaleString('ru-RU');
+                const date = new Date(entry.timestamp).toLocaleString(T.intl_locale);
                 const age = Math.floor((Date.now() - entry.timestamp) / (1000 * 60 * 60));
-                const ageText = age < 24 ? `${age}ч назад` : `${Math.floor(age / 24)}д назад`;
+                const ageText = age < 24 ? tr(T.hours_ago, { count: age }) : tr(T.days_ago, { count: Math.floor(age / 24) });
                 return `
 <div class="history-item">
 <div class="flex items-center justify-between mb-3">
 <span class="text-sm" style="color: var(--text-tertiary);">${date}</span>
 <div class="flex gap-3">
-<span class="text-xs px-3 py-1 rounded-lg" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">${entry.hits || 0} использований</span>
+<span class="text-xs px-3 py-1 rounded-lg" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">${tr(T.uses, { count: entry.hits || 0 })}</span>
 <span class="text-xs" style="color: var(--text-tertiary);">${ageText}</span>
 </div>
 </div>
-<div class="font-bold text-lg truncate">${escapeHtml(entry.nameA || 'Документ A')} ↔ ${escapeHtml(entry.nameB || 'Документ B')}</div>
+<div class="font-bold text-lg truncate">${escapeHtml(entry.nameA || T.txt_difference)} ↔ ${escapeHtml(entry.nameB || T.txt_difference)}</div>
 <div class="text-sm mt-2" style="color: var(--text-tertiary);">
-${entry.result?.findings?.length || 0} различий · ${entry.result?.recommendations?.length || 0} рекомендаций
+${tr(T.diffs_and_recs, { diffs: entry.result?.findings?.length || 0, recs: entry.result?.recommendations?.length || 0 })}
 </div>
 <div class="mt-3 flex justify-end">
-<button onclick="CacheManager.remove('${entry.key}');showCacheManager();" class="text-sm px-4 py-2 rounded-lg transition" style="color: var(--accent-error);">Удалить</button>
+<button onclick="CacheManager.remove('${entry.key}');showCacheManager();" class="text-sm px-4 py-2 rounded-lg transition" style="color: var(--accent-error);">${T.delete}</button>
 </div>
 </div>
 `;
@@ -1741,10 +1747,10 @@ ${entry.result?.findings?.length || 0} различий · ${entry.result?.recom
         document.getElementById('cacheModal').classList.remove('active');
     }
     function clearCache() {
-        if (!confirm('Очистить весь кэш? Это действие нельзя отменить.')) return;
+        if (!confirm(T.confirm_clear_cache)) return;
         CacheManager.clear();
         showCacheManager();
-        showToast('Кэш очищен', 'success');
+        showToast(T.cache_cleared, 'success');
     }
     // =================================================================
     // TOAST
@@ -1783,7 +1789,7 @@ ${entry.result?.findings?.length || 0} различий · ${entry.result?.recom
         const infoBox = document.getElementById('ollamaInfoBox');
         const modelSelect = document.getElementById('ollamaModel');
         badge.className = 'status-badge checking';
-        badge.innerHTML = '<span class="dot pulse-dot"></span><span>Проверка Ollama...</span>';
+        badge.innerHTML = `<span class="dot pulse-dot"></span><span>${T.checking_ollama}</span>`;
         infoBox.classList.add('hidden');
         try {
             const controller = new AbortController();
@@ -1796,10 +1802,10 @@ ${entry.result?.findings?.length || 0} различий · ${entry.result?.recom
             if (models.length === 0) {
                 state.ollamaConnected = false;
                 badge.className = 'status-badge disconnected';
-                badge.innerHTML = '<span class="dot"></span><span>Нет моделей</span>';
+                badge.innerHTML = `<span class="dot"></span><span>${T.no_models}</span>`;
                 infoBox.classList.remove('hidden');
-                infoBox.innerHTML = `<strong>⚠️ Ollama запущена, но нет моделей.</strong><br><code class="px-3 py-1 rounded-lg text-xs" style="background: var(--bg-tertiary);">ollama pull llama3.1:8b</code>`;
-                showToast('Нет моделей', 'warning');
+                infoBox.innerHTML = `${T.ollama_no_models_html}<code class="px-3 py-1 rounded-lg text-xs" style="background: var(--bg-tertiary);">ollama pull llama3.1:8b</code>`;
+                showToast(T.no_models, 'warning');
                 return false;
             }
             state.ollamaConnected = true;
@@ -1818,17 +1824,16 @@ ${entry.result?.findings?.length || 0} различий · ${entry.result?.recom
             badge.className = 'status-badge connected';
             badge.innerHTML = `<span class="dot pulse-dot"></span><span>Ollama · ${models.length}</span>`;
             infoBox.classList.remove('hidden');
-            infoBox.innerHTML = `✅ <strong>Ollama подключена.</strong> ${models.length} моделей доступно.`;
-            showToast(`Ollama подключена · ${models.length} моделей`, 'success');
+            infoBox.innerHTML = `✅ <strong>${T.ollama_connected}</strong> ${tr(T.ollama_models_available, { count: models.length })}`;
+            showToast(tr(T.ollama_connected_toast, { count: models.length }), 'success');
             return true;
         } catch (err) {
             state.ollamaConnected = false;
             badge.className = 'status-badge disconnected';
-            badge.innerHTML = '<span class="dot"></span><span>Ollama недоступна</span>';
+            badge.innerHTML = `<span class="dot"></span><span>${T.ollama_unavailable}</span>`;
             infoBox.classList.remove('hidden');
-            infoBox.innerHTML = `<strong>❌ Не удалось подключиться.</strong><br>
-<code class="px-3 py-1 rounded-lg text-xs" style="background: var(--bg-tertiary);">OLLAMA_ORIGINS="*" ollama serve</code>`;
-            showToast('Ollama недоступна', 'error');
+            infoBox.innerHTML = `${T.ollama_connect_failed}<code class="px-3 py-1 rounded-lg text-xs" style="background: var(--bg-tertiary);">OLLAMA_ORIGINS="*" ollama serve</code>`;
+            showToast(T.ollama_unavailable, 'error');
             return false;
         }
     }
@@ -1868,7 +1873,7 @@ ${entry.result?.findings?.length || 0} различий · ${entry.result?.recom
         streamingStats.classList.remove('hidden');
         streamingPreview.classList.remove('hidden');
         detailsEl.classList.remove('hidden');
-        detailsEl.textContent = `⏳ Подключение к ${model}...`;
+        detailsEl.textContent = tr(T.connecting_to, { model });
         try {
             const response = await fetch(`${url}/api/chat`, {
                 method: 'POST',
@@ -1892,8 +1897,8 @@ ${entry.result?.findings?.length || 0} различий · ${entry.result?.recom
                 signal: controller.signal
             });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            if (!response.body) throw new Error('Streaming не поддерживается');
-            detailsEl.textContent = `✅ Подключено. Получаю токены...`;
+            if (!response.body) throw new Error(T.streaming_unsupported);
+            detailsEl.textContent = T.connected_receiving;
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
@@ -1937,21 +1942,21 @@ ${entry.result?.findings?.length || 0} различий · ${entry.result?.recom
                             document.getElementById('etaTime').textContent = '0:00';
                             document.getElementById('progressBar').style.width = '95%';
                             document.getElementById('progressPercent').textContent = '95%';
-                            detailsEl.textContent = `✅ Готово! ${tokenCount} токенов за ${Math.round(totalTime)}с (${finalSpeed.toFixed(1)} ток/с)`;
+                            detailsEl.textContent = tr(T.done_tokens, { tokens: tokenCount, seconds: Math.round(totalTime), speed: finalSpeed.toFixed(1) });
                             streamingPreview.textContent = fullContent;
                             break;
                         }
                     } catch (e) { continue; }
                 }
             }
-            if (!fullContent) throw new Error('Пустой ответ');
+            if (!fullContent) throw new Error(T.empty_response);
             return fullContent;
         } catch (err) {
             if (err.name === 'AbortError') {
-                throw new Error('Анализ отменен пользователем');
+                throw new Error(T.cancelled_by_user);
             }
             if (err.message.includes('Failed to fetch')) {
-                throw new Error('Ollama недоступна. Запустите: OLLAMA_ORIGINS="*" ollama serve');
+                throw new Error(T.ollama_unavailable_hint);
             }
             throw err;
         } finally {
@@ -1970,15 +1975,15 @@ ${entry.result?.findings?.length || 0} различий · ${entry.result?.recom
         document.getElementById('progressSection').classList.add('hidden');
         document.getElementById('uploadSection').classList.remove('hidden');
         document.getElementById('compareBtn').disabled = false;
-        showToast('Анализ отменен', 'warning');
+        showToast(T.analysis_cancelled, 'warning');
     }
     // =================================================================
     // PROFESSIONAL PROMPT
     // =================================================================
     function buildComparisonPrompt(textA, textB, nameA, nameB) {
         const maxLen = 5000;
-        const tA = textA.length > maxLen ? textA.slice(0, maxLen) + '\n[...текст сокращён для экономии токенов...]' : textA;
-        const tB = textB.length > maxLen ? textB.slice(0, maxLen) + '\n[...текст сокращён для экономии токенов...]' : textB;
+        const tA = textA.length > maxLen ? textA.slice(0, maxLen) + T.text_truncated : textA;
+        const tB = textB.length > maxLen ? textB.slice(0, maxLen) + T.text_truncated : textB;
         const systemPrompt = `# РОЛЬ
 Ты — старший партнёр юридической фирмы Республики Таджикистан с 20-летним опытом в договорном и корпоративном праве. Ты специализируешься на сравнительном правовом анализе договоров и выявлении юридических рисков.
 # ТВОЯ ЭКСПЕРТИЗА
@@ -1997,7 +2002,7 @@ ${entry.result?.findings?.length || 0} различий · ${entry.result?.recom
 # ФОРМАТ ОТВЕТА
 Верни ТОЛЬКО валидный JSON-объект. Никаких пояснений, markdown-обёрток, комментариев.
 Массив "recommendations" ОБЯЗАТЕЛЬНО должен содержать минимум 3 элемента.
-Язык ответа: русский.`;
+Язык ответа: ${T.response_language}.`;
         const userPrompt = `# ЗАДАЧА
 Проведи сравнительный правовой анализ двух договоров. Выяви все юридически значимые различия и дай профессиональные рекомендации.
 # ДОКУМЕНТЫ
@@ -2061,9 +2066,9 @@ ${tB}
 "overallConclusion": "Документы требуют дополнительного согласования по 2 критическим пунктам. После устранения разногласий договор может быть подписан."
 }
 # ТРЕБОВАНИЯ К ВЫВОДУ
-1. **summary** — 2-3 предложения на русском с ключевыми выводами
+1. **summary** — 2-3 предложения на языке ответа с ключевыми выводами
 2. **compatibilityScore** — число 0-100 (100 = идентичны)
-3. **compatibilityLabel** — одно из: "Отличная" (≥95), "Хорошая" (85-94), "Удовлетворительная" (70-84), "Низкая" (50-69), "Критическая" (<50)
+3. **compatibilityLabel** — одно из: "${T.score_excellent}" (≥95), "${T.score_good}" (85-94), "${T.score_satisfactory}" (70-84), "${T.score_low}" (50-69), "${T.score_critical}" (<50)
 4. **findings** — массив всех выявленных различий (каждое с полной структурой)
 5. **recommendations** — массив минимум из 3 рекомендаций с приоритетами
 6. **overallConclusion** — итоговое заключение: можно ли подписывать после устранения разногласий
@@ -2103,48 +2108,48 @@ JSON:`;
         if (criticals.length > 0) {
             recs.push({
                 priority: 'high',
-                action: `Устранить ${criticals.length} критических различий`,
-                rationale: `Обнаружены конфликты: ${[...new Set(criticals.map(f => f.category))].join(', ')}`
+                action: tr(T.rec_fix_criticals, { count: criticals.length }),
+                rationale: tr(T.rec_conflicts_found, { list: [...new Set(criticals.map(f => f.category))].join(', ') })
             });
         }
-        if (findings.some(f => f.category === 'ФИНАНСОВЫЕ УСЛОВИЯ')) {
+        if (findings.some(f => f.category === T.cat_finance)) {
             recs.push({
                 priority: 'high',
-                action: 'Согласовать финансовые условия',
-                rationale: 'Существенное условие договора (ст. 424 ГК РТ)'
+                action: T.rec_align_finance,
+                rationale: T.rec_essential_term
             });
         }
         if (warnings.length > 0) {
             recs.push({
                 priority: 'medium',
-                action: `Пересмотреть ${warnings.length} пунктов с предупреждениями`,
-                rationale: `Требуют внимания: ${[...new Set(warnings.map(f => f.category))].slice(0, 3).join(', ')}`
+                action: tr(T.rec_review_warnings, { count: warnings.length }),
+                rationale: tr(T.rec_need_attention, { list: [...new Set(warnings.map(f => f.category))].slice(0, 3).join(', ') })
             });
         }
-        if (findings.some(f => ['СРОКИ И ДАТЫ', 'ОТВЕТСТВЕННОСТЬ СТОРОН'].includes(f.category))) {
+        if (findings.some(f => [T.cat_dates, T.cat_liability].includes(f.category))) {
             recs.push({
                 priority: 'medium',
-                action: 'Сверить сроки и неустойки',
-                rationale: 'Может привести к просрочке и спорам'
+                action: T.rec_check_terms,
+                rationale: T.rec_may_cause_delay
             });
         }
         if (findings.length > 3) {
             recs.push({
                 priority: 'low',
-                action: 'Составить протокол разногласий',
-                rationale: `${findings.length} различий требуют фиксации`
+                action: T.rec_protocol,
+                rationale: tr(T.rec_diffs_to_fix, { count: findings.length })
             });
         }
         recs.push({
             priority: 'low',
-            action: 'Направить юристу для проверки',
-            rationale: 'Профессиональная экспертиза перед подписанием'
+            action: T.rec_send_to_lawyer,
+            rationale: T.rec_expert_before_sign
         });
         while (recs.length < 3) {
             recs.push({
                 priority: 'low',
-                action: 'Проверить соответствие ГК РТ',
-                rationale: 'Дополнительная проверка'
+                action: T.rec_check_civil_code,
+                rationale: T.rec_extra_check
             });
         }
         return recs;
@@ -2158,14 +2163,14 @@ JSON:`;
             const content = await callOllamaStreaming(systemPrompt, userPrompt);
             const result = parseAIResponse(content);
             if (!result) {
-                showToast('Не удалось распарсить JSON', 'warning');
+                showToast(T.json_parse_failed, 'warning');
                 return null;
             }
             result.findings = Array.isArray(result.findings) ? result.findings : [];
             result.recommendations = Array.isArray(result.recommendations) ? result.recommendations : [];
             result.compatibilityScore = typeof result.compatibilityScore === 'number' ? result.compatibilityScore : 50;
-            result.compatibilityLabel = result.compatibilityLabel || 'Не определена';
-            result.summary = result.summary || 'Анализ завершён.';
+            result.compatibilityLabel = result.compatibilityLabel || T.label_undefined;
+            result.summary = result.summary || T.analysis_done;
             result.overallConclusion = result.overallConclusion || '';
             result.totalDifferences = result.findings.length;
             if (result.findings.length > 0 && result.recommendations.length === 0) {
@@ -2173,15 +2178,15 @@ JSON:`;
             }
             if (result.recommendations.length === 0) {
                 result.recommendations = [
-                    { priority: 'medium', action: 'Проверить соответствие ГК РТ', rationale: 'Юридическая проверка' },
-                    { priority: 'low', action: 'Сохранить отчёт', rationale: 'Для архива' },
-                    { priority: 'low', action: 'Консультация юриста', rationale: 'Перед подписанием' }
+                    { priority: 'medium', action: T.rec_check_civil_code, rationale: T.rec_legal_check },
+                    { priority: 'low', action: T.rec_save_report, rationale: T.rec_for_archive },
+                    { priority: 'low', action: T.rec_lawyer_consult, rationale: T.rec_before_signing }
                 ];
             }
             return result;
         } catch (err) {
             console.error('AI error:', err);
-            showToast('Ошибка: ' + err.message, 'error');
+            showToast(T.error_prefix + err.message, 'error');
             return null;
         }
     }
@@ -2211,18 +2216,18 @@ JSON:`;
     }
     async function handleFile(file, slot) {
         const MAX = 50 * 1024 * 1024;
-        if (file.size > MAX) { showToast('Файл > 50 МБ', 'error'); return; }
+        if (file.size > MAX) { showToast(T.file_too_big, 'error'); return; }
         const ext = file.name.split('.').pop().toLowerCase();
-        if (!['pdf','docx','doc','txt'].includes(ext)) { showToast('Неподдерживаемый формат', 'error'); return; }
-        if (ext === 'doc') { showToast('.doc не поддерживается', 'warning'); return; }
+        if (!['pdf','docx','doc','txt'].includes(ext)) { showToast(T.unsupported_format, 'error'); return; }
+        if (ext === 'doc') { showToast(T.doc_not_supported, 'warning'); return; }
         const dropContent = document.getElementById(`dropContent${slot}`);
         const originalHTML = dropContent.innerHTML;
-        dropContent.innerHTML = `<div class="ai-thinking"><span></span><span></span><span></span></div><p class="text-sm mt-3" style="color: var(--text-tertiary);">Извлечение...</p>`;
+        dropContent.innerHTML = `<div class="ai-thinking"><span></span><span></span><span></span></div><p class="text-sm mt-3" style="color: var(--text-tertiary);">${T.extracting}</p>`;
         try {
             const text = await extractText(file, ext);
             if (!text || text.trim().length < 20) {
                 dropContent.innerHTML = originalHTML;
-                showToast('Не удалось извлечь текст', 'error'); return;
+                showToast(T.extract_failed, 'error'); return;
             }
             state[`file${slot}`] = file;
             state[`text${slot}`] = text;
@@ -2230,15 +2235,15 @@ JSON:`;
             const wordCount = text.trim().split(/\s+/).length;
             document.getElementById(`fileName${slot}`).textContent = file.name;
             document.getElementById(`fileSize${slot}`).textContent = formatSize(file.size);
-            document.getElementById(`fileWords${slot}`).textContent = `${wordCount.toLocaleString('ru-RU')} слов`;
+            document.getElementById(`fileWords${slot}`).textContent = tr(T.words_count, { count: wordCount.toLocaleString(T.intl_locale) });
             document.getElementById(`dropContent${slot}`).classList.add('hidden');
             document.getElementById(`fileSelected${slot}`).classList.remove('hidden');
             document.getElementById(`dropZone${slot}`).classList.add('has-file');
             updateCompareButton();
-            showToast(`✅ ${file.name} (${wordCount} слов)`, 'success');
+            showToast(tr(T.file_loaded, { name: file.name, count: wordCount }), 'success');
         } catch (err) {
             dropContent.innerHTML = originalHTML;
-            showToast('Ошибка: ' + err.message, 'error');
+            showToast(T.error_prefix + err.message, 'error');
         }
     }
     async function extractText(file, ext) {
@@ -2247,7 +2252,7 @@ JSON:`;
             const arrayBuffer = await file.arrayBuffer();
             const zip = await JSZip.loadAsync(arrayBuffer);
             const documentXmlFile = zip.file('word/document.xml');
-            if (!documentXmlFile) throw new Error('word/document.xml не найден');
+            if (!documentXmlFile) throw new Error(T.docx_xml_missing);
             const documentXml = await documentXmlFile.async('string');
             return extractTextFromDocxXml(documentXml);
         }
@@ -2271,7 +2276,7 @@ JSON:`;
             }
             return textParts.join('\n');
         }
-        throw new Error(`.${ext} не поддерживается`);
+        throw new Error(tr(T.ext_not_supported, { ext }));
     }
     function extractTextFromDocxXml(xmlString) {
         const paragraphs = [];
@@ -2308,8 +2313,8 @@ JSON:`;
         document.getElementById('compareBtn').disabled = !(state.textA && state.textB);
     }
     function formatSize(bytes) {
-        if (bytes === 0) return '0 Б';
-        const k = 1024, sizes = ['Б','КБ','МБ','ГБ'];
+        if (bytes === 0) return '0 ' + T.bytes;
+        const k = 1024, sizes = T.size_units;
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
@@ -2393,9 +2398,9 @@ JSON:`;
         const findings = [];
         let id = 1;
         const patterns = [
-            { regex: /\b(\d+(?:[.,]\d+)?)\s*(?:руб|сом|USD|EUR|сомони)\b/gi, category: 'ФИНАНСОВЫЕ УСЛОВИЯ', severity: 'critical' },
-            { regex: /\b(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}|\d{1,2}\s+\w+\s+\d{4})\b/g, category: 'СРОКИ И ДАТЫ', severity: 'warning' },
-            { regex: /\b(\d+(?:[.,]\d+)?)\s*%/g, category: 'ОТВЕТСТВЕННОСТЬ СТОРОН', severity: 'warning' },
+            { regex: /\b(\d+(?:[.,]\d+)?)\s*(?:руб|сом|USD|EUR|сомони)\b/gi, category: T.cat_finance, severity: 'critical' },
+            { regex: /\b(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{2,4}|\d{1,2}\s+\w+\s+\d{4})\b/g, category: T.cat_dates, severity: 'warning' },
+            { regex: /\b(\d+(?:[.,]\d+)?)\s*%/g, category: T.cat_liability, severity: 'warning' },
         ];
         const extractValues = (text, regex) => {
             const matches = [];
@@ -2411,45 +2416,45 @@ JSON:`;
                 if (![...new Set(valsB)].some(vB => vB.toLowerCase() === vA.toLowerCase())) {
                     findings.push({
                         id: id++, category: p.category, severity: p.severity,
-                        title: `Различие: ${p.category.toLowerCase()}`,
-                        inDocA: vA, inDocB: '— не найдено —',
-                        legalRisk: 'Возможны разногласия',
-                        recommendation: 'Согласовать значение'
+                        title: tr(T.diff_title, { category: p.category.toLowerCase() }),
+                        inDocA: vA, inDocB: T.not_found_dash,
+                        legalRisk: T.risk_possible_disputes,
+                        recommendation: T.rec_align_value
                     });
                 }
             });
         });
         if (stats.modify + stats.insert + stats.delete > 10) {
             findings.unshift({
-                id: id++, category: 'ПРОЧЕЕ', severity: 'info',
-                title: 'Множественные различия',
-                inDocA: `${stats.delete} удалённых, ${stats.modify} изменённых`,
-                inDocB: `${stats.insert} добавленных`,
-                legalRisk: 'Требуется изучение',
-                recommendation: 'Проверить вручную'
+                id: id++, category: T.cat_other, severity: 'info',
+                title: T.multiple_diffs,
+                inDocA: tr(T.deleted_modified, { deleted: stats.delete, modified: stats.modify }),
+                inDocB: tr(T.inserted, { inserted: stats.insert }),
+                legalRisk: T.risk_needs_study,
+                recommendation: T.rec_check_manually
             });
         }
         const score = stats.similarity;
-        let label = 'Отличная';
-        if (score < 95) label = 'Хорошая';
-        if (score < 85) label = 'Удовлетворительная';
-        if (score < 70) label = 'Низкая';
-        if (score < 50) label = 'Критическая';
+        let label = T.score_excellent;
+        if (score < 95) label = T.score_good;
+        if (score < 85) label = T.score_satisfactory;
+        if (score < 70) label = T.score_low;
+        if (score < 50) label = T.score_critical;
         const result = {
-            summary: `Совпадение: ${score}%. Различий: ${stats.insert + stats.delete + stats.modify}.`,
+            summary: tr(T.local_summary, { score, count: stats.insert + stats.delete + stats.modify }),
             compatibilityScore: score,
             compatibilityLabel: label,
             totalDifferences: stats.insert + stats.delete + stats.modify,
             findings: findings.slice(0, 20),
             recommendations: [],
-            overallConclusion: score >= 85 ? 'Совместимы. Проверьте различия.' : 'Существенные различия. Требуется согласование.'
+            overallConclusion: score >= 85 ? T.conclusion_compatible : T.conclusion_incompatible
         };
         result.recommendations = findings.length > 0
             ? generateRecommendationsFromFindings(findings)
             : [
-                { priority: 'medium', action: 'Проверить ГК РТ', rationale: 'Юридическая проверка' },
-                { priority: 'low', action: 'Сохранить отчёт', rationale: 'Для архива' },
-                { priority: 'low', action: 'Консультация юриста', rationale: 'Перед подписанием' }
+                { priority: 'medium', action: T.rec_check_civil_code, rationale: T.rec_legal_check },
+                { priority: 'low', action: T.rec_save_report, rationale: T.rec_for_archive },
+                { priority: 'low', action: T.rec_lawyer_consult, rationale: T.rec_before_signing }
             ];
         return result;
     }
@@ -2457,7 +2462,7 @@ JSON:`;
     // MAIN COMPARISON
     // =================================================================
     async function startComparison() {
-        if (!state.textA || !state.textB) { showToast('Загрузите оба документа', 'warning'); return; }
+        if (!state.textA || !state.textB) { showToast(T.load_both_docs, 'warning'); return; }
         document.getElementById('progressSection').classList.remove('hidden');
         document.getElementById('resultsSection').classList.add('hidden');
         document.getElementById('uploadSection').classList.add('hidden');
@@ -2466,51 +2471,51 @@ JSON:`;
         const useAI = document.getElementById('useAI').checked && state.ollamaConnected;
         const useCache = document.getElementById('useCache').checked;
         try {
-            updateProgress(15, 'Чтение документов...', 'stage-read');
+            updateProgress(15, T.progress_reading, 'stage-read');
             await sleep(300);
-            updateProgress(40, 'Построение различий...', 'stage-diff');
+            updateProgress(40, T.progress_building_diff, 'stage-diff');
             const diff = computeDiff(state.textA, state.textB);
             const stats = computeDiffStats(diff);
             await sleep(300);
             let aiResult = null;
             let fromCache = false;
             if (useCache) {
-                updateProgress(50, '💾 Проверка кэша...', 'stage-ai');
+                updateProgress(50, T.progress_cache_check, 'stage-ai');
                 const cached = CacheManager.get(state.textA, state.textB);
                 if (cached) {
                     aiResult = cached;
                     fromCache = true;
-                    showToast('📦 Результат из кэша — мгновенно!', 'success');
-                    updateProgress(95, '📦 Из кэша...', 'stage-report');
+                    showToast(T.cache_hit, 'success');
+                    updateProgress(95, T.progress_from_cache, 'stage-report');
                     await sleep(500);
                 }
             }
             if (!aiResult && useAI) {
-                updateProgress(50, '🤖 AI-анализ (streaming)...', 'stage-ai');
+                updateProgress(50, T.progress_ai, 'stage-ai');
                 try {
                     aiResult = await analyzeWithAI(state.textA, state.textB, state.nameA, state.nameB);
                     if (aiResult) {
                         if (useCache) {
                             CacheManager.set(state.textA, state.textB, aiResult);
-                            showToast('💾 Результат сохранён в кэш', 'success');
+                            showToast(T.cache_saved, 'success');
                         }
-                        showToast(`✅ AI: ${aiResult.findings.length} различий`, 'success');
+                        showToast(tr(T.ai_found, { count: aiResult.findings.length }), 'success');
                     } else {
-                        showToast('AI не ответил, используем локальный анализ', 'warning');
+                        showToast(T.ai_no_answer, 'warning');
                     }
                 } catch (err) {
-                    if (err.message.includes('отменен')) {
+                    if (err.message.includes(T.cancelled_keyword)) {
                         stopProgressTimer();
                         document.getElementById('progressSection').classList.add('hidden');
                         document.getElementById('uploadSection').classList.remove('hidden');
                         document.getElementById('compareBtn').disabled = false;
                         return;
                     }
-                    showToast('Ошибка AI: ' + err.message, 'warning');
+                    showToast(T.ai_error + err.message, 'warning');
                 }
             }
             await sleep(200);
-            updateProgress(95, 'Формирование отчёта...', 'stage-report');
+            updateProgress(95, T.progress_report, 'stage-report');
             const result = aiResult || analyzeWithoutAI(state.textA, state.textB, diff);
             result.diff = diff;
             result.stats = stats;
@@ -2518,21 +2523,21 @@ JSON:`;
             result.fromCache = fromCache;
             state.result = result;
             await sleep(300);
-            updateProgress(100, 'Готово!', 'stage-report');
+            updateProgress(100, T.progress_done, 'stage-report');
             await sleep(400);
             renderResults(result);
             saveToHistory(result);
             stopProgressTimer();
             document.getElementById('progressSection').classList.add('hidden');
             document.getElementById('resultsSection').classList.remove('hidden');
-            const source = fromCache ? '📦 из кэша' : (aiResult ? '🤖 AI' : '📊 локально');
-            showToast(`✅ Готово: ${result.recommendations.length} рекомендаций (${source})`, 'success');
+            const source = fromCache ? T.source_cache : (aiResult ? T.source_ai : T.source_local);
+            showToast(tr(T.done_recs, { count: result.recommendations.length, source }), 'success');
             setTimeout(() => {
                 document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 300);
         } catch (err) {
             console.error(err);
-            showToast('Ошибка: ' + err.message, 'error');
+            showToast(T.error_prefix + err.message, 'error');
             stopProgressTimer();
             document.getElementById('progressSection').classList.add('hidden');
             document.getElementById('uploadSection').classList.remove('hidden');
@@ -2561,10 +2566,10 @@ JSON:`;
         const diff = result.diff;
         const stats = result.stats;
         document.getElementById('reportNumber').textContent = 'CMP-' + Math.floor(Math.random() * 900000 + 100000);
-        document.getElementById('reportDate').textContent = new Date().toLocaleString('ru-RU');
+        document.getElementById('reportDate').textContent = new Date().toLocaleString(T.intl_locale);
         document.getElementById('reportModel').textContent = result.fromCache
-            ? '📦 Из кэша'
-            : (result.usedAI ? '🤖 llama3.1:8b · Streaming' : '📊 Локальный анализ');
+            ? T.model_from_cache
+            : (result.usedAI ? T.model_ai_streaming : T.model_local);
         document.getElementById('reportSubtitle').textContent = `${state.nameA} ↔ ${state.nameB}`;
         const cacheIndicator = document.getElementById('cacheIndicator');
         if (result.fromCache) {
@@ -2585,9 +2590,9 @@ JSON:`;
         animateCounter(document.getElementById('kpiWarning'), warning);
         animateCounter(document.getElementById('kpiInfo'), info);
         document.getElementById('docAName').textContent = state.nameA;
-        document.getElementById('docAInfo').textContent = `${state.textA.split(/\s+/).length.toLocaleString('ru-RU')} слов · ${formatSize(state.fileA?.size || 0)}`;
+        document.getElementById('docAInfo').textContent = tr(T.doc_info, { words: state.textA.split(/\s+/).length.toLocaleString(T.intl_locale), size: formatSize(state.fileA?.size || 0) });
         document.getElementById('docBName').textContent = state.nameB;
-        document.getElementById('docBInfo').textContent = `${state.textB.split(/\s+/).length.toLocaleString('ru-RU')} слов · ${formatSize(state.fileB?.size || 0)}`;
+        document.getElementById('docBInfo').textContent = tr(T.doc_info, { words: state.textB.split(/\s+/).length.toLocaleString(T.intl_locale), size: formatSize(state.fileB?.size || 0) });
         document.getElementById('executiveSummary').innerHTML =
             `<strong>${escapeHtml(result.summary)}</strong><br><br>${escapeHtml(result.overallConclusion || '')}`;
         renderHeatmap(result.findings);
@@ -2630,8 +2635,8 @@ JSON:`;
 <div class="w-24 h-24 mx-auto mb-5 rounded-2xl flex items-center justify-center" style="background: rgba(16, 185, 129, 0.2); box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);">
 <svg class="w-12 h-12" style="color: var(--accent-success);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
 </div>
-<h4 class="text-2xl font-black mb-3">Различий не обнаружено</h4>
-<p class="text-base" style="color: var(--text-secondary);">Документы идентичны</p>
+<h4 class="text-2xl font-black mb-3">${T.no_differences}</h4>
+<p class="text-base" style="color: var(--text-secondary);">${T.docs_identical}</p>
 </div>`;
             return;
         }
@@ -2647,24 +2652,24 @@ JSON:`;
 <div class="compare-box a">
 <div class="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2" style="color: #3b82f6;">
 <span class="w-5 h-5 rounded text-[11px] font-black text-white flex items-center justify-center" style="background: #3b82f6;">A</span>
-Базовый
+${T.label_base}
 </div>
 <p class="text-base">${escapeHtml(f.inDocA || '—')}</p>
 </div>
 <div class="compare-box b">
 <div class="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2" style="color: var(--accent-secondary);">
 <span class="w-5 h-5 rounded text-[11px] font-black text-white flex items-center justify-center" style="background: var(--accent-secondary);">B</span>
-Сравниваемый
+${T.label_compared}
 </div>
 <p class="text-base">${escapeHtml(f.inDocB || '—')}</p>
 </div>
 </div>
 <div class="risk-box mb-3">
-<div class="text-xs font-bold uppercase tracking-wider mb-2" style="color: var(--accent-error);">⚠️ Риск</div>
+<div class="text-xs font-bold uppercase tracking-wider mb-2" style="color: var(--accent-error);">${T.label_risk}</div>
 <p class="text-base">${escapeHtml(f.legalRisk || '—')}</p>
 </div>
 <div class="recommendation-box">
-<div class="text-xs font-bold uppercase tracking-wider mb-2" style="color: var(--accent-success);">💡 Рекомендация</div>
+<div class="text-xs font-bold uppercase tracking-wider mb-2" style="color: var(--accent-success);">${T.label_recommendation}</div>
 <p class="text-base">${escapeHtml(f.recommendation || '—')}</p>
 </div>
 </div>
@@ -2673,7 +2678,7 @@ JSON:`;
     function renderRecommendations(recs) {
         const container = document.getElementById('recommendationsList');
         if (!recs || recs.length === 0) {
-            container.innerHTML = '<p class="text-center py-8" style="color: var(--text-tertiary);">Нет рекомендаций</p>';
+            container.innerHTML = `<p class="text-center py-8" style="color: var(--text-tertiary);">${T.no_recommendations}</p>`;
             return;
         }
         const priorityIcons = { high: '🚨', medium: '⚠️', low: '💡' };
@@ -2695,42 +2700,42 @@ JSON:`;
     // EXPORT
     // =================================================================
     function exportPDF() {
-        if (!state.result) { showToast('Нет данных', 'error'); return; }
-        showToast('Генерация PDF...', 'info', 2000);
+        if (!state.result) { showToast(T.no_data, 'error'); return; }
+        showToast(T.generating_pdf, 'info', 2000);
         const el = document.getElementById('reportPrintArea');
         html2pdf().set({
             margin: [10, 10, 10, 10],
-            filename: `Сравнение_${Date.now()}.pdf`,
+            filename: `${T.export_file_name}_${Date.now()}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        }).from(el).save().then(() => showToast('PDF сохранён', 'success'));
+        }).from(el).save().then(() => showToast(T.pdf_saved, 'success'));
     }
     function exportMarkdown() {
-        if (!state.result) { showToast('Нет данных', 'error'); return; }
+        if (!state.result) { showToast(T.no_data, 'error'); return; }
         const r = state.result;
-        let md = `# Отчёт о сравнении\n`;
-        md += `**Дата:** ${new Date().toLocaleString('ru-RU')}\n`;
-        md += `**Источник:** ${r.fromCache ? '📦 Кэш' : (r.usedAI ? '🤖 llama3.1:8b' : '📊 Локальный')}\n`;
+        let md = `${T.md_title}\n`;
+        md += `${T.md_date} ${new Date().toLocaleString(T.intl_locale)}\n`;
+        md += `${T.md_source} ${r.fromCache ? T.md_cache : (r.usedAI ? '🤖 llama3.1:8b' : T.md_local)}\n`;
         md += `**A:** ${state.nameA}\n**B:** ${state.nameB}\n\n`;
-        md += `## Оценка\n- **Совместимость:** ${r.compatibilityScore}% (${r.compatibilityLabel})\n- **Различий:** ${r.totalDifferences}\n\n`;
-        md += `## Резюме\n${r.summary}\n\n`;
-        md += `## Различия\n`;
+        md += `${T.md_score}\n- ${T.md_compatibility} ${r.compatibilityScore}% (${r.compatibilityLabel})\n- ${T.md_differences} ${r.totalDifferences}\n\n`;
+        md += `${T.md_summary}\n${r.summary}\n\n`;
+        md += `${T.md_diffs}\n`;
         r.findings.forEach((f, i) => {
             md += `### ${i+1}. ${f.title} [${f.severity}]\n`;
-            md += `**Категория:** ${f.category}\n`;
+            md += `${T.md_category} ${f.category}\n`;
             md += `**A:** ${f.inDocA}\n**B:** ${f.inDocB}\n`;
-            md += `**Риск:** ${f.legalRisk}\n**Рекомендация:** ${f.recommendation}\n\n`;
+            md += `${T.md_risk} ${f.legalRisk}\n${T.md_recommendation} ${f.recommendation}\n\n`;
         });
-        md += `## Рекомендации\n`;
+        md += `${T.md_recommendations}\n`;
         r.recommendations.forEach(rc => md += `- **[${rc.priority}]** ${rc.action} — ${rc.rationale}\n`);
-        md += `\n## Итог\n${r.overallConclusion}\n`;
+        md += `\n${T.md_conclusion}\n${r.overallConclusion}\n`;
         const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-        downloadBlob(blob, `Сравнение_${Date.now()}.md`);
-        showToast('Markdown сохранён', 'success');
+        downloadBlob(blob, `${T.export_file_name}_${Date.now()}.md`);
+        showToast(T.md_saved, 'success');
     }
     function exportJSON() {
-        if (!state.result) { showToast('Нет данных', 'error'); return; }
+        if (!state.result) { showToast(T.no_data, 'error'); return; }
         const data = {
             metadata: {
                 date: new Date().toISOString(),
@@ -2741,8 +2746,8 @@ JSON:`;
             result: state.result
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        downloadBlob(blob, `Сравнение_${Date.now()}.json`);
-        showToast('JSON сохранён', 'success');
+        downloadBlob(blob, `${T.export_file_name}_${Date.now()}.json`);
+        showToast(T.json_saved, 'success');
     }
     function downloadBlob(blob, filename) {
         const url = URL.createObjectURL(blob);
@@ -2756,33 +2761,33 @@ JSON:`;
     function comparisonResultToText(result) {
         if (!result) return '';
         const lines = [
-            'ОТЧЁТ О СРАВНЕНИИ ДОГОВОРОВ',
-            `Документ A: ${state.nameA || 'Документ A'}`,
-            `Документ B: ${state.nameB || 'Документ B'}`,
-            `Совместимость: ${result.compatibilityScore || 0}% (${result.compatibilityLabel || 'нет оценки'})`,
+            T.txt_report_title,
+            tr(T.txt_doc_a, { name: state.nameA || '—' }),
+            tr(T.txt_doc_b, { name: state.nameB || '—' }),
+            tr(T.txt_compatibility, { score: result.compatibilityScore || 0, label: result.compatibilityLabel || T.txt_no_score }),
             '',
-            'КРАТКОЕ РЕЗЮМЕ',
+            T.txt_summary,
             result.summary || '',
             result.overallConclusion || '',
             '',
-            'ВЫЯВЛЕННЫЕ РАЗЛИЧИЯ'
+            T.txt_differences
         ];
 
         (result.findings || []).forEach((f, index) => {
             lines.push(
                 '',
-                `${index + 1}. ${f.title || 'Различие'} [${f.severity || 'info'}]`,
-                `Категория: ${f.category || 'Не указана'}`,
-                `Документ A: ${f.inDocA || '—'}`,
-                `Документ B: ${f.inDocB || '—'}`,
-                `Риск: ${f.legalRisk || '—'}`,
-                `Рекомендация: ${f.recommendation || '—'}`
+                `${index + 1}. ${f.title || T.txt_difference} [${f.severity || 'info'}]`,
+                tr(T.txt_category, { value: f.category || T.txt_not_specified }),
+                tr(T.txt_in_doc_a, { value: f.inDocA || '—' }),
+                tr(T.txt_in_doc_b, { value: f.inDocB || '—' }),
+                tr(T.txt_risk, { value: f.legalRisk || '—' }),
+                tr(T.txt_recommendation, { value: f.recommendation || '—' })
             );
         });
 
-        lines.push('', 'РЕКОМЕНДАЦИИ');
+        lines.push('', T.txt_recommendations);
         (result.recommendations || []).forEach((r, index) => {
-            lines.push(`${index + 1}. [${r.priority || 'medium'}] ${r.action || 'Действие'} — ${r.rationale || ''}`);
+            lines.push(`${index + 1}. [${r.priority || 'medium'}] ${r.action || T.txt_action} — ${r.rationale || ''}`);
         });
 
         return lines.join('\n');
@@ -2807,9 +2812,9 @@ JSON:`;
             localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
             recordCabinetActivity({
                 type: 'comparison',
-                title: 'Сравнение договоров',
-                details: `${state.nameA || 'Документ A'} - ${state.nameB || 'Документ B'} · совместимость ${result.compatibilityScore || 0}% · различий ${result.findings?.length || 0}`,
-                file_name: `${state.nameA || 'Документ A'} vs ${state.nameB || 'Документ B'}`,
+                title: T.activity_title,
+                details: tr(T.activity_details, { a: state.nameA || '—', b: state.nameB || '—', score: result.compatibilityScore || 0, count: result.findings?.length || 0 }),
+                file_name: tr(T.activity_file, { a: state.nameA || '—', b: state.nameB || '—' }),
                 summary: result.summary || '',
                 result: comparisonResultToText(result),
                 status: 'completed',
@@ -2832,20 +2837,20 @@ JSON:`;
         const list = document.getElementById('historyList');
         const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
         if (!history.length) {
-            list.innerHTML = '<div class="text-center py-12" style="color: var(--text-tertiary);">📭 Пусто</div>';
+            list.innerHTML = `<div class="text-center py-12" style="color: var(--text-tertiary);">${T.history_empty}</div>`;
         } else {
             list.innerHTML = history.map(h => `
 <div class="history-item" onclick="loadHistory('${h.id}')">
 <div class="flex items-center justify-between mb-3">
-<span class="text-sm" style="color: var(--text-tertiary);">${new Date(h.date).toLocaleString('ru-RU')}</span>
+<span class="text-sm" style="color: var(--text-tertiary);">${new Date(h.date).toLocaleString(T.intl_locale)}</span>
 <div class="flex gap-3">
-${h.fromCache ? '<span class="text-xs px-3 py-1 rounded-lg" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">📦 Кэш</span>' : ''}
+${h.fromCache ? '<span class="text-xs px-3 py-1 rounded-lg" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">' + T.history_cache_badge + '</span>' : ''}
 ${h.usedAI ? '<span class="text-xs px-3 py-1 rounded-lg" style="background: rgba(139, 92, 246, 0.2); color: var(--accent-primary); border: 1px solid rgba(139, 92, 246, 0.3);">🤖 AI</span>' : ''}
 <span class="text-xs font-bold px-3 py-1 rounded-lg" style="background: ${h.score >= 85 ? 'rgba(16, 185, 129, 0.2)' : h.score >= 70 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color: ${h.score >= 85 ? 'var(--accent-success)' : h.score >= 70 ? 'var(--accent-warning)' : 'var(--accent-error)'}; border: 1px solid ${h.score >= 85 ? 'rgba(16, 185, 129, 0.3)' : h.score >= 70 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)'};">${h.score}%</span>
 </div>
 </div>
 <div class="font-bold text-lg truncate">${escapeHtml(h.nameA)} ↔ ${escapeHtml(h.nameB)}</div>
-<div class="text-sm mt-2" style="color: var(--text-tertiary);">${h.findings || 0} различий · ${h.recommendations || 0} рек.</div>
+<div class="text-sm mt-2" style="color: var(--text-tertiary);">${tr(T.history_stats, { findings: h.findings || 0, recs: h.recommendations || 0 })}</div>
 </div>
 `).join('');
         }
@@ -2865,10 +2870,10 @@ ${h.usedAI ? '<span class="text-xs px-3 py-1 rounded-lg" style="background: rgba
         setTimeout(() => document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' }), 100);
     }
     function clearHistory() {
-        if (!confirm('Удалить историю?')) return;
+        if (!confirm(T.confirm_clear_history)) return;
         localStorage.removeItem(HISTORY_KEY);
         showHistory();
-        showToast('Очищено', 'success');
+        showToast(T.cache_cleared, 'success');
     }
     function resetComparison() {
         clearFile('A'); clearFile('B');

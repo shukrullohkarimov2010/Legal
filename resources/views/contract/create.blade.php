@@ -580,683 +580,13 @@
 <body class="min-h-screen text-neutral-900 dark:text-neutral-100">
 @php
     $currentUser = auth()->user();
-    $userName = $currentUser?->name ?: 'Пользователь';
+    $userName = $currentUser?->name ?: __('builder.ui.party1');
     $userEmail = $currentUser?->email ?: 'email@example.com';
     $nameParts = preg_split('/\s+/u', trim($userName), -1, PREG_SPLIT_NO_EMPTY) ?: [];
     $userInitials = collect($nameParts)->take(2)->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))->implode('');
-    $userInitials = $userInitials !== '' ? $userInitials : 'П';
+    $userInitials = $userInitials !== '' ? $userInitials : mb_substr(__('builder.ui.party1'), 0, 1);
 
-    $builderTranslations = [
-        'ui' => [
-            'searchCommands' => 'Поиск команд',
-            'theme' => 'Тема',
-            'download' => 'Скачать',
-            'copy' => 'Копировать',
-            'livePreview' => 'Предпросмотр',
-            'draftContract' => 'Проект договора',
-            'draftContractText' => 'Текст договора',
-            'buildStatus' => 'Статус',
-            'draftReady' => 'Готов',
-            'buildStatusText' => 'Документ готов к скачиванию',
-            'reminder' => 'Напоминание',
-            'reviewRequired' => 'Требуется проверка',
-            'reminderText' => 'Перед подписанием рекомендуется проверить данные и реквизиты сторон.',
-            'buildPlan' => 'Структура договора',
-            'txtDocument' => 'TXT документ',
-            'pdfDocument' => 'PDF документ',
-            'wordDocument' => 'Word документ',
-            'copied' => 'Скопировано',
-            'txtDownloaded' => 'TXT документ успешно скачан',
-            'pdfDownloaded' => 'PDF документ успешно скачан',
-            'pdfError' => 'Ошибка при создании PDF',
-            'docxDownloaded' => 'DOCX документ успешно скачан',
-            'docxError' => 'Ошибка при создании DOCX',
-            'generating' => 'Генерация договора...',
-            'commandPaletteInDevelopment' => 'Поиск команд находится в разработке',
-            'rubCurrencySymbol' => '₽',
-            'notSpecified' => 'Не указано',
-            'withoutNumber' => 'Без номера',
-            'party1' => 'Сторона 1',
-            'party2' => 'Сторона 2',
-            'applicableLaw' => 'действующим законодательством',
-            'defaultPenaltyRule' => 'За просрочку исполнения обязательств виновная Сторона уплачивает пеню в размере 0.1% от суммы задолженности за каждый день просрочки.',
-            'defaultSpecialTerms' => 'Дополнительные условия определяются по соглашению Сторон.',
-            'notSelected' => 'Не выбрано',
-        ],
-        'templates' => [
-            'service' => [
-                'label' => 'Договор возмездного оказания услуг',
-                'description' => 'Для оказания услуг и выполнения работ',
-                'badge' => 'Основной',
-                'roleA' => 'Заказчик',
-                'roleB' => 'Исполнитель',
-                'defaultSubject' => 'оказание услуг по разработке программного обеспечения',
-            ],
-            'supply' => [
-                'label' => 'Договор поставки',
-                'description' => 'Для поставки товаров и продукции',
-                'badge' => 'Бизнес',
-                'roleA' => 'Покупатель',
-                'roleB' => 'Поставщик',
-                'defaultSubject' => 'поставка товаров',
-            ],
-            'nda' => [
-                'label' => 'Соглашение о конфиденциальности (NDA)',
-                'description' => 'Для защиты конфиденциальной информации',
-                'badge' => 'Конфиденциально',
-                'roleA' => 'Раскрывающая сторона',
-                'roleB' => 'Получающая сторона',
-                'defaultSubject' => 'передача и защита конфиденциальной информации',
-            ],
-        ],
-        'sections' => [
-            'definitions' => [
-                'label' => 'Определения и термины',
-                'description' => 'Расшифровка ключевых понятий договора',
-            ],
-            'scope' => [
-                'label' => 'Предмет договора',
-                'description' => 'Описание предмета и обязательств сторон',
-            ],
-            'payment' => [
-                'label' => 'Стоимость и порядок оплаты',
-                'description' => 'Финансовые условия договора',
-            ],
-            'acceptance' => [
-                'label' => 'Порядок приёмки-передачи',
-                'description' => 'Процедура приёмки результатов работ',
-            ],
-            'liability' => [
-                'label' => 'Ответственность сторон',
-                'description' => 'Ответственность за нарушение обязательств',
-            ],
-            'ip_rights' => [
-                'label' => 'Права на интеллектуальную собственность',
-                'description' => 'Передача прав на результат работ',
-            ],
-            'termination' => [
-                'label' => 'Срок действия договора',
-                'description' => 'Срок действия и порядок расторжения',
-            ],
-            'confidentiality' => [
-                'label' => 'Конфиденциальность',
-                'description' => 'Защита информации и данных',
-            ],
-            'disputes' => [
-                'label' => 'Разрешение споров',
-                'description' => 'Порядок урегулирования разногласий',
-            ],
-            'force_majeure' => [
-                'label' => 'Форс-мажор',
-                'description' => 'Обстоятельства непреодолимой силы',
-            ],
-            'notices' => [
-                'label' => 'Уведомления и связь',
-                'description' => 'Порядок обмена уведомлениями',
-            ],
-            'entire_agreement' => [
-                'label' => 'Заключительные положения',
-                'description' => 'Финальные условия договора',
-            ],
-        ],
-        'draft' => [
-            'header' => [
-                'ru' => ':customer, именуемое в дальнейшем «:roleA», в лице уполномоченного представителя, действующего на основании учредительных документов, с одной стороны, и :contractor, именуемое в дальнейшем «:roleB», в лице уполномоченного представителя, действующего на основании учредительных документов, с другой стороны, совместно именуемые «Стороны», заключили настоящий договор о нижеследующем:',
-                'en' => ':customer, hereinafter referred to as ":roleA", represented by an authorized representative acting on the basis of constituent documents, of the one part, and :contractor, hereinafter referred to as ":roleB", represented by an authorized representative acting on the basis of constituent documents, of the other part, jointly referred to as the "Parties", have concluded this Agreement as follows:',
-                'kk' => ':customer, бұдан былай «:roleA» деп аталатын, құрылтай құжаттары негізінде әрекет ететін уәкілетті өкілі арқылы, бір тараптан, және :contractor, бұдан былай «:roleB» деп аталатын, құрылтай құжаттары негізінде әрекет ететін уәкілетті өкілі арқылы, екінші тараптан, бірлесіп «Тараптар» деп аталатын, осы шартты төмендегілер туралы жасасты:',
-            ],
-            'definitions' => [
-                'ru' => "1. ОПРЕДЕЛЕНИЯ И ТЕРМИНЫ
-
-1.1. В настоящем договоре следующие термины имеют следующие значения:
-— «Работы/Услуги» — действия Исполнителя, направленные на достижение результата, указанного в п. 2.1 настоящего договора;
-— «Результат» — материальный или нематериальный итог выполнения Работ, передаваемый Заказчику;
-— «Стороны» — Заказчик и Исполнитель, совместно именуемые;
-— «Рабочий день» — день, не являющийся выходным или праздничным согласно законодательству места заключения договора.
-
-1.2. Иные термины, используемые в договоре, толкуются в соответствии с действующим законодательством.",
-                'en' => "1. DEFINITIONS AND TERMS
-
-1.1. In this Agreement, the following terms have the following meanings:
-— \"Works/Services\" — actions of the Contractor aimed at achieving the result specified in clause 2.1 of this Agreement;
-— \"Result\" — material or intangible outcome of the Work performed, transferred to the Customer;
-— \"Parties\" — Customer and Contractor, jointly referred to as;
-— \"Business Day\" — a day that is not a weekend or holiday according to the legislation of the place of conclusion of the Agreement.
-
-1.2. Other terms used in the Agreement shall be interpreted in accordance with applicable law.",
-                'kk' => "1. АНЫҚТАМАЛАР ЖӘНЕ ТЕРМИНДЕР
-
-1.1. Осы шартта келесі терминдер келесі мағыналарға ие:
-— «Жұмыстар/Қызметтер» — осы шарттың 2.1-тармағында көрсетілген нәтижеге қол жеткізуге бағытталған Мердігердің әрекеттері;
-— «Нәтиже» — Тапсырыс берушіге берілетін орындалған Жұмыстардың материалдық немесе материалдық емес қорытындысы;
-— «Тараптар» — Тапсырыс беруші және Мердігер, бірлесіп аталатын;
-— «Жұмыс күні» — шарт жасалған жердің заңнамасына сәйкес демалыс немесе мереке күні емес күн.
-
-1.2. Шартта қолданылатын басқа терминдер қолданыстағы заңнамаға сәйкес түсіндіріледі.",
-            ],
-            'scope' => [
-                'ru' => "2. ПРЕДМЕТ ДОГОВОРА
-
-2.1. :roleB обязуется по заданию :roleA выполнить :subject, а :roleA обязуется принять результат выполненных работ и оплатить его в порядке и на условиях, предусмотренных настоящим договором.
-
-2.2. Объём, содержание, сроки выполнения работ и иные условия могут определяться дополнительными соглашениями или техническими заданиями, являющимися неотъемлемой частью настоящего договора.
-
-2.3. :roleB гарантирует надлежащее качество выполняемых работ и соответствие результата требованиям :roleA, указанным в техническом задании.
-
-2.4. :roleB обязуется выполнять работы лично, если иное не согласовано Сторонами в письменной форме.",
-                'en' => "2. SUBJECT OF THE AGREEMENT
-
-2.1. :roleB undertakes to perform :subject as assigned by :roleA, and :roleA undertakes to accept the result of the work and pay for it in the manner and under the conditions provided for by this Agreement.
-
-2.2. The scope, content, timing of work and other conditions may be determined by additional agreements or technical specifications that are an integral part of this Agreement.
-
-2.3. :roleB guarantees the proper quality of the work performed and compliance of the result with the requirements of :roleA specified in the technical specification.
-
-2.4. :roleB undertakes to perform the work personally, unless otherwise agreed by the Parties in writing.",
-                'kk' => "2. ШАРТТЫҢ МӘНІ
-
-2.1. :roleB :roleA тапсырмасы бойынша :subject орындауды міндеттейді, ал :roleA орындалған жұмыс нәтижесін қабылдауды және осы шартта көзделген тәртіппен және шарттармен төлеуді міндеттейді.
-
-2.2. Жұмыстардың көлемі, мазмұны, орындалу мерзімдері және басқа шарттар қосымша келісімдермен немесе техникалық тапсырмалармен анықталуы мүмкін, олар осы шарттың ажырамас бөлігі болып табылады.
-
-2.3. :roleB орындалатын жұмыстардың тиісті сапасын және нәтиженің техникалық тапсырмада көрсетілген :roleA талаптарына сәйкестігін кепілдейді.
-
-2.4. :roleB жұмыстарды жеке орындауды міндеттейді, егер Тараптар жазбаша түрде басқаша келіспесе.",
-            ],
-            'payment' => [
-                'ru' => "3. СТОИМОСТЬ И ПОРЯДОК ОПЛАТЫ
-
-3.1. Стоимость работ по настоящему договору составляет :amount (сумма прописью) с учётом всех налогов и сборов.
-
-3.2. Оплата производится в безналичной форме путём перечисления денежных средств на расчётный счёт :roleB.
-
-3.3. :roleA обязуется произвести оплату в следующем порядке:
-— авансовый платёж в размере 50% от стоимости работ — в течение 5 (пяти) рабочих дней с даты подписания настоящего договора;
-— окончательный расчёт в размере 50% — в течение :days рабочих дней с момента подписания акта выполненных работ.
-
-3.4. Обязательства по оплате считаются исполненными с момента поступления денежных средств на расчётный счёт :roleB.
-
-3.5. В случае задержки оплаты :roleA уплачивает :roleB пеню в размере, указанном в разделе 5 настоящего договора.",
-                'en' => "3. COST AND PAYMENT PROCEDURE
-
-3.1. The cost of work under this Agreement is :amount (amount in words) including all taxes and fees.
-
-3.2. Payment is made in non-cash form by transferring funds to the bank account of :roleB.
-
-3.3. :roleA undertakes to make payment in the following order:
-— advance payment in the amount of 50% of the cost of work — within 5 (five) business days from the date of signing this Agreement;
-— final settlement in the amount of 50% — within :days business days from the date of signing the act of completed work.
-
-3.4. Payment obligations are considered fulfilled from the moment funds are received to the bank account of :roleB.
-
-3.5. In case of payment delay, :roleA pays :roleB a penalty in the amount specified in Section 5 of this Agreement.",
-                'kk' => "3. ҚҰНЫ ЖӘНЕ ТӨЛЕМ ТӘРТІБІ
-
-3.1. Осы шарт бойынша жұмыстардың құны :amount (сомасы жазбаша) барлық салықтар мен алымдарды ескере отырып құрайды.
-
-3.2. Төлем :roleB есеп шотына ақша аудару арқылы қолма-қол ақшасыз нысанда жүзеге асырылады.
-
-3.3. :roleA келесі тәртіппен төлем жасауды міндеттейді:
-— жұмыс құнының 50% мөлшерінде аванстық төлем — осы шартқа қол қойылған күннен бастап 5 (бес) жұмыс күні ішінде;
-— 50% мөлшерінде соңғы есептесу — орындалған жұмыс актісіне қол қойылған сәттен бастап :days жұмыс күні ішінде.
-
-3.4. Төлем міндеттемелері ақша :roleB есеп шотына түскен сәттен бастап орындалған болып саналады.
-
-3.5. Төлемді кешіктірген жағдайда :roleA осы шарттың 5-бөлімінде көрсетілген мөлшерде :roleB-ға айыппұл төлейді.",
-            ],
-            'acceptance' => [
-                'ru' => "4. ПОРЯДОК ПРИЁМКИ-ПЕРЕДАЧИ
-
-4.1. Результат работ передаётся Заказчику по Акту сдачи-приёмки, подписываемому обеими Сторонами.
-
-4.2. :roleB обязуется уведомить :roleA о готовности результата работ в письменной форме.
-
-4.3. :roleA обязуется в течение :days рабочих дней с момента получения уведомления и результата работ:
-— рассмотреть результат и направить :roleB мотивированный отказ от приёмки с указанием недостатков; либо
-— подписать Акт сдачи-приёмки.
-
-4.4. При отсутствии мотивированного отказа в установленный срок Результат считается принятым, а обязательства :roleB — исполненными надлежащим образом.
-
-4.5. В случае выявления недостатков :roleB обязуется устранить их в согласованный Сторонами срок за свой счёт.",
-                'en' => "4. ACCEPTANCE AND TRANSFER PROCEDURE
-
-4.1. The result of the work is transferred to the Customer under the Acceptance Act signed by both Parties.
-
-4.2. :roleB undertakes to notify :roleA of the readiness of the work result in writing.
-
-4.3. :roleA undertakes within :days business days from the date of receipt of the notification and the result of the work:
-— to review the result and send :roleB a reasoned refusal to accept, indicating the deficiencies; or
-— sign the Acceptance Act.
-
-4.4. In the absence of a reasoned refusal within the established period, the Result is considered accepted, and the obligations of :roleB are considered properly fulfilled.
-
-4.5. In case of deficiencies, :roleB undertakes to eliminate them within the period agreed by the Parties at its own expense.",
-                'kk' => "4. ҚАБЫЛДАУ-ТАПСЫРУ ТӘРТІБІ
-
-4.1. Жұмыс нәтижесі Тапсырыс берушіге екі Тарап қол қойған Тапсыру-қабылдау актісі бойынша беріледі.
-
-4.2. :roleB жұмыс нәтижесінің дайындығы туралы :roleA-ны жазбаша түрде хабардар етуге міндеттенеді.
-
-4.3. :roleA хабарлама мен жұмыс нәтижесін алған сәттен бастап :days жұмыс күні ішінде:
-— нәтижені қарап, :roleB-ға кемшіліктерді көрсете отырып қабылдаудан дәлелді бас тартуды жіберуге; немесе
-— Тапсыру-қабылдау актісіне қол қоюға міндеттенеді.
-
-4.4. Белгіленген мерзімде дәлелді бас тарту болмаған жағдайда Нәтиже қабылданды деп саналады, ал :roleB міндеттемелері тиісінше орындалды деп саналады.
-
-4.5. Кемшіліктер анықталған жағдайда :roleB оларды Тараптар келіскен мерзімде өз есебінен жоюға міндеттенеді.",
-            ],
-            'liability' => [
-                'ru' => "5. ОТВЕТСТВЕННОСТЬ СТОРОН
-
-5.1. За неисполнение либо ненадлежащее исполнение обязательств по настоящему договору Стороны несут ответственность в соответствии с действующим законодательством.
-
-5.2. :penalty
-
-5.3. Сторона, нарушившая обязательства по настоящему договору, обязана возместить другой Стороне причинённые убытки в полном объёме, включая упущенную выгоду.
-
-5.4. Уплата неустойки не освобождает Стороны от исполнения обязательств по настоящему договору.
-
-5.5. Общая ответственность :roleB по настоящему договору ограничивается суммой, фактически уплаченной :roleA по договору.",
-                'en' => "5. LIABILITY OF THE PARTIES
-
-5.1. For non-performance or improper performance of obligations under this Agreement, the Parties shall be liable in accordance with applicable law.
-
-5.2. :penalty
-
-5.3. The Party that has violated obligations under this Agreement shall compensate the other Party for damages in full, including lost profits.
-
-5.4. Payment of a penalty does not release the Parties from performing obligations under this Agreement.
-
-5.5. The total liability of :roleB under this Agreement is limited to the amount actually paid by :roleA under the Agreement.",
-                'kk' => "5. ТАРАПТАРДЫҢ ЖАУАПКЕРШІЛІГІ
-
-5.1. Осы шарт бойынша міндеттемелерді орындамағаны немесе тиісінше орындамағаны үшін Тараптар қолданыстағы заңнамаға сәйкес жауапкершілікке тартылады.
-
-5.2. :penalty
-
-5.3. Осы шарт бойынша міндеттемелерді бұзған Тарап екінші Тарапқа келтірілген зиянды толық көлемде, соның ішінде жіберіп алған пайданы өтеуге міндетті.
-
-5.4. Айыппұл төлеу Тараптарды осы шарт бойынша міндеттемелерді орындаудан босатпайды.
-
-5.5. :roleB-ның осы шарт бойынша жалпы жауапкершілігі :roleA шарт бойынша іс жүзінде төлеген сомамен шектеледі.",
-            ],
-            'ip_rights' => [
-                'ru' => "6. ПРАВА НА ИНТЕЛЛЕКТУАЛЬНУЮ СОБСТВЕННОСТЬ
-
-6.1. Исключительные права на Результат, созданный в рамках настоящего договора, переходят к :roleA с момента полной оплаты и подписания Акта приёмки.
-
-6.2. :roleB сохраняет право использовать наработанные методики, библиотеки и инструменты общего назначения в своей дальнейшей деятельности.
-
-6.3. До момента перехода прав :roleB обязуется не передавать Результат третьим лицам и не использовать его в собственных целях.
-
-6.4. :roleB гарантирует, что Результат не нарушает права третьих лиц на объекты интеллектуальной собственности.",
-                'en' => "6. INTELLECTUAL PROPERTY RIGHTS
-
-6.1. Exclusive rights to the Result created under this Agreement shall pass to :roleA from the moment of full payment and signing of the Acceptance Act.
-
-6.2. :roleB retains the right to use the developed methodologies, libraries and general-purpose tools in its further activities.
-
-6.3. Until the transfer of rights, :roleB undertakes not to transfer the Result to third parties and not to use it for its own purposes.
-
-6.4. :roleB guarantees that the Result does not violate the rights of third parties to intellectual property objects.",
-                'kk' => "6. ЗИЯТКЕРЛІК МЕНШІКҚҰҚЫҚТАРЫ
-
-6.1. Осы шарт аясында жасалған Нәтижеге ерекше құқықтар толық төлем және Қабылдау актісіне қол қойылған сәттен бастап :roleA-ға өтеді.
-
-6.2. :roleB әзірленген әдістемелерді, кітапханалар мен жалпы мақсаттағы құралдарды өз қызметінде пайдалану құқығын сақтайды.
-
-6.3. Құқықтар өткенге дейін :roleB Нәтижені үшінші тұлғаларға бермеуге және оны өз мақсаттарында пайдаланбауға міндеттенеді.
-
-6.4. :roleB Нәтиженің зияткерлік меншік нысандарына үшінші тұлғалардың құқықтарын бұзбайтынына кепілдік береді.",
-            ],
-            'termination' => [
-                'ru' => "7. СРОК ДЕЙСТВИЯ ДОГОВОРА
-
-7.1. Настоящий договор вступает в силу с :startDate и действует до :endDate.
-
-7.2. Настоящий договор может быть расторгнут:
-— по взаимному соглашению Сторон;
-— по инициативе одной из Сторон с письменным уведомлением другой Стороны не менее чем за 30 (тридцать) дней;
-— при существенном нарушении условий договора одной из Сторон.
-
-7.3. Существенным нарушением считается нарушение, которое влечёт для другой Стороны такой ущерб, что она в значительной степени лишается того, на что была вправе рассчитывать при заключении договора.
-
-7.4. Расторжение договора не освобождает Стороны от исполнения обязательств, возникших до даты его прекращения.",
-                'en' => "7. TERM OF THE AGREEMENT
-
-7.1. This Agreement enters into force on :startDate and is valid until :endDate.
-
-7.2. This Agreement may be terminated:
-— by mutual agreement of the Parties;
-— at the initiative of one of the Parties with written notice to the other Party at least 30 (thirty) days in advance;
-— in case of material breach of the terms of the Agreement by one of the Parties.
-
-7.3. A material breach is a breach that entails such damage to the other Party that it is largely deprived of what it was entitled to expect when concluding the Agreement.
-
-7.4. Termination of the Agreement does not release the Parties from fulfilling obligations that arose before the date of its termination.",
-                'kk' => "7. ШАРТТЫҢ ӘРЕКЕТ ЕТУ МЕРЗІМІ
-
-7.1. Осы шарт :startDate бастап күшіне енеді және :endDate дейін әрекет етеді.
-
-7.2. Осы шарт тоқтатылуы мүмкін:
-— Тараптардың өзара келісімі бойынша;
-— Тараптардың біреуінің бастамасымен екінші Тарапқа кемінде 30 (отыз) күн бұрын жазбаша хабарламамен;
-— Тараптардың біреуі шарт шарттарын елеулі түрде бұзған жағдайда.
-
-7.3. Елеулі бұзушылық деп екінші Тарапқа шарт жасасқан кезде күтуге құқылы болғанынан айтарлықтай айырылатындай зиян келтіретін бұзушылық саналады.
-
-7.4. Шартты бұзу Тараптарды оның тоқтатылу күніне дейін пайда болған міндеттемелерді орындаудан босатпайды.",
-            ],
-            'confidentiality' => [
-                'ru' => "8. КОНФИДЕНЦИАЛЬНОСТЬ
-
-8.1. Стороны обязуются не разглашать сведения и информацию, полученные в ходе исполнения настоящего договора, третьим лицам без предварительного письменного согласия другой Стороны.
-
-8.2. Конфиденциальной признаётся любая информация, переданная Сторонами в письменной, электронной либо иной форме, включая коммерческую, техническую, финансовую информацию.
-
-8.3. К конфиденциальной информации не относятся сведения:
-— ставшие общедоступными не по вине получающей Стороны;
-— правомерно полученные от третьих лиц без обязательства о неразглашении;
-— независимо разработанные получающей Стороной.
-
-8.4. Обязательства по соблюдению конфиденциальности сохраняют силу в течение 5 (пяти) лет после прекращения действия настоящего договора.",
-                'en' => "8. CONFIDENTIALITY
-
-8.1. The Parties undertake not to disclose information received during the performance of this Agreement to third parties without prior written consent of the other Party.
-
-8.2. Any information transmitted by the Parties in written, electronic or other form, including commercial, technical, financial information, is considered confidential.
-
-8.3. Confidential information does not include information:
-— that has become publicly available through no fault of the receiving Party;
-— lawfully obtained from third parties without an obligation of non-disclosure;
-— independently developed by the receiving Party.
-
-8.4. Confidentiality obligations remain in effect for 5 (five) years after the termination of this Agreement.",
-                'kk' => "8. ҚҰПИЯЛЫҚ
-
-8.1. Тараптар осы шартты орындау барысында алынған мәліметтер мен ақпаратты екінші Тараптың алдын ала жазбаша келісімінсіз үшінші тұлғаларға жарияламауға міндеттенеді.
-
-8.2. Тараптар арқылы жазбаша, электрондық немесе басқа нысанда берілген кез келген ақпарат, соның ішінде коммерциялық, техникалық, қаржылық ақпарат құпия болып саналады.
-
-8.3. Құпия ақпаратқа мыналар жатпайды:
-— алушы Тараптың кінәсінен емес жалпыға қол жетімді болған мәліметтер;
-— жарияламау міндеттемесінсіз үшінші тұлғалардан заңды түрде алынған;
-— алушы Тарап тәуелсіз әзірлеген.
-
-8.4. Құпиялылықты сақтау міндеттемелері осы шарттың әрекеті тоқтатылғаннан кейін 5 (бес) жыл бойы күшін сақтайды.",
-            ],
-            'disputes' => [
-                'ru' => "9. РАЗРЕШЕНИЕ СПОРОВ
-
-9.1. Все споры и разногласия, возникающие между Сторонами в связи с исполнением настоящего договора, подлежат урегулированию путём переговоров.
-
-9.2. Сторона, права которой нарушены, направляет другой Стороне письменную претензию с изложением существа нарушения и требований.
-
-9.3. Сторона, получившая претензию, обязана рассмотреть её и дать мотивированный ответ в течение 15 (пятнадцати) рабочих дней с даты получения.
-
-9.4. В случае невозможности достижения соглашения в претензионном порядке спор подлежит рассмотрению в судебном порядке в соответствии с :law.
-
-9.5. Стороны соглашаются, что подсудность споров определяется по месту нахождения ответчика.",
-                'en' => "9. DISPUTE RESOLUTION
-
-9.1. All disputes and disagreements arising between the Parties in connection with the performance of this Agreement shall be resolved through negotiations.
-
-9.2. The Party whose rights have been violated shall send a written claim to the other Party setting out the essence of the violation and the requirements.
-
-9.3. The Party that received the claim shall review it and provide a reasoned response within 15 (fifteen) business days from the date of receipt.
-
-9.4. If it is impossible to reach an agreement through the pre-trial procedure, the dispute shall be resolved in court in accordance with :law.
-
-9.5. The Parties agree that the jurisdiction of disputes is determined by the location of the defendant.",
-                'kk' => "9. ДАУЛАРДЫ ШЕШУ
-
-9.1. Осы шартты орындауға байланысты Тараптар арасында туындайтын барлық даулар мен келіспеушіліктер келіссөздер арқылы шешілуге жатады.
-
-9.2. Құқықтары бұзылған Тарап екінші Тарапқа бұзушылықтың мәні мен талаптарды баяндай отырып жазбаша шағым жібереді.
-
-9.3. Шағымды алған Тарап оны қарап, алған күннен бастап 15 (он бес) жұмыс күні ішінде дәлелді жауап беруге міндетті.
-
-9.4. Претензиялық тәртіппен келісімге қол жеткізу мүмкін болмаған жағдайда, дау :law сәйкес сот тәртібімен қаралуға жатады.
-
-9.5. Тараптар даулардың қараулылығы жауапкердің орналасқан жері бойынша анықталатынымен келіседі.",
-            ],
-            'force_majeure' => [
-                'ru' => "10. ФОРС-МАЖОР
-
-10.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств, если оно вызвано обстоятельствами непреодолимой силы (пожар, наводнение, землетрясение, военные действия, акты государственных органов и т.п.), возникшими после заключения договора.
-
-10.2. Сторона, не имеющая возможности исполнить обязательства, обязана уведомить другую Сторону в течение 3 (трёх) рабочих дней с момента наступления таких обстоятельств, указав их характер и предполагаемый срок действия.
-
-10.3. Подтверждением наличия форс-мажорных обстоятельств являются документы, выданные компетентными государственными органами.
-
-10.4. Если обстоятельства непреодолимой силы продолжаются более 30 (тридцати) дней, любая из Сторон вправе расторгнуть договор в одностороннем порядке без возмещения убытков.",
-                'en' => "10. FORCE MAJEURE
-
-10.1. The Parties shall be released from liability for partial or complete non-performance of obligations if it is caused by force majeure circumstances (fire, flood, earthquake, military actions, acts of state authorities, etc.) that arose after the conclusion of the Agreement.
-
-10.2. The Party unable to fulfill its obligations shall notify the other Party within 3 (three) business days from the occurrence of such circumstances, indicating their nature and estimated duration.
-
-10.3. Confirmation of the existence of force majeure circumstances are documents issued by competent state authorities.
-
-10.4. If force majeure circumstances continue for more than 30 (thirty) days, any of the Parties has the right to terminate the Agreement unilaterally without compensation for damages.",
-                'kk' => "10. ФОРС-МАЖОР
-
-10.1. Тараптар шарт жасалғаннан кейін пайда болған жеңілмейтін күш жағдайлары (өрт, су тасқыны, жер сілкінісі, әскери әрекеттер, мемлекеттік органдардың актілері және т.б.) салдарынан міндеттемелерді ішінара немесе толық орындамағаны үшін жауапкершіліктен босатылады.
-
-10.2. Міндеттемелерді орындау мүмкіндігі жоқ Тарап мұндай жағдайлар туындаған сәттен бастап 3 (үш) жұмыс күні ішінде екінші Тарапқа олардың сипаты мен болжамды әрекет ету мерзімін көрсете отырып хабарлауға міндетті.
-
-10.3. Форс-мажор жағдайларының бар екенін растау құзыретті мемлекеттік органдар берген құжаттар болып табылады.
-
-10.4. Егер жеңілмейтін күш жағдайлары 30 (отыз) күннен астам уақыт бойы жалғасса, кез келген Тарап шартты зиянды өтемей біржақты тәртіппен бұзуға құқылы.",
-            ],
-            'notices' => [
-                'ru' => "11. УВЕДОМЛЕНИЯ И СВЯЗЬ
-
-11.1. Все уведомления, требования и документы по договору направляются в письменной форме:
-— курьером с подтверждением вручения;
-— заказным письмом с уведомлением о вручении;
-— по электронной почте с подтверждением получения.
-
-11.2. Уведомление считается полученным:
-— при личной передаче — в день вручения под роспись;
-— при отправке почтой — на 10-й день после отправки;
-— по электронной почте — в день отправки при наличии подтверждения прочтения.
-
-11.3. Стороны обязаны незамедлительно уведомлять друг друга об изменении реквизитов, указанных в разделе 13 настоящего договора.
-
-11.4. Уведомления направляются по адресам, указанным в разделе 13 настоящего договора.",
-                'en' => "11. NOTICES AND COMMUNICATION
-
-11.1. All notices, demands and documents under the Agreement shall be sent in writing:
-— by courier with confirmation of delivery;
-— by registered mail with acknowledgment of receipt;
-— by e-mail with confirmation of receipt.
-
-11.2. The notice is considered received:
-— upon personal delivery — on the day of delivery against signature;
-— when sent by mail — on the 10th day after sending;
-— by e-mail — on the day of sending, provided there is confirmation of reading.
-
-11.3. The Parties are obliged to immediately notify each other of any changes in the details specified in Section 13 of this Agreement.
-
-11.4. Notices shall be sent to the addresses specified in Section 13 of this Agreement.",
-                'kk' => "11. ХАБАРЛАМАЛАР ЖӘНЕ БАЙЛАНЫС
-
-11.1. Шарт бойынша барлық хабарламалар, талаптар мен құжаттар жазбаша түрде жіберіледі:
-— тапсырылғанын растаумен курьер арқылы;
-— тапсырылғаны туралы хабарламамен тапсырыс хатпен;
-— алынғанын растаумен электрондық пошта арқылы.
-
-11.2. Хабарлама алынды деп саналады:
-— жеке тапсыру кезінде — қолхатпен тапсырылған күні;
-— поштамен жібергенде — жіберілгеннен кейін 10-шы күні;
-— электрондық пошта арқылы — оқылғанын растау болған жағдайда жіберілген күні.
-
-11.3. Тараптар осы шарттың 13-бөлімінде көрсетілген реквизиттердің өзгеруі туралы бір-бірін дереу хабардар етуге міндетті.
-
-11.4. Хабарламалар осы шарттың 13-бөлімінде көрсетілген мекенжайларға жіберіледі.",
-            ],
-            'specialTerms' => [
-                'ru' => "12. ОСОБЫЕ УСЛОВИЯ
-
-12.1. :terms
-
-12.2. Стороны признают, что настоящее соглашение содержит все договорённости между ними по предмету договора.",
-                'en' => "12. SPECIAL TERMS
-
-12.1. :terms
-
-12.2. The Parties acknowledge that this Agreement contains all agreements between them on the subject matter of the Agreement.",
-                'kk' => "12. АРНАЙЫ ШАРТТАР
-
-12.1. :terms
-
-12.2. Тараптар осы келісімде шарттың мәні бойынша олардың арасындағы барлық келісімдер бар екенін мойындайды.",
-            ],
-            'entire_agreement' => [
-                'ru' => "13. ЗАКЛЮЧИТЕЛЬНЫЕ ПОЛОЖЕНИЯ
-
-13.1. Настоящий договор содержит всё соглашение Сторон и отменяет все предыдущие устные и письменные договорённости по предмету договора.
-
-13.2. Любые изменения и дополнения к настоящему договору действительны только в письменной форме, подписанной уполномоченными представителями обеих Сторон.
-
-13.3. Если любое положение договора будет признано недействительным или неисполнимым, это не влияет на силу остальных положений, которые остаются в полной силе.
-
-13.4. Во всём остальном, что не урегулировано настоящим договором, Стороны руководствуются :law.
-
-13.5. Договор составлен в двух экземплярах, имеющих равную юридическую силу, по одному для каждой из Сторон.
-
-13.6. Все приложения и дополнительные соглашения к настоящему договору являются его неотъемлемой частью.",
-                'en' => "13. FINAL PROVISIONS
-
-13.1. This Agreement contains the entire agreement of the Parties and cancels all previous oral and written agreements on the subject matter of the Agreement.
-
-13.2. Any amendments and additions to this Agreement are valid only in writing, signed by authorized representatives of both Parties.
-
-13.3. If any provision of the Agreement is found to be invalid or unenforceable, this does not affect the validity of the remaining provisions, which remain in full force.
-
-13.4. In all other matters not regulated by this Agreement, the Parties shall be guided by :law.
-
-13.5. The Agreement is drawn up in two copies having equal legal force, one for each of the Parties.
-
-13.6. All appendices and additional agreements to this Agreement are an integral part thereof.",
-                'kk' => "13. ҚОРЫТЫНДЫ ЕРЕЖЕЛЕР
-
-13.1. Осы шарт Тараптардың барлық келісімін қамтиды және шарттың мәні бойынша барлық бұрынғы ауызша және жазбаша келісімдердің күшін жояды.
-
-13.2. Осы шартқа кез келген өзгерістер мен толықтырулар екі Тараптың уәкілетті өкілдері қол қойған жазбаша нысанда ғана жарамды.
-
-13.3. Егер шарттың кез келген ережесі жарамсыз немесе орындалмайтын деп танылса, бұл толық күшінде қалатын қалған ережелердің күшіне әсер етпейді.
-
-13.4. Осы шартпен реттелмеген барлық басқа мәселелер бойынша Тараптар :law басшылыққа алады.
-
-13.5. Шарт заңды күші тең екі данада жасалған, әр Тарап үшін бір данадан.
-
-13.6. Осы шартқа барлық қосымшалар мен қосымша келісімдер оның ажырамас бөлігі болып табылады.",
-            ],
-            'signatures' => [
-                'ru' => "14. АДРЕСА, РЕКВИЗИТЫ И ПОДПИСИ СТОРОН
-
-:roleA:
-:customer
-
-Юридический адрес: ____________________
-Почтовый адрес: ____________________
-ИНН/БИН: ____________________
-Расчётный счёт: ____________________
-Банк: ____________________
-БИК/МФО: ____________________
-
-____________________ / ____________________ /
-(подпись) (Ф.И.О.)
-
-М.П.
-
-:roleB:
-:contractor
-
-Юридический адрес: ____________________
-Почтовый адрес: ____________________
-ИНН/БИН: ____________________
-Расчётный счёт: ____________________
-Банк: ____________________
-БИК/МФО: ____________________
-
-____________________ / ____________________ /
-(подпись) (Ф.И.О.)
-
-М.П.",
-                'en' => "14. ADDRESSES, DETAILS AND SIGNATURES OF THE PARTIES
-
-:roleA:
-:customer
-
-Legal address: ____________________
-Mailing address: ____________________
-Tax ID: ____________________
-Bank account: ____________________
-Bank: ____________________
-SWIFT: ____________________
-
-____________________ / ____________________ /
-(signature) (Full name)
-
-Seal
-
-:roleB:
-:contractor
-
-Legal address: ____________________
-Mailing address: ____________________
-Tax ID: ____________________
-Bank account: ____________________
-Bank: ____________________
-SWIFT: ____________________
-
-____________________ / ____________________ /
-(signature) (Full name)
-
-Seal",
-                'kk' => "14. МЕКЕНЖАЙЛАР, РЕКВИЗИТТЕР ЖӘНЕ ТАРАПТАРДЫҢ ҚОЛДАРЫ
-
-:roleA:
-:customer
-
-Заңды мекенжайы: ____________________
-Пошта мекенжайы: ____________________
-Салық нөмірі: ____________________
-Есеп шоты: ____________________
-Банк: ____________________
-БИК/МФО: ____________________
-
-____________________ / ____________________ /
-(қолы) (Т.А.Ә.)
-
-М.О.
-
-:roleB:
-:contractor
-
-Заңды мекенжайы: ____________________
-Пошта мекенжайы: ____________________
-Салық нөмірі: ____________________
-Есеп шоты: ____________________
-Банк: ____________________
-БИК/МФО: ____________________
-
-____________________ / ____________________ /
-(қолы) (Т.А.Ә.)
-
-М.О.",
-            ],
-        ],
-        'timeline' => [
-            'template' => 'Шаблон: :value',
-            'parties' => 'Стороны: :value',
-            'term' => 'Срок действия: :value',
-            'sections' => 'Разделы: :value',
-        ],
-    ];
+    $builderTranslations = __('builder');
 @endphp
 
 <div class="toast-container" id="toastContainer"></div>
@@ -1411,7 +741,7 @@ ____________________ / ____________________ /
             <div class="stepper-dot bg-indigo-500 text-white" id="step1">1</div>
             <div class="hidden sm:block">
                 <div class="text-sm font-semibold">{{ __('ui.dashboard_choose_template') }}</div>
-                <div class="text-xs text-neutral-500 dark:text-neutral-400">Тип договора</div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">{{ __('builder.ui.stepContractType') }}</div>
             </div>
         </div>
         <div class="stepper-line" id="line1"></div>
@@ -1419,7 +749,7 @@ ____________________ / ____________________ /
             <div class="stepper-dot bg-black/5 dark:bg-white/10 text-neutral-500" id="step2">2</div>
             <div class="hidden sm:block">
                 <div class="text-sm font-semibold">{{ __('ui.dashboard_fill_params') }}</div>
-                <div class="text-xs text-neutral-500 dark:text-neutral-400">Параметры</div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">{{ __('builder.ui.stepParams') }}</div>
             </div>
         </div>
         <div class="stepper-line" id="line2"></div>
@@ -1427,12 +757,12 @@ ____________________ / ____________________ /
             <div class="stepper-dot bg-black/5 dark:bg-white/10 text-neutral-500" id="step3">3</div>
             <div class="hidden sm:block">
                 <div class="text-sm font-semibold">{{ __('ui.dashboard_enable_sections') }}</div>
-                <div class="text-xs text-neutral-500 dark:text-neutral-400">Разделы</div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">{{ __('builder.ui.stepSections') }}</div>
             </div>
         </div>
         <div class="ml-auto flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-            <span class="hidden sm:inline">Автосохранение</span>
+            <span class="hidden sm:inline">{{ __('builder.ui.autosave') }}</span>
             <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse-slow"></span>
         </div>
     </div>
@@ -1444,7 +774,7 @@ ____________________ / ____________________ /
                     <div>
                         <div class="inline-flex items-center gap-2 px-2.5 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-semibold mb-3">
                             <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                            ШАГ 1
+                            {{ __('builder.ui.step1') }}
                         </div>
                         <h2 class="text-xl lg:text-2xl font-bold mb-1 tracking-tight">{{ __('ui.dashboard_choose_template') }}</h2>
                         <p class="text-sm text-neutral-600 dark:text-neutral-400">{{ __('ui.dashboard_choose_template_text') }}</p>
@@ -1476,14 +806,14 @@ ____________________ / ____________________ /
                     <div>
                         <div class="inline-flex items-center gap-2 px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full text-xs font-semibold mb-3">
                             <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-                            ШАГ 2
+                            {{ __('builder.ui.step2') }}
                         </div>
                         <h2 class="text-xl lg:text-2xl font-bold mb-1 tracking-tight">{{ __('ui.dashboard_fill_params') }}</h2>
                         <p class="text-sm text-neutral-600 dark:text-neutral-400">{{ __('ui.dashboard_fill_params_text') }}</p>
                     </div>
                     <button type="button" id="resetFormBtn" class="text-xs text-neutral-500 hover:text-red-500 transition flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        Сбросить
+                        {{ __('builder.ui.reset') }}
                     </button>
                 </div>
 
@@ -1492,14 +822,14 @@ ____________________ / ____________________ /
                         <label>{{ __('ui.contract_number') }}</label>
                         <div class="relative">
                             <svg class="input-icon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
-                            <input id="contractNumber" type="text" value="LA-042/26" placeholder="Например: LA-001/26">
+                            <input id="contractNumber" type="text" value="LA-042/26" placeholder="{{ __('builder.ui.numberPlaceholder') }}">
                         </div>
                     </div>
                     <div class="input-premium">
                         <label>{{ __('ui.city_of_signing') }}</label>
                         <div class="relative">
                             <svg class="input-icon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <input id="contractCity" type="text" value="Алматы">
+                            <input id="contractCity" type="text" value="{{ __('builder.ui.defaultCity') }}">
                         </div>
                     </div>
                     <div class="input-premium">
@@ -1555,7 +885,7 @@ ____________________ / ____________________ /
                         <label>{{ __('ui.governing_law') }}</label>
                         <div class="relative">
                             <svg class="input-icon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-                            <input id="governingLaw" type="text" value="Право Республики Казахстан">
+                            <input id="governingLaw" type="text" value="{{ __('builder.ui.defaultLaw') }}">
                         </div>
                     </div>
                     <div class="input-premium md:col-span-2">
@@ -1569,7 +899,7 @@ ____________________ / ____________________ /
                         <label>{{ __('ui.special_terms') }}</label>
                         <div class="relative">
                             <svg class="input-icon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            <textarea id="specialTerms" rows="3" style="padding-top: 0.875rem;">Исполнитель предоставляет ежемесячный отчёт о выполненных работах и фиксирует замечания заказчика в течение 2 рабочих дней.</textarea>
+                            <textarea id="specialTerms" rows="3" style="padding-top: 0.875rem;">{{ __('builder.ui.defaultSpecialTermsValue') }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -1580,13 +910,13 @@ ____________________ / ____________________ /
                     <div>
                         <div class="inline-flex items-center gap-2 px-2.5 py-1 bg-pink-500/10 text-pink-600 dark:text-pink-400 rounded-full text-xs font-semibold mb-3">
                             <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
-                            ШАГ 3
+                            {{ __('builder.ui.step3') }}
                         </div>
                         <h2 class="text-xl lg:text-2xl font-bold mb-1 tracking-tight">{{ __('ui.dashboard_enable_sections') }}</h2>
                         <p class="text-sm text-neutral-600 dark:text-neutral-400">{{ __('ui.dashboard_enable_sections_text') }}</p>
                     </div>
                     <div class="text-xs text-neutral-500 dark:text-neutral-400 bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-lg">
-                        Выбрано: <span id="sectionsCounter" class="font-bold text-indigo-600 dark:text-indigo-400">4</span>
+                        {{ __('builder.ui.selectedLabel') }} <span id="sectionsCounter" class="font-bold text-indigo-600 dark:text-indigo-400">4</span>
                     </div>
                 </div>
 
@@ -1661,11 +991,11 @@ ____________________ / ____________________ /
                         </div>
                     </div>
                     <div class="ml-auto flex items-center gap-1">
-                        <button type="button" class="toolbar-btn" id="fontSmaller" title="Уменьшить шрифт">
+                        <button type="button" class="toolbar-btn" id="fontSmaller" title="{{ __('builder.ui.fontSmaller') }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"/></svg>
                         </button>
                         <span class="text-xs font-mono text-neutral-600 dark:text-neutral-400 px-1" id="fontSizeLabel">13</span>
-                        <button type="button" class="toolbar-btn" id="fontBigger" title="Увеличить шрифт">
+                        <button type="button" class="toolbar-btn" id="fontBigger" title="{{ __('builder.ui.fontBigger') }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                         </button>
                     </div>
@@ -1750,7 +1080,7 @@ ____________________ / ____________________ /
 
     document.getElementById('notificationsButton')?.addEventListener('click', (e) => {
         e.stopPropagation();
-        showToast('Уведомления: 3 новых события', 'info');
+        showToast(translations.ui?.notificationsToast, 'info');
     });
 
     let languageSwitcherOpen = false;
@@ -1833,7 +1163,7 @@ ____________________ / ____________________ /
     }
 
     function resetForm() {
-        if (!confirm('Сбросить все данные формы?')) return;
+        if (!confirm(translations.ui?.confirmReset)) return;
         localStorage.removeItem(STORAGE_KEY);
         location.reload();
     }
@@ -1857,16 +1187,16 @@ ____________________ / ____________________ /
     }
 
     function formatDate(v) {
-        if (!v) return translations.ui?.notSpecified || 'Не указано';
+        if (!v) return translations.ui?.notSpecified || '';
         try { return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'ru-RU').format(new Date(v)); }
-        catch { return translations.ui?.notSpecified || 'Не указано'; }
+        catch { return translations.ui?.notSpecified || ''; }
     }
 
     function buildSectionText(template, sections, values) {
         const blocks = [];
         const lang = locale || 'ru';
         const d = translations.draft || {};
-        const get = (key) => d[key]?.[lang] || d[key]?.ru || '';
+        const get = (key) => d[key] || '';
 
         if (sections.includes('definitions')) blocks.push(get('definitions'));
         if (sections.includes('scope')) blocks.push(replaceTokens(get('scope'), { roleB: template.roleB, subject: values.subject, roleA: template.roleA }));
@@ -1890,23 +1220,23 @@ ____________________ / ____________________ /
         if (!template) return '';
         const ui = translations.ui || {};
         const values = {
-            number: fields.contractNumber?.value.trim() || ui.withoutNumber || 'Без номера',
-            city: fields.contractCity?.value.trim() || ui.notSpecified || 'Не указано',
+            number: fields.contractNumber?.value.trim() || ui.withoutNumber || '',
+            city: fields.contractCity?.value.trim() || ui.notSpecified || '',
             startDate: fields.startDate?.value,
             endDate: fields.endDate?.value,
-            customerName: fields.customerName?.value.trim() || ui.party1 || 'Сторона 1',
-            contractorName: fields.contractorName?.value.trim() || ui.party2 || 'Сторона 2',
+            customerName: fields.customerName?.value.trim() || ui.party1 || '',
+            contractorName: fields.contractorName?.value.trim() || ui.party2 || '',
             subject: fields.contractSubject?.value.trim() || template.defaultSubject,
             amount: fields.contractAmount?.value,
             paymentDays: fields.paymentDays?.value || '5',
-            governingLaw: fields.governingLaw?.value.trim() || ui.applicableLaw || 'действующим законодательством',
+            governingLaw: fields.governingLaw?.value.trim() || ui.applicableLaw || '',
             penaltyRule: fields.penaltyRule?.value.trim() || ui.defaultPenaltyRule,
             specialTerms: fields.specialTerms?.value.trim() || ui.defaultSpecialTerms
         };
 
         const d = translations.draft || {};
-        const headerText = d.header?.[locale] || d.header?.ru || '';
-        const header = `${template.label}\n№ ${values.number}\nг. ${values.city}\n${formatDate(values.startDate)}\n\n${replaceTokens(headerText, { customer: values.customerName, roleA: template.roleA, contractor: values.contractorName, roleB: template.roleB })}`;
+        const headerText = d.header || '';
+        const header = `${template.label}\n№ ${values.number}\n${ui.cityPrefix || ''} ${values.city}\n${formatDate(values.startDate)}\n\n${replaceTokens(headerText, { customer: values.customerName, roleA: template.roleA, contractor: values.contractorName, roleB: template.roleB })}`;
         return `${header}\n\n${buildSectionText(template, getSelectedSections(), values)}`;
     }
 
@@ -1926,10 +1256,10 @@ ____________________ / ____________________ /
         if (!template) return;
         const t = translations.timeline || {};
         const items = [
-            replaceTokens(t.template || 'Шаблон: :value', { value: template.label }),
-            replaceTokens(t.parties || 'Стороны: :value', { value: `${fields.customerName?.value.trim() || '—'} / ${fields.contractorName?.value.trim() || '—'}` }),
-            replaceTokens(t.term || 'Срок: :value', { value: `${formatDate(fields.startDate?.value)} - ${formatDate(fields.endDate?.value)}` }),
-            replaceTokens(t.sections || 'Разделы: :value', { value: selected.map(s => sectionConfig[s]?.label).join(', ') || '—' })
+            replaceTokens(t.template || ':value', { value: template.label }),
+            replaceTokens(t.parties || ':value', { value: `${fields.customerName?.value.trim() || '—'} / ${fields.contractorName?.value.trim() || '—'}` }),
+            replaceTokens(t.term || ':value', { value: `${formatDate(fields.startDate?.value)} - ${formatDate(fields.endDate?.value)}` }),
+            replaceTokens(t.sections || ':value', { value: selected.map(s => sectionConfig[s]?.label).join(', ') || '—' })
         ];
         const tl = document.getElementById('timeline');
         tl.innerHTML = '';
@@ -2033,7 +1363,7 @@ ____________________ / ____________________ /
     document.getElementById('copyContractButton')?.addEventListener('click', async () => {
         if (!navigator.clipboard) return;
         await navigator.clipboard.writeText(previewElement.textContent);
-        showToast('Текст скопирован в буфер обмена', 'success');
+        showToast(translations.ui?.copiedToast, 'success');
     });
 
     document.getElementById('downloadTxtButton')?.addEventListener('click', () => {
@@ -2044,7 +1374,7 @@ ____________________ / ____________________ /
         a.download = `contract-${fields.contractNumber?.value || 'draft'}.txt`;
         a.click();
         URL.revokeObjectURL(url);
-        showToast('TXT документ успешно скачан', 'success');
+        showToast(translations.ui?.txtDownloaded, 'success');
         document.getElementById('downloadDropdown').classList.add('hidden');
     });
 
@@ -2057,21 +1387,21 @@ ____________________ / ____________________ /
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             }).from(previewElement).save();
-            showToast('PDF документ успешно скачан', 'success');
+            showToast(translations.ui?.pdfDownloaded, 'success');
         } catch (err) {
             console.error(err);
-            showToast('Ошибка при создании PDF', 'error');
+            showToast(translations.ui?.pdfError, 'error');
         }
         document.getElementById('downloadDropdown').classList.add('hidden');
     });
 
     document.getElementById('downloadDocxButton')?.addEventListener('click', async () => {
         try {
-            if (typeof docx === 'undefined' && typeof window.docx === 'undefined') throw new Error('Библиотека docx не загружена');
+            if (typeof docx === 'undefined' && typeof window.docx === 'undefined') throw new Error(translations.ui?.docxLibMissing);
             const DocxLib = window.docx || docx;
             const { Document, Packer, Paragraph } = DocxLib;
             const text = previewElement.textContent || '';
-            if (!text.trim()) throw new Error('Нет текста');
+            if (!text.trim()) throw new Error(translations.ui?.noText);
 
             const lines = text.split('\n');
             const children = lines.map(line => {
@@ -2086,13 +1416,13 @@ ____________________ / ____________________ /
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `contract-${(fields.contractNumber?.value || 'draft').replace(/[^а-яА-ЯёЁa-zA-Z0-9-_]/g, '')}.docx`;
+            a.download = `contract-${(fields.contractNumber?.value || 'draft').replace(/[^а-яА-ЯёЁҷҶҳҲӣӢқҚғҒӯӮa-zA-Z0-9-_]/g, '')}.docx`;
             a.click();
             setTimeout(() => URL.revokeObjectURL(url), 100);
-            showToast('DOCX документ успешно скачан', 'success');
+            showToast(translations.ui?.docxDownloaded, 'success');
         } catch (err) {
             console.error(err);
-            showToast('Ошибка создания DOCX: ' + err.message, 'error');
+            showToast((translations.ui?.docxErrorPrefix || '') + err.message, 'error');
         }
         document.getElementById('downloadDropdown').classList.add('hidden');
     });

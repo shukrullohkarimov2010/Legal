@@ -733,4 +733,9 @@ return [
       'face_permission_yes' => 'Enable face verification',
       'face_permission_no' => 'Skip for now',
       'face_permission_privacy' => 'Your camera data is processed only on your device. No images are saved on servers.',
-  ];
+      'profile' => 'Profile',
+    'my_documents' => 'My documents',
+    'logout' => 'Log out',
+    'service_default_subject' => 'Provision of consulting services',
+    'password_reset_sent' => 'A password reset link has been sent to your email.',
+];

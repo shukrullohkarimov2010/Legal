@@ -28,6 +28,9 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import legal_rag  # noqa: E402  — движок поиска по кодексам РТ
+
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -66,8 +69,8 @@ RAG_INDEX_FILE = (
     _rag_index_env if _rag_index_env and os.path.isabs(_rag_index_env)
     else os.path.join(PROJECT_ROOT, _rag_index_env or os.path.join("storage", "app", "rag", "1918_ru_1.index.json"))
 )
-RAG_CHUNK_SIZE = int(os.environ.get("RAG_CHUNK_SIZE", "1800"))
-RAG_CHUNK_OVERLAP = int(os.environ.get("RAG_CHUNK_OVERLAP", "200"))
+# Нарезка больше не идёт по числу символов: фрагмент — это статья кодекса.
+# Порог деления длинной статьи задаётся в legal_rag.MAX_ARTICLE_CHARS.
 CHAT_RAG_SOURCE_NAMES = [
     CONTRACT_RAG_SOURCE_NAME,
     "574_ru.doc",
@@ -109,6 +112,9 @@ rag_lock = threading.Lock()
 rag_articles_cache = None
 rag_citations_cache = None
 multi_rag_citations_cache = {}
+rag_embeddings = None
+chat_rag_embeddings = None
+embedding_provider = legal_rag.EmbeddingProvider()
 ollama_cache = None
 ollama_cache_lock = threading.Lock()
 
@@ -511,15 +517,57 @@ def extract_text_from_doc(path):
     except Exception as e:
         raise Exception(f"Ошибка чтения DOC: {str(e)}")
 
+def _cyrillic_ratio(text):
+    """Доля кириллицы среди букв. Ноль означает потерю кодировки."""
+    letters = [ch for ch in (text or "") if ch.isalpha()]
+    if not letters:
+        return 0.0
+    cyrillic = sum(1 for ch in letters if "Ѐ" <= ch <= "ӿ")
+    return cyrillic / len(letters)
+
+
+def _doc_text_looks_valid(text, min_cyrillic=0.30):
+    """Отбраковывает извлечение, потерявшее русский текст.
+
+    antiword без карты кодировки отдаёт кириллицу как «?»: формально
+    успешный вызов возвращает 500 КБ мусора. Молча проиндексировать такой
+    результат хуже, чем не проиндексировать вовсе, — поэтому проверяем.
+    """
+    if not text or not text.strip():
+        return False
+    if text.count("?") > max(len(text) * 0.02, 200):
+        return False
+    return _cyrillic_ratio(text) >= min_cyrillic
+
+
 def _extract_text_from_doc_command(path):
-    for cmd in ["antiword", "catdoc"]:
-        if shutil.which(cmd):
-            try:
-                proc = subprocess.run([cmd, path], capture_output=True, text=True, timeout=60)
-                if proc.returncode == 0 and proc.stdout.strip():
-                    return proc.stdout.strip()
-            except Exception as e:
-                print(f"  ⚠️ Ошибка вызова {cmd}: {e}")
+    """Пробует внешние конвертеры, отбраковывая испорченную кодировку.
+
+    Вывод читается байтами и декодируется явно: на Windows text=True берёт
+    кодировку из локали (cp1251) и падает на первом же неизвестном байте.
+    """
+    attempts = [
+        (["antiword", "-m", "cp1251.txt", path], ("cp1251", "utf-8")),
+        (["antiword", "-m", "UTF-8.txt", path], ("utf-8", "cp1251")),
+        (["catdoc", "-d", "utf-8", path], ("utf-8", "cp1251")),
+        (["antiword", path], ("cp1251", "utf-8")),
+        (["catdoc", path], ("cp1251", "utf-8")),
+    ]
+    for argv, encodings in attempts:
+        if not shutil.which(argv[0]):
+            continue
+        try:
+            proc = subprocess.run(argv, capture_output=True, timeout=60)
+            if proc.returncode != 0:
+                continue
+            raw = proc.stdout or b""
+            for encoding in encodings:
+                output = raw.decode(encoding, errors="replace")
+                if _doc_text_looks_valid(output):
+                    return output.strip()
+            print(f"  ⚠️ {' '.join(argv[:3])}: кириллица потеряна, пробуем следующий способ")
+        except Exception as e:
+            print(f"  ⚠️ Ошибка вызова {argv[0]}: {e}")
     return ""
 
 def _extract_text_from_doc_unicode(path):
@@ -654,7 +702,8 @@ def split_text_smart(text, size, overlap):
 
 # ================= RAG =================
 def tokenize_for_rag(text):
-    return re.findall(r"[0-9A-Za-zА-Яа-яЁёІіҶҷҚқҒғӢӣӮӯҲҳ]+", (text or "").lower())
+    """Нормализованные токены: стемминг + отсев служебных слов."""
+    return legal_rag.tokenize(text)
 
 def discover_rag_source(source_hint=None):
     global _current_rag_source
@@ -720,44 +769,26 @@ def extract_text_for_rag(path):
         return extract_text_from_txt(path)
     raise Exception(f"Unsupported RAG source format: {ext}")
 
-def guess_chunk_title(chunk, idx):
-    lines = [line.strip() for line in chunk.splitlines() if line.strip()]
-    for line in lines[:8]:
-        if len(line) <= 180:
-            return line
-    return f"Fragment {idx + 1}"
-
 def build_rag_chunks(text, source_name=None):
-    raw_chunks = split_text_smart(text, RAG_CHUNK_SIZE, RAG_CHUNK_OVERLAP)
-    chunks = []
-    for idx, chunk in enumerate(raw_chunks):
-        tokens = tokenize_for_rag(chunk)
-        if len(tokens) < 10:
-            continue
-        rag_chunk = {
-            "id": idx + 1,
-            "title": guess_chunk_title(chunk, idx),
-            "text": chunk,
-            "tokens": tokens,
-            "token_count": len(tokens),
-        }
-        if source_name:
-            rag_chunk["source"] = source_name
-        chunks.append(rag_chunk)
+    """Разбивает кодекс по границам статей, а не по смещению в символах.
+
+    Каждый фрагмент несёт кодекс, главу и номер статьи, поэтому ссылка на
+    норму берётся из метаданных и не может «съехать» при цитировании.
+    """
+    source = source_name or os.path.basename(discover_rag_source() or CONTRACT_RAG_SOURCE_NAME)
+    code_label = RAG_CODE_LABELS.get(source, RAG_CODE_NAME)
+    chunks = legal_rag.build_article_chunks(text, source, code_label)
+    if not chunks:
+        raise RuntimeError(f"RAG: в источнике {source} не найдено ни одной статьи")
     return chunks
 
 def hydrate_rag_index(index):
     chunks = index.get("chunks", [])
     doc_count = max(len(chunks), 1)
-    df = Counter()
-    for chunk in chunks:
-        df.update(set(chunk.get("tokens", [])))
-    index["idf"] = {
-        term: math.log(1 + (doc_count - freq + 0.5) / (freq + 0.5))
-        for term, freq in df.items()
-    }
+    stats = legal_rag.build_stats(chunks)
+    index["idf"] = stats["idf"]
     index["avgdl"] = (
-        sum(chunk.get("token_count", 0) for chunk in chunks) / doc_count
+        stats["avgdl"]
         if chunks else 1
     )
     index["ready"] = bool(chunks)
@@ -794,10 +825,10 @@ def load_rag_index(force=False):
                 if (
                     cached.get("source_path") == source_path
                     and cached.get("source_mtime") == source_mtime
-                    and cached.get("chunk_size") == RAG_CHUNK_SIZE
-                    and cached.get("chunk_overlap") == RAG_CHUNK_OVERLAP
+                    and cached.get("index_version") == legal_rag.INDEX_VERSION
                 ):
                     rag_index = hydrate_rag_index(cached)
+                    rag_index["embeddings"] = legal_rag.load_embeddings(index_file)
                     return rag_index
             except Exception as e:
                 print(f"RAG cache load error: {e}")
@@ -809,11 +840,11 @@ def load_rag_index(force=False):
             "source_name": os.path.basename(source_path),
             "source_mtime": source_mtime,
             "built_at": time.time(),
-            "chunk_size": RAG_CHUNK_SIZE,
-            "chunk_overlap": RAG_CHUNK_OVERLAP,
+            "index_version": legal_rag.INDEX_VERSION,
             "chunks": chunks,
         }
         rag_index = hydrate_rag_index(index)
+        rag_index["embeddings"] = legal_rag.load_embeddings(index_file)
 
         try:
             cacheable = dict(index)
@@ -853,10 +884,10 @@ def load_chat_rag_index(force=False):
                     cached = json.load(file)
                 if (
                     cached.get("sources") == sources
-                    and cached.get("chunk_size") == RAG_CHUNK_SIZE
-                    and cached.get("chunk_overlap") == RAG_CHUNK_OVERLAP
+                    and cached.get("index_version") == legal_rag.INDEX_VERSION
                 ):
                     chat_rag_index = hydrate_rag_index(cached)
+                    chat_rag_index["embeddings"] = legal_rag.load_embeddings(CHAT_RAG_INDEX_FILE)
                     return chat_rag_index
             except Exception as error:
                 print(f"Chat RAG cache load error: {error}")
@@ -864,10 +895,9 @@ def load_chat_rag_index(force=False):
         chunks = []
         for source in sources:
             try:
-                document_chunks = build_rag_chunks(extract_text_for_rag(source["path"]), source["name"])
-                for index, chunk in enumerate(document_chunks, 1):
-                    chunk["id"] = f"{source['name']}:{index}"
-                chunks.extend(document_chunks)
+                # id формируется нарезчиком как «источник:статья:часть» —
+                # перенумеровывать его нельзя, иначе потеряется адресация.
+                chunks.extend(build_rag_chunks(extract_text_for_rag(source["path"]), source["name"]))
             except Exception as error:
                 print(f"Chat RAG source skipped ({source['name']}): {error}")
 
@@ -875,11 +905,11 @@ def load_chat_rag_index(force=False):
             "source_name": "Законы Республики Таджикистан",
             "sources": sources,
             "built_at": time.time(),
-            "chunk_size": RAG_CHUNK_SIZE,
-            "chunk_overlap": RAG_CHUNK_OVERLAP,
+            "index_version": legal_rag.INDEX_VERSION,
             "chunks": chunks,
         }
         chat_rag_index = hydrate_rag_index(index)
+        chat_rag_index["embeddings"] = legal_rag.load_embeddings(CHAT_RAG_INDEX_FILE)
         try:
             cacheable = dict(index)
             with open(CHAT_RAG_INDEX_FILE, "w", encoding="utf-8") as file:
@@ -892,14 +922,22 @@ def rag_status_payload():
     index = load_rag_index(force=False)
     rag_dir = os.path.dirname(RAG_SOURCE_PATH)
     chat_sources = [name for name in CHAT_RAG_SOURCE_NAMES if os.path.isfile(os.path.join(rag_dir, name))]
+    chunks = index.get("chunks", [])
     return {
         "ready": bool(index.get("ready")),
         "source": index.get("source_name"),
         "source_path": index.get("source_path") or index.get("expected_path"),
-        "chunks": len(index.get("chunks", [])),
+        "chunks": len(chunks),
+        "articles": len({chunk.get("article") for chunk in chunks if chunk.get("article")}),
+        "index_version": index.get("index_version"),
         "built_at": index.get("built_at"),
         "error": index.get("error"),
         "chat_sources": chat_sources,
+        "embeddings": {
+            "enabled": bool(index.get("embeddings")),
+            "model": legal_rag.EMBED_MODEL,
+            "reason": embedding_provider.reason or None,
+        },
     }
 
 def _shorten_text(text, limit=260):
@@ -1081,68 +1119,53 @@ def extract_rag_articles(article_numbers, source_name=None):
             })
     return articles
 def retrieve_rag(query, top_k=None, index=None):
+    """Гибридный поиск: BM25 по статье и названию + опциональные эмбеддинги."""
     index = index or load_rag_index(force=False)
     if not index.get("ready"):
         return []
-    query_tokens = tokenize_for_rag(query)
-    if not query_tokens:
-        return []
-    q_terms = Counter(query_tokens)
-    idf = index.get("idf", {})
-    avgdl = max(float(index.get("avgdl", 1)), 1.0)
-    k1 = 1.5
-    b = 0.75
-    results = []
-    for chunk in index.get("chunks", []):
-        tokens = chunk.get("tokens", [])
-        if not tokens:
-            continue
-        tf = Counter(tokens)
-        dl = max(chunk.get("token_count", len(tokens)), 1)
-        score = 0.0
-        for term, q_count in q_terms.items():
-            if term not in tf:
-                continue
-            term_idf = idf.get(term, 0.1)
-            freq = tf[term]
-            denom = freq + k1 * (1 - b + b * dl / avgdl)
-            score += term_idf * ((freq * (k1 + 1)) / denom) * min(q_count, 3)
-        query_lower = (query or "").lower()
-        text_lower = (chunk.get("text") or "").lower()
-        for phrase in re.findall(r"[А-Яа-яЁёA-Za-z0-9][^.!?\n]{8,80}", query_lower):
-            phrase = phrase.strip()
-            if phrase and phrase in text_lower:
-                score += 2.0
-        if score > 0:
-            results.append({
-                "id": chunk.get("id"),
-                "title": chunk.get("title"),
-                "text": chunk.get("text"),
-                "score": round(score, 4),
-                "source": chunk.get("source", index.get("source_name")),
-            })
-    results.sort(key=lambda item: item["score"], reverse=True)
-    return results[:top_k or RAG_TOP_K]
+    store = index.get("embeddings")
+    return legal_rag.search(
+        index,
+        query,
+        top_k=top_k or RAG_TOP_K,
+        store=store,
+        provider=embedding_provider if store else None,
+    )
 
 def format_rag_context(results, max_chars=12000):
     if not results:
         return ""
     blocks = []
     used = 0
+    # Бюджет делится между найденными нормами. Раньше каждый фрагмент резался
+    # до 2000 символов, а не поместившийся блок обрывал цикл целиком — при
+    # небольшом бюджете модель получала пустой контекст и отвечала без опоры
+    # на закон. Заголовок и ссылка съедают около 200 символов на блок.
+    per_item = max(400, (max_chars // max(len(results), 1)) - 200)
     for i, item in enumerate(results, 1):
         text = re.sub(r"\s+", " ", item.get("text", "")).strip()
-        if len(text) > 2000:
-            text = text[:2000].rsplit(" ", 1)[0] + "..."
-        article_numbers = _cited_article_numbers(text)
-        citations = (
-            canonical_rag_norm(article_numbers)
-            if item.get("source") == CONTRACT_RAG_SOURCE_NAME
-            else canonical_rag_norm_for_source(article_numbers, item.get("source", ""))
-        )
+        if len(text) > per_item:
+            text = text[:per_item].rsplit(" ", 1)[0] + "..."
+        # Ссылка берётся из метаданных фрагмента: он знает свой кодекс,
+        # главу и номер статьи. Разбор текста регуляркой остаётся запасным
+        # путём для индексов старого формата.
+        citations = item.get("citation") or legal_rag.citation_for(item)
+        if not citations:
+            article_numbers = _cited_article_numbers(text)
+            citations = (
+                canonical_rag_norm(article_numbers)
+                if item.get("source") == CONTRACT_RAG_SOURCE_NAME
+                else canonical_rag_norm_for_source(article_numbers, item.get("source", ""))
+            )
         citation_note = f"\nПРОВЕРЕННАЯ ССЫЛКА RAG: {citations}" if citations else ""
-        block = f"[{i}] {item.get('source')} / {item.get('title')} (score {item.get('score')}):\n{text}{citation_note}"
-        if used + len(block) > max_chars:
-            break
+        label = item.get("code_short") or RAG_CODE_LABELS.get(item.get("source"), item.get("source"))
+        block = f"[{i}] {label} / {item.get('title')}:\n{text}{citation_note}"
+        remaining = max_chars - used
+        if len(block) > remaining:
+            # Последнюю норму лучше подрезать, чем потерять целиком.
+            if remaining < 300:
+                break
+            block = block[:remaining].rsplit(" ", 1)[0] + "..."
         blocks.append(block)
         used += len(block)
     return "\n\n".join(blocks)
