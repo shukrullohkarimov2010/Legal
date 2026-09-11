@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="LegalAI Pro — интеллектуальный анализ УК Таджикистана на базе локальной LLM llama3.1:8b с RAG-поиском">
+<meta name="description" content="LegalAI Pro — квалификация по УК Таджикистана: ответ строится только по тексту кодекса из RAG-индекса">
 <meta name="theme-color" content="#05050a" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <title>LegalAI Pro — Анализ УК РТ</title>
@@ -1662,11 +1662,11 @@ body::before {
             <span class="highlight">с RAG-анализом УК РТ</span>
           </h1>
           <p class="hero-subtitle">
-            Опишите ситуацию — система выполнит векторный поиск по базе УК РТ, 
-            а <strong style="color:var(--accent-amber)">llama3.1:8b</strong> определит статью, 
-            реальные сроки и алгоритм действий для потерпевшего.
+            Опишите ситуацию — система найдёт нормы в тексте УК РТ, а
+            <strong style="color:var(--accent-amber)">локальная модель</strong> разберёт состав
+            только по найденному. Если подходящей нормы в кодексе нет, ответа не будет.
           </p>
-          <div class="hero-badge">🦙 llama3.1:8b • RAG Pipeline • Локально</div>
+          <div class="hero-badge">🔒 Только текст УК РТ • RAG • Локально</div>
         </div>
         <div class="hero-visual" aria-hidden="true">
           <div class="scales">
@@ -1683,7 +1683,7 @@ body::before {
 
     <!-- ANALYSIS PANEL -->
     <section class="panel" aria-labelledby="panel-title">
-      <div class="rag-source">🔒 RAG-база: ст. 104, 111, 114, 246–250 УК РТ</div>
+      <div class="rag-source">🔒 Источник ответа — только Уголовный кодекс Республики Таджикистан из RAG-индекса</div>
       
       <div class="panel__header">
         <h2 class="panel__title" id="panel-title">Опишите преступление</h2>
@@ -1693,8 +1693,8 @@ body::before {
       <div id="apiWarning" class="alert alert--warning" style="display:none" role="alert">
         <span class="alert__icon" aria-hidden="true">⚠️</span>
         <div>
-          <strong>RAG API недоступен.</strong> Запустите <code>python app.py</code> для работы с llama3.1:8b.
-          <br><small>Активирован локальный режим анализа.</small>
+          <strong>Индекс УК РТ недоступен.</strong> Запустите <code>python app.py</code> и убедитесь, что собран индекс кодексов.
+          <br><small>Страница отвечает только по тексту УК РТ, поэтому без индекса анализ не выполняется.</small>
         </div>
       </div>
 
@@ -1721,12 +1721,12 @@ body::before {
         <div class="btn-group">
           <button id="btnAnalyze" class="btn btn--primary" type="button">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            <span>RAG-анализ</span>
+            <span>Найти норму</span>
             <kbd>Ctrl+↵</kbd>
           </button>
           <button id="btnQualify" class="btn btn--secondary" type="button">
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <span>Квалификация ИИ</span>
+            <span>Полная квалификация</span>
           </button>
         </div>
       </div>
@@ -1738,21 +1738,21 @@ body::before {
           <div class="progress-step" data-step="retrieval">
             <div class="step-indicator">1</div>
             <div class="step-content">
-              <div class="step-label">Векторный поиск по базе УК РТ</div>
+              <div class="step-label">Поиск норм в тексте УК РТ</div>
               <div class="step-detail" data-detail>Ожидание...</div>
             </div>
           </div>
           <div class="progress-step" data-step="llm">
             <div class="step-indicator">2</div>
             <div class="step-content">
-              <div class="step-label">Генерация ответа llama3.1:8b</div>
+              <div class="step-label">Разбор моделью (только для полной квалификации)</div>
               <div class="step-detail" data-detail>Ожидание...</div>
             </div>
           </div>
           <div class="progress-step" data-step="validation">
             <div class="step-indicator">3</div>
             <div class="step-content">
-              <div class="step-label">Валидация и формирование отчёта</div>
+              <div class="step-label">Сверка ссылок с выдачей поиска</div>
               <div class="step-detail" data-detail>Ожидание...</div>
             </div>
           </div>
@@ -1772,13 +1772,20 @@ body::before {
     <!-- KNOWLEDGE BASE -->
     <section class="kb-section" aria-labelledby="kb-title">
       <h2 class="panel__title" id="kb-title">📚 База знаний УК РТ</h2>
-      <p class="panel__subtitle">Основные статьи. Кликните — текст подставится в форму.</p>
+      <p class="panel__subtitle">Статьи загружаются из RAG-индекса кодекса. Кликните — номер подставится в форму.</p>
+      <div class="input-footer" style="margin-bottom:var(--space-4)">
+        <label for="kbFilter" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Поиск по статьям УК РТ</label>
+        <input id="kbFilter" class="crime-input" type="search" autocomplete="off"
+               placeholder="Поиск по номеру, названию статьи или главе — например: кража, 248, против собственности"
+               style="min-height:auto;height:44px;resize:none;flex:1 1 320px">
+        <span class="char-count" id="kbCount" aria-live="polite"></span>
+      </div>
       <div class="kb-grid" id="kbGrid" role="list"></div>
     </section>
 
     <!-- FOOTER -->
     <footer class="footer">
-      <p>⚖️ LegalAI Pro • RAG-анализ УК РТ на базе <a href="https://ollama.com" target="_blank" rel="noopener">Ollama + llama3.1:8b</a></p>
+      <p>⚖️ LegalAI Pro • Ответ только по тексту УК РТ • локальная модель через <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a></p>
       <p style="margin-top:var(--space-2)">Информация носит ознакомительный характер. Для точной консультации обратитесь к адвокату.</p>
     </footer>
 
@@ -1795,114 +1802,22 @@ body::before {
    ═══════════════════════════════════════════════════════════ */
 const CONFIG = Object.freeze({
   API_BASE: 'http://127.0.0.1:5000',
-  MODEL: 'llama3.1:8b',
   MAX_INPUT_LENGTH: 2000,
-  RAG_TOP_K: 10,
+  RAG_TOP_K: 8,
   RETRY_MAX: 3,
   RETRY_BASE_DELAY: 800,
   TIMEOUT_SHORT: 5000,
   TIMEOUT_MEDIUM: 15000,
-  TIMEOUT_LONG: 120000,
+  // Разбор приходит потоком, поэтому сторожим не весь ответ, а только
+  // молчание до первого байта: прежний таймаут на весь запрос обрывал
+  // генерацию посреди ответа с «signal is aborted without reason».
+  TIMEOUT_FIRST_BYTE: 90000,
   DEBOUNCE_MS: 300,
   HISTORY_MAX: 8,
-  CONFIDENCE_THRESHOLDS: Object.freeze({ HIGH: 0.8, MEDIUM: 0.5 }),
-});
-
-/* ═══════════════════════════════════════════════════════════
-   LEGAL KNOWLEDGE BASE (RAG Fallback)
-   ═══════════════════════════════════════════════════════════ */
-const LEGAL_DB = Object.freeze({
-  '104': Object.freeze({
-    number: '104',
-    name: 'Умышленное убийство',
-    description: 'Умышленное причинение смерти другому человеку. Объект — жизнь человека. Субъективная сторона — прямой или косвенный умысел.',
-    keywords: ['убийств', 'убил', 'смерть', 'зарезал', 'застрелил', 'задушил', 'отравил', 'лишил жизни'],
-    sentences: Object.freeze([
-      Object.freeze({ type: 'Основной состав', value: '5–15 лет', note: 'ч. 1 ст. 104' }),
-      Object.freeze({ type: 'Отягчающие', value: '10–20 лет', note: 'ч. 2 — двух и более лиц' }),
-      Object.freeze({ type: 'Особо тяжкое', value: '15–25 лет / пожизн.', note: 'ч. 3 — исключительная жестокость' }),
-    ]),
-  }),
-  '111': Object.freeze({
-    number: '111',
-    name: 'Умышленное причинение тяжкого вреда здоровью',
-    description: 'Умышленное причинение тяжкого вреда здоровью, опасного для жизни человека, или повлёкшего потерю зрения, слуха, органа.',
-    keywords: ['ножев', 'ранен', 'тяжк', 'вред здоров', 'опасн для жизн', 'потерял сознани', 'кровотечен', 'перелом черепа', 'проникающ'],
-    sentences: Object.freeze([
-      Object.freeze({ type: 'Основной состав', value: 'До 5 лет', note: 'ч. 1 ст. 111' }),
-      Object.freeze({ type: 'Отягчающие', value: '3–8 лет', note: 'ч. 2 — группой, неоднократно' }),
-      Object.freeze({ type: 'Смерть потерпевшего', value: '5–10 лет', note: 'ч. 3 — по неосторожности' }),
-    ]),
-  }),
-  '114': Object.freeze({
-    number: '114',
-    name: 'Умышленное причинение средней тяжести вреда здоровью',
-    description: 'Умышленное причинение вреда здоровью, не опасного для жизни, повлёкшего длительное расстройство здоровья (свыше 21 дня).',
-    keywords: ['ударил', 'побо', 'синяк', 'ссадин', 'кулаком', 'сломал нос', 'средн.*тяжест', 'ушиб', 'растяжен'],
-    sentences: Object.freeze([
-      Object.freeze({ type: 'Основной состав', value: 'До 2 лет', note: 'ч. 1 ст. 114' }),
-      Object.freeze({ type: 'Отягчающие', value: 'До 4 лет', note: 'ч. 2 — группой, хулиганство' }),
-    ]),
-  }),
-  '246': Object.freeze({
-    number: '246',
-    name: 'Мошенничество',
-    description: 'Хищение чужого имущества или приобретение права на имущество путём обмана или злоупотребления доверием.',
-    keywords: ['мошен', 'обман', 'перевёл', 'позвонили', 'банк', 'безопасный счёт', 'фишинг', 'подделк', 'подставн', 'афер'],
-    sentences: Object.freeze([
-      Object.freeze({ type: 'Основной состав', value: 'До 3 лет', note: 'ч. 1 ст. 246' }),
-      Object.freeze({ type: 'Повторно / группой', value: 'До 6 лет', note: 'ч. 2 ст. 246' }),
-      Object.freeze({ type: 'Крупный размер', value: '5–10 лет', note: 'ч. 3 — служебное положение' }),
-      Object.freeze({ type: 'Особо крупный', value: '8–12 лет', note: 'ч. 4 — организованная группа' }),
-    ]),
-  }),
-  '247': Object.freeze({
-    number: '247',
-    name: 'Кража',
-    description: 'Тайное хищение чужого имущества. Преступник действует незаметно для потерпевшего и окружающих.',
-    keywords: ['карман', 'тайно', 'вытащил', 'незаметно', 'украли', 'пропаж', 'взлом', 'двер', 'окн', 'похитил тайно', 'из кармана'],
-    sentences: Object.freeze([
-      Object.freeze({ type: 'Основной состав', value: 'До 3 лет', note: 'ч. 1 ст. 247' }),
-      Object.freeze({ type: 'Группой / с проникновением', value: 'До 5 лет', note: 'ч. 2 ст. 247' }),
-      Object.freeze({ type: 'Крупный размер', value: '5–8 лет', note: 'ч. 3 ст. 247' }),
-      Object.freeze({ type: 'Особо крупный', value: '7–12 лет', note: 'ч. 4 — организованная группа' }),
-    ]),
-  }),
-  '248': Object.freeze({
-    number: '248',
-    name: 'Грабёж',
-    description: 'Открытое хищение чужого имущества. Совершается в присутствии потерпевшего, осознающего противоправность действий.',
-    keywords: ['вырвал', 'открыто', 'подбежал', 'сумку из рук', 'грабёж', 'грабеж', 'сорвал', 'выхватил', 'отнял'],
-    sentences: Object.freeze([
-      Object.freeze({ type: 'Основной состав', value: 'До 5 лет', note: 'ч. 1 ст. 248' }),
-      Object.freeze({ type: 'С насилием / группой', value: '5–10 лет', note: 'ч. 2 ст. 248' }),
-      Object.freeze({ type: 'Организованная группа', value: '8–15 лет', note: 'ч. 3 ст. 248' }),
-    ]),
-  }),
-  '249': Object.freeze({
-    number: '249',
-    name: 'Разбой',
-    description: 'Нападение в целях хищения чужого имущества, совершённое с применением насилия, опасного для жизни или здоровья, либо с угрозой такого насилия.',
-    keywords: ['нож', 'оруж', 'пистолет', 'напали', 'угрожал уб', 'ранен.*ограблен', 'разбой', 'нападен.*хищен'],
-    sentences: Object.freeze([
-      Object.freeze({ type: 'Основной состав', value: '3–7 лет', note: 'ч. 1 ст. 249' }),
-      Object.freeze({ type: 'С оружием / группой', value: '7–12 лет', note: 'ч. 2 ст. 249' }),
-      Object.freeze({ type: 'Тяжкий вред', value: '10–15 лет', note: 'ч. 3 ст. 249' }),
-      Object.freeze({ type: 'Организованная группа', value: '12–20 лет', note: 'ч. 4 ст. 249' }),
-    ]),
-  }),
-  '250': Object.freeze({
-    number: '250',
-    name: 'Вымогательство',
-    description: 'Требование передачи чужого имущества или права на имущество под угрозой применения насилия, уничтожения имущества или распространения сведений.',
-    keywords: ['вымог', 'потребовал.*деньг', 'угрожа.*расправ', 'шантаж', 'встречу.*деньг', 'заплати.*иначе', 'дань'],
-    sentences: Object.freeze([
-      Object.freeze({ type: 'Основной состав', value: 'До 4 лет', note: 'ч. 1 ст. 250' }),
-      Object.freeze({ type: 'Повторно / группой', value: '3–7 лет', note: 'ч. 2 ст. 250' }),
-      Object.freeze({ type: 'С насилием', value: '7–12 лет', note: 'ч. 3 ст. 250' }),
-      Object.freeze({ type: 'Особо крупный', value: '10–15 лет', note: 'ч. 4 ст. 250' }),
-    ]),
-  }),
+  // Сколько статей кодекса показывать в базе знаний за раз.
+  KB_VISIBLE: 24,
+  // Сколько найденных норм разворачивать полным текстом.
+  SEARCH_VISIBLE: 5,
 });
 
 /* ═══════════════════════════════════════════════════════════
@@ -1916,18 +1831,6 @@ const SCENARIOS = Object.freeze({
   fraud: { icon: '🎭', label: 'Мошенничество', text: 'Мне позвонили из "банка" и сказали, что мой счёт заблокирован. Под диктовку мошенника я перевёл все свои сбережения (50000 сомони) на "безопасный счёт".' },
   battery: { icon: '👊', label: 'Побои', text: 'В баре возник конфликт. Мужчина ударил меня кулаком по лицу три раза. Свидетели есть, зафиксированы синяки и ссадины, есть справка из травмпункта.' },
 });
-
-/* ═══════════════════════════════════════════════════════════
-   ACTIONS TEMPLATE
-   ═══════════════════════════════════════════════════════════ */
-const ACTIONS = Object.freeze([
-  { step: 'Заявление в РОВД', detail: 'Немедленно обратитесь в ближайший отдел милиции. Подайте письменное заявление (арза) с описанием обстоятельств.' },
-  { step: 'Талон-уведомление', detail: 'Дежурный обязан выдать талон-уведомление с номером КУСП — доказательство регистрации обращения.' },
-  { step: 'Сбор доказательств', detail: 'Сохраните контакты свидетелей, запросите записи с камер (хранятся 7–30 дней), сделайте фото повреждений.' },
-  { step: 'Медосвидетельствование', detail: 'При травмах — снимите побои в травмпункте. Справка — ключевое доказательство в суде.' },
-  { step: 'Следственные действия', detail: 'Следователь проведёт проверку, возбудит уголовное дело, проведёт очные ставки и опознание.' },
-  { step: 'Суд и приговор', detail: 'После завершения следствия дело передаётся в суд. Потерпевший вправе заявить гражданский иск.' },
-]);
 
 /* ═══════════════════════════════════════════════════════════
    UTILITY FUNCTIONS
@@ -1982,384 +1885,183 @@ const Utils = {
     throw lastError;
   },
 
-  extractJson(text) {
-    if (!text) return null;
-    
-    // Try markdown code block first
-    const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-    if (codeBlockMatch) {
-      try { return JSON.parse(codeBlockMatch[1].trim()); } catch {}
-    }
-    
-    // Try raw JSON object
-    const jsonMatch = text.match(/\{[\s\S]*?\}/);
-    if (jsonMatch) {
-      try { return JSON.parse(jsonMatch[0]); } catch {}
-    }
-    
-    // Try to find JSON with nested braces
-    let depth = 0;
-    let start = -1;
-    for (let i = 0; i < text.length; i++) {
-      if (text[i] === '{') {
-        if (depth === 0) start = i;
-        depth++;
-      } else if (text[i] === '}') {
-        depth--;
-        if (depth === 0 && start !== -1) {
-          try { return JSON.parse(text.slice(start, i + 1)); } catch {}
-          start = -1;
-        }
-      }
-    }
-    
-    return null;
-  },
-
-  sanitizeRagText(text) {
-    return String(text || '')
-      .replace(/[^\p{L}\p{N}\s.,;:!?\-()[\]{}"'«»§№]/gu, ' ')
-      .replace(/\s{2,}/g, ' ')
-      .trim()
-      .slice(0, 1200);
-  },
 };
 
 /* ═══════════════════════════════════════════════════════════
-   RAG ENGINE — Multi-stage retrieval with scoring
+   RAG ENGINE — единственный источник ответов страницы
+
+   Локального словаря статей здесь больше нет намеренно. Он подсказывал
+   правдоподобные, но чужие номера: в нём «247 — Кража» и «246 —
+   Мошенничество», тогда как в УК РТ 244 — кража, 247 — мошенничество,
+   а 246 — хищение кредитных средств. Всё, что показывает страница,
+   приходит из индекса Уголовного кодекса РТ.
    ═══════════════════════════════════════════════════════════ */
-class RAGEngine {
+class CrimeRAG {
   constructor() {
-    this.db = new Map(Object.entries(LEGAL_DB));
-    this.apiAvailable = false;
+    this.ready = false;
+    this.status = null;
+    this.catalog = [];
   }
 
-  /**
-   * Multi-stage article matching with weighted scoring
-   * Stage 1: Exact keyword match (highest weight)
-   * Stage 2: TF-IDF-like scoring on description
-   * Stage 3: RAG API results (if available)
-   */
-  matchArticle(description, ragResults = []) {
-    const lower = description.toLowerCase();
-    const scores = new Map();
-
-    // Stage 1: Keyword matching with position weighting
-    for (const [num, article] of this.db) {
-      let score = 0;
-      for (const keyword of article.keywords) {
-        try {
-          const regex = new RegExp(keyword, 'gi');
-          const matches = lower.match(regex);
-          if (matches) {
-            // More matches = higher score, but with diminishing returns
-            score += Math.min(matches.length * 15, 45);
-          }
-        } catch {}
-      }
-      if (score > 0) {
-        scores.set(num, (scores.get(num) || 0) + score);
-      }
-    }
-
-    // Stage 2: Semantic similarity via token overlap
-    const descTokens = new Set(lower.split(/\s+/).filter(t => t.length > 3));
-    for (const [num, article] of this.db) {
-      const articleTokens = new Set(
-        `${article.name} ${article.description}`.toLowerCase().split(/\s+/).filter(t => t.length > 3)
-      );
-      let overlap = 0;
-      for (const token of descTokens) {
-        if (articleTokens.has(token)) overlap++;
-      }
-      const similarity = descTokens.size > 0 ? overlap / descTokens.size : 0;
-      if (similarity > 0.05) {
-        scores.set(num, (scores.get(num) || 0) + similarity * 30);
-      }
-    }
-
-    // Stage 3: RAG API results boost
-    if (ragResults.length > 0) {
-      for (const result of ragResults) {
-        const text = `${result.title || ''} ${result.text || ''}`.toLowerCase();
-        for (const [num] of this.db) {
-          const patterns = [
-            new RegExp(`ст\\.?\\s*${num}\\b`, 'i'),
-            new RegExp(`статья\\s*${num}\\b`, 'i'),
-            new RegExp(`моддаи\\s*${num}\\b`, 'i'),
-            new RegExp(`\\b${num}\\b`),
-          ];
-          for (const pattern of patterns) {
-            if (pattern.test(text)) {
-              scores.set(num, (scores.get(num) || 0) + 25);
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    // Stage 4: Aggravating factors boost
-    const aggravatingScore = this._scoreAggravating(lower);
-    for (const [num, boost] of Object.entries(aggravatingScore)) {
-      scores.set(num, (scores.get(num) || 0) + boost);
-    }
-
-    // Find best match
-    if (scores.size === 0) return { article: null, confidence: 'low', score: 0 };
-
-    let bestNum = null;
-    let bestScore = 0;
-    for (const [num, score] of scores) {
-      if (score > bestScore) {
-        bestScore = score;
-        bestNum = num;
-      }
-    }
-
-    const article = this.db.get(bestNum) || null;
-    const confidence = this._calculateConfidence(bestScore, scores);
-
-    return { article, confidence, score: bestScore };
-  }
-
-  _scoreAggravating(text) {
-    const boosts = {};
-    const rules = [
-      { pattern: /нож|оруж|пистолет|топор/, articles: ['249', '111'], boost: 20 },
-      { pattern: /дво|тро|групп|несколько/, articles: ['248', '249', '250'], boost: 10 },
-      { pattern: /крупн|особо крупн|дорог/, articles: ['247', '246', '250'], boost: 8 },
-      { pattern: /угрожал|угроз|шантаж/, articles: ['250', '249'], boost: 15 },
-      { pattern: /обман|позвонил|перевёл/, articles: ['246'], boost: 18 },
-      { pattern: /тайно|незаметно|карман/, articles: ['247'], boost: 18 },
-      { pattern: /открыто|вырвал|подбежал/, articles: ['248'], boost: 18 },
-    ];
-
-    for (const rule of rules) {
-      if (rule.pattern.test(text)) {
-        for (const num of rule.articles) {
-          boosts[num] = (boosts[num] || 0) + rule.boost;
-        }
-      }
-    }
-    return boosts;
-  }
-
-  _calculateConfidence(bestScore, allScores) {
-    if (bestScore >= 60) return 'high';
-    if (bestScore >= 30) return 'medium';
-    
-    // Check if there's a clear winner
-    const sorted = [...allScores.values()].sort((a, b) => b - a);
-    if (sorted.length >= 2 && sorted[0] > sorted[1] * 2) return 'medium';
-    
-    return 'low';
-  }
-
-  getAggravatingFactors(description) {
-    const lower = description.toLowerCase();
-    const factors = [];
-    
-    const checks = [
-      { pattern: /нож|оруж|пистолет|топор/, label: 'применение оружия или предметов' },
-      { pattern: /дво|тро|групп|несколько человек/, label: 'совершение группой лиц' },
-      { pattern: /крупн|особо крупн|дорог/, label: 'крупный размер ущерба' },
-      { pattern: /ранен|травм|удар|побо|синяк|кровь/, label: 'причинение вреда здоровью' },
-      { pattern: /повторн|неоднократн|ранее судим/, label: 'рецидив / неоднократность' },
-      { pattern: /ноч|тёмн|переулк|безлюдн/, label: 'совершение в тёмное время суток' },
-      { pattern: /ребён|несовершеннолетн|пожил|инвалид/, label: 'потерпевший — уязвимое лицо' },
-      { pattern: /алкогол|пьян|наркот/, label: 'состояние опьянения' },
-    ];
-
-    for (const check of checks) {
-      if (check.pattern.test(lower)) {
-        factors.push(check.label);
-      }
-    }
-
-    return factors;
-  }
-
-  async searchAPI(query) {
-    if (!this.apiAvailable) return [];
-    
-    try {
-      const response = await Utils.fetchWithRetry(
-        `${CONFIG.API_BASE}/api/rag/search`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, top_k: CONFIG.RAG_TOP_K }),
-          timeout: CONFIG.TIMEOUT_MEDIUM,
-        }
-      );
-      const data = await response.json();
-      return Array.isArray(data.results) ? data.results : [];
-    } catch {
-      return [];
-    }
-  }
-
+  /** Готовность именно уголовного индекса, а не RAG вообще. */
   async checkStatus() {
     try {
       const response = await Utils.fetchWithRetry(
         `${CONFIG.API_BASE}/api/rag/status`,
-        { timeout: CONFIG.TIMEOUT_SHORT }
+        { timeout: CONFIG.TIMEOUT_MEDIUM }
       );
       const data = await response.json();
-      this.apiAvailable = !!data.ready;
-      return data;
+      this.status = data.crime || null;
+      this.ready = !!(this.status && this.status.ready);
     } catch {
-      this.apiAvailable = false;
-      return null;
+      this.status = null;
+      this.ready = false;
     }
+    return this.status;
   }
 
-  async loadArticlesFromAPI() {
-    if (!this.apiAvailable) return false;
-    
+  /** Перечень статей УК РТ для базы знаний — из индекса, не из шаблона. */
+  async loadCatalog() {
+    if (!this.ready) return [];
     try {
       const response = await Utils.fetchWithRetry(
-        `${CONFIG.API_BASE}/api/rag/articles`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ source: '574_ru.doc' }),
-          timeout: CONFIG.TIMEOUT_MEDIUM,
-        }
+        `${CONFIG.API_BASE}/api/crime/catalog`,
+        { timeout: CONFIG.TIMEOUT_MEDIUM }
       );
       const data = await response.json();
-      
-      if (!Array.isArray(data.articles) || data.articles.length === 0) return false;
-      
-      for (const article of data.articles) {
-        if (!article.number) continue;
-        const existing = LEGAL_DB[article.number];
-        this.db.set(article.number, {
-          number: article.number,
-          name: article.title || existing?.name || `Статья ${article.number}`,
-          description: article.description || article.text?.slice(0, 300) || existing?.description || '',
-          keywords: existing?.keywords || [],
-          sentences: Array.isArray(article.sentences) && article.sentences.length > 0
-            ? article.sentences
-            : existing?.sentences || [],
-        });
-      }
-      return true;
+      this.catalog = Array.isArray(data.articles) ? data.articles : [];
     } catch {
-      return false;
+      this.catalog = [];
     }
+    return this.catalog;
+  }
+
+  /** Поиск норм по описанию события. Без языковой модели. */
+  async search(description) {
+    const response = await Utils.fetchWithRetry(
+      `${CONFIG.API_BASE}/api/crime/search`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description, top_k: CONFIG.RAG_TOP_K }),
+        timeout: CONFIG.TIMEOUT_MEDIUM,
+      },
+      1
+    );
+    return response.json();
   }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   LLM SERVICE — Prompt engineering + streaming
+   LLM SERVICE — модель работает в границах найденных норм
+
+   Промпт собирается на сервере: там же лежит выдача поиска, которой ответ
+   обязан ограничиться. Клиент отправляет только описание события.
    ═══════════════════════════════════════════════════════════ */
-class LLMService {
-  constructor(ragEngine) {
-    this.rag = ragEngine;
-  }
+class CrimeService {
+  /**
+   * Полный разбор потоком NDJSON: опора ответа приходит первой строкой,
+   * дальше текст по мере генерации, последней — результат сверки ссылок.
+   *
+   * Ответа целиком тут ждать нельзя: на этом железе разбор идёт минуты, и
+   * обычный fetch обрывался по таймауту («signal is aborted without reason»),
+   * так и не показав ни строчки. Таймаут сторожит только первый байт.
+   */
+  async qualifyStream(description, { onMeta, onChunk, onWait, onDone }) {
+    const controller = new AbortController();
+    let firstByte = false;
+    const guard = setTimeout(() => {
+      if (!firstByte) controller.abort();
+    }, CONFIG.TIMEOUT_FIRST_BYTE);
 
-  buildClassificationPrompt(description, ragResults) {
-    const allowedArticles = [...this.rag.db.values()]
-      .map(a => `  - Ст. ${a.number}: ${a.name}`)
-      .join('\n');
+    let response;
+    try {
+      response = await fetch(`${CONFIG.API_BASE}/api/crime/qualify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/x-ndjson',
+        },
+        body: JSON.stringify({ description }),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      clearTimeout(guard);
+      throw new Error(firstByte ? err.message : 'Сервер не ответил — проверьте, запущены ли python app.py и Ollama');
+    }
 
-    const ragContext = ragResults.length > 0
-      ? ragResults.map((r, i) => {
-          const cleanText = Utils.sanitizeRagText(r.text);
-          return `[Фрагмент ${i + 1}] (${r.source || 'RAG'}): ${cleanText}`;
-        }).join('\n\n')
-      : 'Фрагменты не найдены. Используй знания из списка статей.';
-
-    return `Ты — эксперт-криминалист по Уголовному кодексу Республики Таджикистан.
-
-ЗАДАЧА: Квалифицируй описанное деяние, используя ТОЛЬКО предоставленные фрагменты RAG и список статей.
-
-ДОПУСТИМЫЕ СТАТЬИ (выбери ОДНУ):
-${allowedArticles}
-
-ФРАГМЕНТЫ ИЗ БАЗЫ УК РТ:
-${ragContext}
-
-ОПИСАНИЕ ДЕЯНИЯ:
-"${description}"
-
-ИНСТРУКЦИЯ:
-1. Проанализируй объективную сторону (способ, орудие, обстановка)
-2. Определи объект посягательства
-3. Установи субъективную сторону (умысел/неосторожность)
-4. Сопоставь с диспозицией статьи
-5. Верни СТРОГО JSON без пояснений:
-
-{
-  "article_number": "номер статьи из списка",
-  "article_name": "название статьи",
-  "confidence": "high|medium|low",
-  "reasoning": "краткое обоснование (2-3 предложения)",
-  "qualifying_signs": ["признак 1", "признак 2"],
-  "aggravating": ["отягчающее обстоятельство или null"]
-}`;
-  }
-
-  async *streamClassification(description, ragResults) {
-    const prompt = this.buildClassificationPrompt(description, ragResults);
-    
-    const response = await fetch(`${CONFIG.API_BASE}/api/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/x-ndjson',
-      },
-      body: JSON.stringify({
-        message: prompt,
-        model: CONFIG.MODEL,
-        temperature: 0.1,
-        top_p: 0.9,
-        history: [],
-      }),
-    });
-
-    if (!response.ok || !response.body) {
-      throw new Error(`LLM stream error: HTTP ${response.status}`);
+    // Отказ «нормы не найдено» и ошибки индекса приходят обычным JSON, а не
+    // потоком: их надо вернуть как есть, иначе разбор NDJSON не найдёт в них
+    // ни опоры, ни токенов и ответ выродится в «сервер не прислал опору».
+    const contentType = response.headers.get('content-type') || '';
+    if (!response.ok || !response.body || contentType.includes('application/json')) {
+      clearTimeout(guard);
+      let payload = null;
+      try { payload = await response.json(); } catch {}
+      if (payload) return payload;
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let meta = null;
+    const collected = [];
+    let tail = {};
+
+    let plainPayload = null;
+    const handle = line => {
+      if (!line.trim()) return;
+      let obj;
+      try { obj = JSON.parse(line); } catch { return; }
+      if (obj.meta) {
+        meta = obj.meta;
+        onMeta?.(meta);
+        return;
+      }
+      if (obj.wait !== undefined) {
+        // Признак жизни: модель ещё молчит. Соединение держится, и до
+        // первого токена видно, что запрос не завис.
+        onWait?.(obj.wait);
+        return;
+      }
+      if (obj.response) {
+        collected.push(obj.response);
+        onChunk?.(obj.response);
+      }
+      if (obj.done) tail = obj;
+      // Строка без опоры, токена, ожидания и признака конца — это обычный
+      // JSON-ответ, отданный без потока (отказ или ошибка).
+      if (obj.meta === undefined && obj.response === undefined && !obj.done) {
+        plainPayload = obj;
+      }
+    };
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
+      firstByte = true;
+      clearTimeout(guard);
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const parsed = JSON.parse(line);
-          if (parsed.response) yield parsed.response;
-          if (parsed.done) return;
-        } catch {}
-      }
+      lines.forEach(handle);
     }
-  }
+    handle(buffer);
+    clearTimeout(guard);
 
-  async qualifyCrime(description) {
-    const response = await Utils.fetchWithRetry(
-      `${CONFIG.API_BASE}/api/crime/qualify`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ crime_description: description }),
-        timeout: CONFIG.TIMEOUT_LONG,
-      }
-    );
-    
-    const data = await response.json();
-    if (!data.qualification) throw new Error('API не вернул данные квалификации');
+    // Поток без первой строки с опорой — это отказ или ошибка, отданные JSON.
+    if (!meta) {
+      if (plainPayload) return plainPayload;
+      throw new Error('Сервер не прислал опору ответа');
+    }
+
+    const data = {
+      ...meta,
+      qualification: collected.join('') + (tail.note || ''),
+      unverified_articles: tail.unverified_articles || [],
+    };
+    onDone?.(data);
     return data;
   }
 }
@@ -2377,115 +2079,165 @@ class UIRenderer {
     `).join('');
   }
 
-  static renderKnowledgeBase(db) {
+  /**
+   * База знаний — статьи из индекса УК РТ. Кодекс целиком в сетку не влезает,
+   * поэтому показывается срез по фильтру: без него 405 карточек хоронили бы
+   * панель анализа под собой.
+   */
+  static renderKnowledgeBase(articles, filter = '') {
     const grid = document.getElementById('kbGrid');
-    const articles = [...db.values()];
-    
-    if (articles.length === 0) {
-      grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--ink-tertiary);padding:2rem;">База знаний пуста</p>';
+    const counter = document.getElementById('kbCount');
+    const query = filter.trim().toLowerCase();
+
+    if (!Array.isArray(articles) || articles.length === 0) {
+      grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--ink-tertiary);padding:2rem;">'
+        + 'Индекс УК РТ недоступен — база знаний не загружена.</p>';
+      if (counter) counter.textContent = '';
       return;
     }
 
-    grid.innerHTML = articles.map(a => {
-      const minSentence = a.sentences?.[0]?.value || '—';
-      return `
-        <button class="kb-card" data-article="${a.number}" type="button" role="listitem">
-          <div class="kb-card__number">${Utils.escapeHtml(a.number)}</div>
-          <div class="kb-card__name">${Utils.escapeHtml(a.name)}</div>
-          <div class="kb-card__desc">${Utils.escapeHtml(a.description)}</div>
-          <div class="kb-card__sentence">⏱ ${Utils.escapeHtml(minSentence)}</div>
-        </button>
-      `;
-    }).join('');
+    const matched = query
+      ? articles.filter(a =>
+          String(a.article).includes(query)
+          || String(a.article_title || '').toLowerCase().includes(query)
+          || String(a.chapter_title || '').toLowerCase().includes(query))
+      : articles;
+
+    const shown = matched.slice(0, CONFIG.KB_VISIBLE);
+    if (counter) {
+      counter.textContent = matched.length > shown.length
+        ? `показано ${shown.length} из ${matched.length}`
+        : `${matched.length} ст.`;
+    }
+
+    if (shown.length === 0) {
+      grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--ink-tertiary);padding:2rem;">'
+        + 'По запросу в УК РТ ничего не найдено.</p>';
+      return;
+    }
+
+    grid.innerHTML = shown.map(a => `
+      <button class="kb-card" data-article="${Utils.escapeHtml(a.article)}" type="button" role="listitem">
+        <div class="kb-card__number">${Utils.escapeHtml(a.article)}</div>
+        <div class="kb-card__name">${Utils.escapeHtml(a.article_title || '')}</div>
+        <div class="kb-card__desc">${Utils.escapeHtml(a.snippet || '')}</div>
+        <div class="kb-card__sentence">📖 ${Utils.escapeHtml(a.chapter_title || ('Глава ' + (a.chapter || '—')))}</div>
+      </button>
+    `).join('');
   }
 
-  static renderResults({ article, description, rawText, confidence, aggravating }) {
-    if (!article) return;
-
-    const confidencePercent = confidence === 'high' ? 92 : confidence === 'medium' ? 68 : 40;
-    const confidenceClass = confidence === 'high' ? 'high' : confidence === 'medium' ? 'medium' : 'low';
-    const factors = aggravating || [];
-
-    const container = document.getElementById('results');
-    container.innerHTML = `
-      <!-- Verdict -->
-      <div class="result-card result-card--verdict">
+  /** Карточка с нормой: заголовок, ссылка на кодекс и дословный текст статьи. */
+  static _articleCard(article, { label, icon, verdict = false, withCopy = false } = {}) {
+    return `
+      <div class="result-card ${verdict ? 'result-card--verdict' : ''}">
         <div class="result-card__header">
-          <div class="result-card__icon" aria-hidden="true">⚖️</div>
+          <div class="result-card__icon" aria-hidden="true">${icon || '📕'}</div>
           <div style="flex:1">
-            <div class="result-card__label">Квалификация деяния</div>
-            <div class="result-card__title">${Utils.escapeHtml(article.name)}</div>
+            <div class="result-card__label">${Utils.escapeHtml(label || 'Норма УК РТ')}</div>
+            <div class="result-card__title">${Utils.escapeHtml(article.article_title || '')}</div>
+          </div>
+          ${withCopy ? `
+          <button class="copy-btn" data-action="copy" type="button">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            Копировать
+          </button>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-4)">
+          <span class="article-badge">Ст. ${Utils.escapeHtml(article.article)} УК РТ</span>
+          <span style="color:var(--ink-tertiary);font-size:var(--text-sm)">${Utils.escapeHtml(article.citation || '')}</span>
+        </div>
+        <div class="article-text" style="white-space:pre-wrap">${Utils.escapeHtml(article.text || article.snippet || '')}</div>
+      </div>
+    `;
+  }
+
+  /** Список прочих норм, поднятых поиском: пользователь видит всю опору ответа. */
+  static _sourcesCard(articles, selectedNumber) {
+    const rest = (articles || []).filter(a => String(a.article) !== String(selectedNumber));
+    if (rest.length === 0) return '';
+    return `
+      <div class="result-card">
+        <div class="result-card__header">
+          <div class="result-card__icon" aria-hidden="true">🔎</div>
+          <div>
+            <div class="result-card__label">ИСТОЧНИКИ RAG</div>
+            <div class="result-card__title">Остальные нормы, найденные по описанию</div>
+          </div>
+        </div>
+        <ol class="action-list">
+          ${rest.map(a => `
+            <li>
+              <strong>Ст. ${Utils.escapeHtml(a.article)} — ${Utils.escapeHtml(a.article_title || '')}</strong>
+              <span>${Utils.escapeHtml(a.snippet || '')}</span>
+            </li>
+          `).join('')}
+        </ol>
+      </div>
+    `;
+  }
+
+  /**
+   * Результат поиска по УК РТ: сами нормы, дословно и со ссылкой.
+   * Ни одной строки здесь не пишет модель — это выдача индекса.
+   */
+  static renderSearch(data) {
+    const articles = data.articles || [];
+    const container = document.getElementById('results');
+    const top = articles[0] || {};
+    const rest = articles.slice(1, CONFIG.SEARCH_VISIBLE);
+
+    container.innerHTML = `
+      <div class="result-card">
+        <div class="result-card__header">
+          <div class="result-card__icon" aria-hidden="true">🔒</div>
+          <div style="flex:1">
+            <div class="result-card__label">ИСТОЧНИК ОТВЕТА</div>
+            <div class="result-card__title">Уголовный кодекс Республики Таджикистан</div>
           </div>
           <button class="copy-btn" data-action="copy" type="button">
             <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
             Копировать
           </button>
         </div>
-        <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-4)">
-          <span class="article-badge">Ст. ${Utils.escapeHtml(article.number)} УК РТ</span>
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3)">
+          ${articles.map(a => `<span class="article-badge">Ст. ${Utils.escapeHtml(a.article)} — ${Utils.escapeHtml(a.article_title || '')}</span>`).join('')}
         </div>
-        <div class="article-text">${Utils.escapeHtml(article.description)}</div>
-        <div class="confidence">
-          <span style="color:var(--ink-tertiary);font-size:var(--text-sm)">Уверенность:</span>
-          <div class="confidence__bar">
-            <div class="confidence__fill confidence__fill--${confidenceClass}" style="width:${confidencePercent}%"></div>
-          </div>
-          <span class="confidence__value">${confidencePercent}%</span>
+        <div style="color:var(--ink-tertiary);font-size:var(--text-sm);line-height:var(--leading-relaxed)">
+          Нормы найдены поиском по тексту кодекса и приведены дословно, без участия
+          языковой модели. Порядок — по совпадению с описанием. Для разбора состава
+          и санкций нажмите «Полная квалификация».
         </div>
       </div>
 
-      <!-- Punishments -->
-      <div class="result-card">
-        <div class="result-card__header">
-          <div class="result-card__icon" aria-hidden="true">⏱️</div>
-          <div>
-            <div class="result-card__label">Наказание</div>
-            <div class="result-card__title">Реальные сроки по УК Таджикистана</div>
-          </div>
-        </div>
-        <div class="punishment-grid">
-          ${(article.sentences || []).map(s => `
-            <div class="punishment-card">
-              <div class="punishment-card__type">${Utils.escapeHtml(s.type)}</div>
-              <div class="punishment-card__value">${Utils.escapeHtml(s.value)}</div>
-              <div class="punishment-card__note">${Utils.escapeHtml(s.note || '')}</div>
-            </div>
-          `).join('') || '<p style="color:var(--ink-tertiary)">Данные недоступны</p>'}
-        </div>
-        ${factors.length > 0 ? `
-          <div class="aggravating-box">
-            <strong>🚨 Отягчающие обстоятельства:</strong> ${Utils.escapeHtml(factors.join('; '))} — срок может быть увеличен.
-          </div>
-        ` : `
-          <div class="aggravating-box" style="border-left-color:var(--accent-green);background:var(--success-bg)">
-            <strong style="color:var(--success-text)">✓ Отягчающие обстоятельства не выявлены.</strong> Применяется основная квалификация.
-          </div>
-        `}
-      </div>
+      ${UIRenderer._articleCard(top, {
+        label: 'Наиболее близкая норма',
+        icon: '⚖️',
+        verdict: true,
+      })}
 
-      <!-- Actions -->
-      <div class="result-card">
-        <div class="result-card__header">
-          <div class="result-card__icon" aria-hidden="true">👮</div>
-          <div>
-            <div class="result-card__label">Алгоритм действий</div>
-            <div class="result-card__title">Что делать потерпевшему</div>
-          </div>
-        </div>
-        <ol class="action-list">
-          ${ACTIONS.map(a => `
-            <li><strong>${Utils.escapeHtml(a.step)}</strong><span>${Utils.escapeHtml(a.detail)}</span></li>
-          `).join('')}
-        </ol>
-      </div>
-
-      <!-- Raw -->
-      <details class="raw-toggle">
-        <summary>🤖 Технические данные (JSON / raw)</summary>
-        <pre>${Utils.escapeHtml(rawText || JSON.stringify(article, null, 2))}</pre>
-      </details>
+      ${rest.map(a => UIRenderer._articleCard(a, { label: 'Также найдено', icon: '📕' })).join('')}
     `;
 
+    container.setAttribute('data-active', 'true');
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /** Ответ, когда в УК РТ опоры нет. Ничего «по общим знаниям» тут не будет. */
+  static renderNotFound(message, query = '') {
+    const container = document.getElementById('results');
+    container.innerHTML = `
+      <div class="result-card result-card--verdict" style="border-color:var(--warning-border);background:var(--warning-bg)">
+        <div class="result-card__header">
+          <div class="result-card__icon" style="background:var(--warning-bg)" aria-hidden="true">🔍</div>
+          <div>
+            <div class="result-card__label" style="color:var(--warning-text)">НОРМА НЕ НАЙДЕНА</div>
+            <div class="result-card__title">В УК РТ нет статьи под это описание</div>
+          </div>
+        </div>
+        <div class="article-text" style="border-left-color:var(--accent-amber)">${Utils.escapeHtml(message)}</div>
+        ${query ? `<div style="margin-top:var(--space-3);color:var(--ink-tertiary);font-size:var(--text-sm)">Запрос: ${Utils.escapeHtml(query)}</div>` : ''}
+      </div>
+    `;
     container.setAttribute('data-active', 'true');
     container.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -2503,11 +2255,11 @@ class UIRenderer {
         </div>
         ${details ? `<div class="article-text" style="border-left-color:var(--accent-amber)">${Utils.escapeHtml(details)}</div>` : ''}
         <div style="margin-top:var(--space-4);color:var(--ink-tertiary);font-size:var(--text-sm);line-height:var(--leading-relaxed)">
-          <strong>Рекомендации:</strong>
+          <strong>Что проверить:</strong>
           <ul style="margin-top:var(--space-2);padding-left:1.25rem">
-            <li>Опишите ситуацию подробнее (способ, объект, обстоятельства)</li>
-            <li>Выберите готовый сценарий выше</li>
-            <li>Проверьте, запущен ли Python RAG API</li>
+            <li>Запущен ли Python RAG API (<code>python app.py</code>) и Ollama</li>
+            <li>Собран ли индекс УК РТ — статус виден в шапке страницы</li>
+            <li>Описано ли событие достаточно подробно</li>
           </ul>
         </div>
       </div>
@@ -2516,14 +2268,56 @@ class UIRenderer {
     container.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  static renderQualification(data, description) {
+  /**
+   * Живой вывод разбора: опора ответа рисуется сразу, текст дописывается
+   * по мере генерации. Пустой спиннер на несколько минут — это то, ради
+   * чего страница и переведена на поток.
+   */
+  static renderQualificationStart(meta) {
+    const container = document.getElementById('results');
+    const articles = meta.articles || [];
+    container.innerHTML = `
+      <div class="result-card">
+        <div class="result-card__header">
+          <div class="result-card__icon" aria-hidden="true">🔒</div>
+          <div style="flex:1">
+            <div class="result-card__label">ОПОРА ОТВЕТА</div>
+            <div class="result-card__title">${Utils.escapeHtml(meta.primary_source || 'Уголовный кодекс Республики Таджикистан')}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+          ${articles.map(a => `<span class="article-badge">Ст. ${Utils.escapeHtml(a.article)} — ${Utils.escapeHtml(a.article_title || '')}</span>`).join('')}
+        </div>
+      </div>
+
+      <div class="result-card result-card--verdict">
+        <div class="result-card__header">
+          <div class="result-card__icon" aria-hidden="true">✍️</div>
+          <div>
+            <div class="result-card__label">РАЗБОР</div>
+            <div class="result-card__title">Модель пишет ответ по найденным нормам</div>
+          </div>
+        </div>
+        <div class="article-text" id="qualifyStream" style="white-space:pre-wrap"></div>
+      </div>
+    `;
+    container.setAttribute('data-active', 'true');
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  static appendQualificationChunk(chunk) {
+    const target = document.getElementById('qualifyStream');
+    if (target) target.textContent += chunk;
+  }  static renderQualification(data, description) {
     const text = data.qualification || '';
     const sections = UIRenderer._parseSections(text);
     const container = document.getElementById('results');
+    const articles = data.articles || [];
+    const unverified = data.unverified_articles || [];
 
     const sectionCards = [
       { key: 'квалификация', icon: '⚖️', label: 'КВАЛИФИКАЦИЯ', title: 'Определение состава преступления' },
-      { key: 'санкции', icon: '⏱️', label: 'САНКЦИИ', title: 'Наказание по УК РТ' },
+      { key: 'санкции', icon: '⏱️', label: 'САНКЦИИ', title: 'Наказание по тексту статьи УК РТ' },
       { key: 'факты', icon: '🔍', label: 'ФАКТЫ', title: 'Доказательственная база' },
       { key: 'обстоятельства', icon: '⚠️', label: 'ОБСТОЯТЕЛЬСТВА', title: 'Смягчающие и отягчающие' },
       { key: 'анализ', icon: '🧠', label: 'ПРАВОВОЙ АНАЛИЗ', title: 'Юридическое обоснование' },
@@ -2531,6 +2325,28 @@ class UIRenderer {
     ];
 
     container.innerHTML = `
+      <div class="result-card">
+        <div class="result-card__header">
+          <div class="result-card__icon" aria-hidden="true">🔒</div>
+          <div style="flex:1">
+            <div class="result-card__label">ОПОРА ОТВЕТА</div>
+            <div class="result-card__title">${Utils.escapeHtml(data.primary_source || 'Уголовный кодекс Республики Таджикистан')}</div>
+          </div>
+          <button class="copy-btn" data-action="copy" type="button">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            Копировать
+          </button>
+        </div>
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+          ${articles.map(a => `<span class="article-badge">Ст. ${Utils.escapeHtml(a.article)} — ${Utils.escapeHtml(a.article_title || '')}</span>`).join('')}
+        </div>
+        ${unverified.length > 0 ? `
+          <div class="aggravating-box">
+            <strong>⚠️ Не подтверждено RAG:</strong> статьи ${Utils.escapeHtml(unverified.join(', '))}
+            в найденных фрагментах УК РТ отсутствуют — проверьте их по тексту кодекса.
+          </div>` : ''}
+      </div>
+
       ${sectionCards.filter(s => sections[s.key]).map(s => `
         <div class="result-card ${s.key === 'квалификация' || s.key === 'вывод' ? 'result-card--verdict' : ''}">
           <div class="result-card__header">
@@ -2554,8 +2370,11 @@ class UIRenderer {
           <div class="article-text">${Utils.escapeHtml(text)}</div>
         </div>
       `}
+
+      ${articles.map(a => UIRenderer._articleCard(a, { label: 'Текст нормы из индекса', icon: '📕' })).join('')}
+
       <details class="raw-toggle">
-        <summary>🤖 Полный ответ llama3.1:8b</summary>
+        <summary>🤖 Полный ответ модели</summary>
         <pre>${Utils.escapeHtml(text)}</pre>
       </details>
     `;
@@ -2727,13 +2546,12 @@ class ThemeManager {
    ═══════════════════════════════════════════════════════════ */
 class LegalAIApp {
   constructor() {
-    this.rag = new RAGEngine();
-    this.llm = new LLMService(this.rag);
+    this.rag = new CrimeRAG();
+    this.llm = new CrimeService();
     this.theme = new ThemeManager();
     this.history = new HistoryManager();
     this.progress = new ProgressTracker();
     this.isProcessing = false;
-    this.abortController = null;
 
     // DOM refs
     this.input = document.getElementById('crimeInput');
@@ -2744,6 +2562,7 @@ class LegalAIApp {
     this.statusText = document.getElementById('statusText');
     this.apiWarning = document.getElementById('apiWarning');
     this.resultsEl = document.getElementById('results');
+    this.kbFilter = document.getElementById('kbFilter');
 
     this._bindEvents();
     this._init();
@@ -2781,18 +2600,22 @@ class LegalAIApp {
       }
     });
 
+    // Фильтр базы знаний: кодекс целиком в сетку не помещается.
+    this.kbFilter?.addEventListener('input', Utils.debounce(
+      () => UIRenderer.renderKnowledgeBase(this.rag.catalog, this.kbFilter.value),
+      CONFIG.DEBOUNCE_MS
+    ));
+
     // Event delegation for KB cards
     document.getElementById('kbGrid').addEventListener('click', e => {
       const card = e.target.closest('[data-article]');
-      if (card) {
-        const article = this.rag.db.get(card.dataset.article);
-        if (article) {
-          this.input.value = `Преступление по статье ${article.number} УК РТ (${article.name}): `;
-          this._updateCounter();
-          this.input.focus();
-          window.scrollTo({ top: 350, behavior: 'smooth' });
-        }
-      }
+      if (!card) return;
+      const article = this.rag.catalog.find(a => String(a.article) === card.dataset.article);
+      if (!article) return;
+      this.input.value = `Событие по признакам статьи ${article.article} УК РТ (${article.article_title}): `;
+      this._updateCounter();
+      this.input.focus();
+      window.scrollTo({ top: 350, behavior: 'smooth' });
     });
 
     // Event delegation for history
@@ -2819,7 +2642,6 @@ class LegalAIApp {
 
   async _init() {
     UIRenderer.renderScenarios();
-    UIRenderer.renderKnowledgeBase(this.rag.db);
     this.history.render();
     this._updateCounter();
     await this._checkAPI();
@@ -2829,16 +2651,17 @@ class LegalAIApp {
     this._setStatus('checking', 'Проверка...');
     const status = await this.rag.checkStatus();
 
-    if (status && status.ready) {
-      this._setStatus('connected', `✓ RAG: ${status.chunks || '—'} чанков`);
+    if (this.rag.ready) {
+      this._setStatus('connected', `✓ УК РТ: ${status.articles || '—'} статей`);
       this.apiWarning.style.display = 'none';
-      
-      // Load articles from API
-      const loaded = await this.rag.loadArticlesFromAPI();
-      if (loaded) UIRenderer.renderKnowledgeBase(this.rag.db);
+      await this.rag.loadCatalog();
+      UIRenderer.renderKnowledgeBase(this.rag.catalog, this.kbFilter?.value || '');
     } else {
-      this._setStatus('disconnected', '✗ Локальный режим');
+      // Локального режима нет: без индекса УК РТ отвечать нечем, и
+      // догадка по ключевым словам здесь хуже честного отказа.
+      this._setStatus('disconnected', '✗ Индекс УК РТ недоступен');
       this.apiWarning.style.display = 'flex';
+      UIRenderer.renderKnowledgeBase([]);
     }
   }
 
@@ -2850,7 +2673,7 @@ class LegalAIApp {
   _updateCounter() {
     const len = this.input.value.length;
     this.charCount.textContent = `${len} / ${CONFIG.MAX_INPUT_LENGTH}`;
-    
+
     if (len > CONFIG.MAX_INPUT_LENGTH * 0.9) {
       this.charCount.setAttribute('data-level', 'danger');
     } else if (len > CONFIG.MAX_INPUT_LENGTH * 0.75) {
@@ -2873,179 +2696,129 @@ class LegalAIApp {
     } else {
       this.btnAnalyze.innerHTML = `
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-        <span>RAG-анализ</span><kbd>Ctrl+↵</kbd>`;
+        <span>Найти норму</span><kbd>Ctrl+↵</kbd>`;
       this.btnQualify.innerHTML = `
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        <span>Квалификация ИИ</span>`;
+        <span>Полная квалификация</span>`;
       this.progress.hide();
     }
   }
 
-  async analyze() {
+  /** Общая проверка перед запросом: есть описание и есть чем отвечать. */
+  _canRun() {
     const description = this.input.value.trim();
     if (!description) {
       this.input.style.animation = 'shake 0.4s ease';
       setTimeout(() => this.input.style.animation = '', 400);
       this.input.focus();
-      return;
+      return null;
     }
+    if (this.isProcessing) return null;
+    if (!this.rag.ready) {
+      UIRenderer.renderError(
+        'Индекс УК РТ недоступен',
+        'Страница отвечает только по тексту Уголовного кодекса РТ из RAG-индекса. '
+        + 'Пока индекс не загружен, ответ дать неоткуда.'
+      );
+      return null;
+    }
+    return description;
+  }
 
-    if (this.isProcessing) return;
+  /**
+   * Поиск норм по описанию события. Языковая модель не участвует: на этом
+   * железе генерация занимает минуты, а сам текст статьи с санкцией — это
+   * уже ответ, и он приходит из индекса дословно.
+   */
+  async analyze() {
+    const description = this._canRun();
+    if (!description) return;
     this._setProcessing(true);
 
-    let ragResults = [];
-    let rawText = '';
-    let matchedArticle = null;
-    let confidence = 'low';
-
     try {
-      // STEP 1: RAG Retrieval
-      this.progress.update('retrieval', 'active', 'Векторный поиск по базе УК РТ...');
-      
-      if (this.rag.apiAvailable) {
-        ragResults = await this.rag.searchAPI(description);
-        this.progress.update('retrieval', 'done',
-          ragResults.length > 0 ? `✓ Найдено ${ragResults.length} фрагментов` : '✓ База проверена');
-      } else {
-        this.progress.update('retrieval', 'done', '✓ Локальный поиск (API оффлайн)');
-      }
+      this.progress.update('retrieval', 'active', 'Поиск норм в тексте УК РТ...');
+      const data = await this.rag.search(description);
+      this.progress.update('llm', 'done', '— не используется: ответ из индекса');
 
-      // STEP 2: LLM Analysis (if available)
-      this.progress.update('llm', 'active', 'llama3.1:8b генерирует ответ...');
-      
-      if (this.rag.apiAvailable) {
-        try {
-          let tokenCount = 0;
-          for await (const chunk of this.llm.streamClassification(description, ragResults)) {
-            rawText += chunk;
-            tokenCount++;
-            if (tokenCount % 15 === 0) {
-              this.progress.update('llm', 'active', `${tokenCount} токенов...`);
-            }
-          }
-
-          const parsed = Utils.extractJson(rawText);
-          if (parsed?.article_number) {
-            const num = String(parsed.article_number).replace(/\D/g, '');
-            const article = this.rag.db.get(num);
-            if (article) {
-              matchedArticle = article;
-              confidence = parsed.confidence || 'medium';
-            }
-          }
-          this.progress.update('llm', 'done', '✓ LLM-анализ завершён');
-        } catch (err) {
-          console.warn('LLM stream failed, falling back:', err.message);
-          this.progress.update('llm', 'error', '✗ LLM недоступен → локальный анализ');
-        }
-      } else {
-        this.progress.update('llm', 'done', '✓ Пропущен (API оффлайн)');
-      }
-
-      // Fallback: Local RAG matching
-      if (!matchedArticle) {
-        const result = this.rag.matchArticle(description, ragResults);
-        matchedArticle = result.article;
-        confidence = result.confidence;
-        if (!rawText) {
-          rawText = `Локальный RAG-матчер.\nScore: ${result.score}\nConfidence: ${result.confidence}`;
-        }
-      }
-
-      // STEP 3: Validation & Render
-      this.progress.update('validation', 'active', 'Формирование отчёта...');
-      await Utils.sleep(300);
-
-      if (!matchedArticle) {
-        this.progress.update('validation', 'error', '✗ Статья не определена');
+      if (!data.grounded) {
+        this.progress.update('retrieval', 'error', '✗ Норма не найдена');
+        this.progress.update('validation', 'done', '✓ Ответ без опоры не выдан');
+        await Utils.sleep(200);
         this._setProcessing(false);
-        UIRenderer.renderError(
-          'Не удалось квалифицировать деяние',
-          'Опишите ситуацию подробнее: укажите способ совершения, объект посягательства, наличие оружия/угроз.'
-        );
+        UIRenderer.renderNotFound(data.message || '', description);
         return;
       }
 
-      this.progress.update('validation', 'done', '✓ Отчёт сформирован');
+      const found = (data.articles || []).length;
+      this.progress.update('retrieval', 'done', `✓ Найдено норм: ${found}`);
+      this.progress.update('validation', 'done', '✓ Все ссылки из текста кодекса');
       await Utils.sleep(200);
 
-      const aggravating = this.rag.getAggravatingFactors(description);
       this._setProcessing(false);
-      UIRenderer.renderResults({
-        article: matchedArticle,
-        description,
-        rawText,
-        confidence,
-        aggravating,
-      });
+      UIRenderer.renderSearch(data);
 
-      this.history.add(description, matchedArticle);
-      this.history.render();
-
+      const top = data.articles[0];
+      if (top) {
+        this.history.add(description, { number: top.article, name: top.article_title || '' });
+        this.history.render();
+      }
     } catch (err) {
-      console.error('Analysis error:', err);
+      console.error('Search error:', err);
       this._setProcessing(false);
-      UIRenderer.renderError('Внутренняя ошибка анализа', err.message);
+      UIRenderer.renderError('Ошибка поиска по УК РТ', err.message);
     }
   }
 
+  /** Полный разбор: состав, санкции и обстоятельства в границах найденных норм. */
   async qualify() {
-    const description = this.input.value.trim();
-    if (!description) {
-      this.input.style.animation = 'shake 0.4s ease';
-      setTimeout(() => this.input.style.animation = '', 400);
-      this.input.focus();
-      return;
-    }
-
-    if (this.isProcessing) return;
+    const description = this._canRun();
+    if (!description) return;
     this._setProcessing(true);
 
-    if (!this.rag.apiAvailable) {
-      // Fallback to local analysis
-      this.progress.update('retrieval', 'active', 'Локальный анализ...');
-      await Utils.sleep(400);
-      const result = this.rag.matchArticle(description);
-      
-      if (!result.article) {
+    try {
+      this.progress.update('retrieval', 'active', 'Поиск норм в тексте УК РТ...');
+      this.progress.update('llm', 'active', 'Ожидание первых строк ответа...');
+
+      let tokens = 0;
+      const data = await this.llm.qualifyStream(description, {
+        onMeta: meta => {
+          this.progress.update('retrieval', 'done', `✓ Статей в опоре: ${(meta.article_numbers || []).length}`);
+          UIRenderer.renderQualificationStart(meta);
+        },
+        onWait: seconds => {
+          // Первый токен приходит через минуты: разбор промпта, а на холодном
+          // старте ещё и чтение модели с диска. Молча ждать нельзя.
+          this.progress.update('llm', 'active', `модель готовит ответ, ${Math.round(seconds)} с...`);
+        },
+        onChunk: chunk => {
+          tokens += 1;
+          UIRenderer.appendQualificationChunk(chunk);
+          if (tokens % 20 === 0) this.progress.update('llm', 'active', `${tokens} фрагментов...`);
+        },
+      });
+
+      if (!data.grounded) {
+        this.progress.update('retrieval', 'error', '✗ Норма не найдена');
+        this.progress.update('llm', 'done', '— модель не запускалась');
+        this.progress.update('validation', 'done', '✓ Ответ без опоры не выдан');
         this._setProcessing(false);
-        UIRenderer.renderError('API недоступен и локальный анализ не дал результата.');
+        UIRenderer.renderNotFound(data.qualification || data.message || data.error || '', description);
         return;
       }
 
-      this.progress.update('retrieval', 'done', `✓ Ст. ${result.article.number}`);
-      this.progress.update('validation', 'done', '✓ Готово');
-      await Utils.sleep(200);
-      this._setProcessing(false);
-      UIRenderer.renderResults({
-        article: result.article,
-        description,
-        rawText: 'Локальный режим (API недоступен)',
-        confidence: result.confidence,
-        aggravating: this.rag.getAggravatingFactors(description),
-      });
-      return;
-    }
-
-    try {
-      this.progress.update('retrieval', 'active', 'Комплексный RAG-поиск...');
-      this.progress.update('llm', 'active', 'llama3.1:8b квалифицирует...');
-
-      const data = await this.llm.qualifyCrime(description);
-
-      this.progress.update('retrieval', 'done', '✓ RAG-поиск выполнен');
-      this.progress.update('llm', 'done', '✓ Квалификация получена');
-      this.progress.update('validation', 'active', 'Парсинг секций...');
-      await Utils.sleep(300);
-      this.progress.update('validation', 'done', '✓ Отчёт готов');
-      await Utils.sleep(200);
+      this.progress.update('llm', 'done', '✓ Разбор получен');
+      const unverified = (data.unverified_articles || []).length;
+      this.progress.update('validation', unverified ? 'error' : 'done',
+        unverified ? `✗ Ссылок мимо RAG: ${unverified}` : '✓ Все ссылки подтверждены');
 
       this._setProcessing(false);
+      // Финальная перерисовка: тот же текст, но разложенный по секциям и с
+      // дословными статьями из индекса под ним.
       UIRenderer.renderQualification(data, description);
     } catch (err) {
       console.error('Qualification error:', err);
       this._setProcessing(false);
-      UIRenderer.renderError('Ошибка квалификации', `${err.message}\n\nПроверьте эндпоинт /api/crime/qualify.`);
+      UIRenderer.renderError('Ошибка квалификации', err.message);
     }
   }
 

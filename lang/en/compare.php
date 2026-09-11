@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'checking_ollama' => 'Checking Ollama...',
+    'checking_ollama' => 'Checking AI service...',
     'cache_short' => 'Cache',
     'theme_toggle' => 'Switch theme',
     'history_btn' => '📚 History',
@@ -18,8 +18,8 @@ return [
     'drop_file' => 'Drag the file here',
     'or_click' => 'or click to choose',
 
-    'ai_via_ollama' => 'AI analysis via Ollama',
-    'ai_subtitle' => 'Streaming · Full prompt · Cache',
+    'ai_via_ollama' => 'AI analysis by LegalAI',
+    'ai_subtitle' => 'Full prompt · Cache',
     'ollama_url_placeholder' => 'Ollama URL',
     'model_faster' => '⚡ llama3.2:3b (faster)',
     'model_fastest' => '🚀 phi3:mini (fastest)',
@@ -98,22 +98,22 @@ return [
         'confirm_clear_cache' => 'Clear the entire cache? This action cannot be undone.',
         'cache_cleared' => 'Cache cleared',
 
-        'checking_ollama' => 'Checking Ollama...',
+        'checking_ollama' => 'Checking AI service...',
         'no_models' => 'No models',
-        'ollama_no_models_html' => '<strong>⚠️ Ollama is running but has no models.</strong><br>',
-        'ollama_connected' => 'Ollama connected.',
+        'ollama_no_models_html' => '<strong>⚠️ Service is running but has no models.</strong><br>',
+        'ollama_connected' => 'AI service connected.',
         'ollama_models_available' => ':count models available.',
-        'ollama_connected_toast' => 'Ollama connected · :count models',
-        'ollama_unavailable' => 'Ollama is unavailable',
-        'ollama_connect_failed' => '<strong>❌ Could not connect.</strong><br>',
+        'ollama_connected_toast' => 'AI service connected',
+        'ollama_unavailable' => 'AI service is unavailable',
+        'ollama_connect_failed' => '<strong>❌ Could not connect to the AI service.</strong><br>Make sure python/app.py is running.',
 
-        'connecting_to' => '⏳ Connecting to :model...',
+        'connecting_to' => '⏳ Sending request (:model)...',
         'streaming_unsupported' => 'Streaming is not supported',
-        'connected_receiving' => '✅ Connected. Receiving tokens...',
+        'connected_receiving' => '✅ Waiting for model response...',
         'done_tokens' => '✅ Done! :tokens tokens in :seconds s (:speed tok/s)',
         'empty_response' => 'Empty response',
         'cancelled_by_user' => 'Analysis cancelled by the user',
-        'ollama_unavailable_hint' => 'Ollama is unavailable. Run: OLLAMA_ORIGINS="*" ollama serve',
+        'ollama_unavailable_hint' => 'AI service is unavailable. Make sure python/app.py is running.',
         'analysis_cancelled' => 'Analysis cancelled',
         'cancelled_keyword' => 'cancelled',
 

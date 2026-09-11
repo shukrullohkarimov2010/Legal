@@ -1090,7 +1090,7 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-black tracking-tight">LegalAI Compare</h1>
-                    <p class="text-xs font-medium" style="color: var(--text-tertiary);">Premium · Streaming · llama3.1:8b</p>
+                    <p class="text-xs font-medium" style="color: var(--text-tertiary);">Premium · AI-Powered · Cached</p>
                 </div>
             </div>
             <div class="flex items-center gap-3 flex-wrap">
@@ -1220,12 +1220,6 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-3 flex-wrap">
-                        <input type="text" id="ollamaUrl" value="http://localhost:11434" class="px-4 py-2.5 rounded-xl text-sm w-52" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary);" placeholder="{{ __('compare.ollama_url_placeholder') }}">
-                        <select id="ollamaModel" class="px-4 py-2.5 rounded-xl text-sm" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary);">
-                            <option value="llama3.1:8b" selected>🦙 llama3.1:8b</option>
-                            <option value="llama3.2:3b">{{ __('compare.model_faster') }}</option>
-                            <option value="phi3:mini">{{ __('compare.model_fastest') }}</option>
-                        </select>
                         <button onclick="checkOllamaConnection()" class="px-4 py-2.5 rounded-xl text-sm font-semibold transition" style="background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary);">
                             {{ __('compare.check_btn') }}
                         </button>
@@ -1567,6 +1561,7 @@
     // =================================================================
     const T = @json(__('compare.js'));
     const tr = (str, params = {}) => Object.entries(params).reduce((acc, [k, v]) => acc.split(':' + k).join(v), str || '');
+    const PYTHON_API = "{{ env('PYTHON_API_URL', 'http://127.0.0.1:5000') }}";
 
     // =================================================================
     // STATE
@@ -1575,8 +1570,8 @@
         fileA: null, textA: '', nameA: '',
         fileB: null, textB: '', nameB: '',
         result: null,
-        ollamaConnected: false,
-        availableModels: [],
+        backendReady: false,
+        backendLabel: '',
         currentAbortController: null,
         progressTimerInterval: null,
         progressStartTime: null
@@ -1781,58 +1776,35 @@ ${tr(T.diffs_and_recs, { diffs: entry.result?.findings?.length || 0, recs: entry
         }, duration);
     }
     // =================================================================
-    // OLLAMA CONNECTION
+    // BACKEND CONNECTION (LegalAI API — LLM_PROVIDER is chosen server-side)
     // =================================================================
     async function checkOllamaConnection() {
-        const url = document.getElementById('ollamaUrl').value.trim();
         const badge = document.getElementById('ollamaStatusBadge');
         const infoBox = document.getElementById('ollamaInfoBox');
-        const modelSelect = document.getElementById('ollamaModel');
         badge.className = 'status-badge checking';
         badge.innerHTML = `<span class="dot pulse-dot"></span><span>${T.checking_ollama}</span>`;
         infoBox.classList.add('hidden');
         try {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 8000);
-            const response = await fetch(`${url}/api/tags`, { method: 'GET', signal: controller.signal });
+            const response = await fetch(`${PYTHON_API}/health`, { method: 'GET', signal: controller.signal });
             clearTimeout(timeout);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
-            const models = data.models || [];
-            if (models.length === 0) {
-                state.ollamaConnected = false;
-                badge.className = 'status-badge disconnected';
-                badge.innerHTML = `<span class="dot"></span><span>${T.no_models}</span>`;
-                infoBox.classList.remove('hidden');
-                infoBox.innerHTML = `${T.ollama_no_models_html}<code class="px-3 py-1 rounded-lg text-xs" style="background: var(--bg-tertiary);">ollama pull llama3.1:8b</code>`;
-                showToast(T.no_models, 'warning');
-                return false;
-            }
-            state.ollamaConnected = true;
-            state.availableModels = models.map(m => m.name);
-            const currentSelection = modelSelect.value;
-            modelSelect.innerHTML = '';
-            models.forEach(m => {
-                const sizeGB = m.size ? ` (${(m.size / 1e9).toFixed(1)}GB)` : '';
-                const option = document.createElement('option');
-                option.value = m.name;
-                option.textContent = `🦙 ${m.name}${sizeGB}`;
-                if (m.name === 'llama3.1:8b' || m.name.startsWith('llama3.1')) option.selected = true;
-                modelSelect.appendChild(option);
-            });
-            if (state.availableModels.includes(currentSelection)) modelSelect.value = currentSelection;
+            state.backendReady = true;
+            state.backendLabel = data.model || data.llm_provider || 'AI';
             badge.className = 'status-badge connected';
-            badge.innerHTML = `<span class="dot pulse-dot"></span><span>Ollama · ${models.length}</span>`;
+            badge.innerHTML = `<span class="dot pulse-dot"></span><span>${state.backendLabel}</span>`;
             infoBox.classList.remove('hidden');
-            infoBox.innerHTML = `✅ <strong>${T.ollama_connected}</strong> ${tr(T.ollama_models_available, { count: models.length })}`;
-            showToast(tr(T.ollama_connected_toast, { count: models.length }), 'success');
+            infoBox.innerHTML = `✅ <strong>${T.ollama_connected}</strong>`;
+            showToast(T.ollama_connected, 'success');
             return true;
         } catch (err) {
-            state.ollamaConnected = false;
+            state.backendReady = false;
             badge.className = 'status-badge disconnected';
             badge.innerHTML = `<span class="dot"></span><span>${T.ollama_unavailable}</span>`;
             infoBox.classList.remove('hidden');
-            infoBox.innerHTML = `${T.ollama_connect_failed}<code class="px-3 py-1 rounded-lg text-xs" style="background: var(--bg-tertiary);">OLLAMA_ORIGINS="*" ollama serve</code>`;
+            infoBox.innerHTML = T.ollama_connect_failed;
             showToast(T.ollama_unavailable, 'error');
             return false;
         }
@@ -1857,100 +1829,35 @@ ${tr(T.diffs_and_recs, { diffs: entry.result?.findings?.length || 0, recs: entry
         }
     }
     // =================================================================
-    // STREAMING OLLAMA CALL
+    // BACKEND AI CALL (LegalAI API — /api/contract/compare)
     // =================================================================
-    async function callOllamaStreaming(systemPrompt, userPrompt) {
-        const url = document.getElementById('ollamaUrl').value.trim();
-        const model = document.getElementById('ollamaModel').value;
+    async function callBackendCompare(textA, textB, nameA, nameB) {
         const detailsEl = document.getElementById('aiProgressDetails');
         const streamingStats = document.getElementById('streamingStats');
         const streamingPreview = document.getElementById('streamingPreview');
         state.currentAbortController = new AbortController();
         const controller = state.currentAbortController;
-        let fullContent = '';
-        let tokenCount = 0;
-        const startTime = Date.now();
-        streamingStats.classList.remove('hidden');
+        streamingStats.classList.add('hidden');
         streamingPreview.classList.remove('hidden');
         detailsEl.classList.remove('hidden');
-        detailsEl.textContent = tr(T.connecting_to, { model });
+        detailsEl.textContent = tr(T.connecting_to, { model: state.backendLabel || 'AI' });
+        streamingPreview.textContent = T.connected_receiving;
         try {
-            const response = await fetch(`${url}/api/chat`, {
+            const response = await fetch(`${PYTHON_API}/api/contract/compare`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: model,
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: userPrompt }
-                    ],
-                    stream: true,
-                    format: 'json',
-                    options: {
-                        temperature: 0.1,
-                        top_p: 0.95,
-                        num_predict: 4000,
-                        num_ctx: 8192,
-                        stop: ['\n']
-                    }
-                }),
+                body: JSON.stringify({ nameA, nameB, textA, textB }),
                 signal: controller.signal
             });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            if (!response.body) throw new Error(T.streaming_unsupported);
-            detailsEl.textContent = T.connected_receiving;
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop() || '';
-                for (const line of lines) {
-                    if (!line.trim()) continue;
-                    try {
-                        const json = JSON.parse(line);
-                        if (json.message?.content) {
-                            fullContent += json.message.content;
-                            tokenCount++;
-                            if (tokenCount % 3 === 0) {
-                                const elapsed = (Date.now() - startTime) / 1000;
-                                const speed = tokenCount / elapsed;
-                                document.getElementById('tokenCount').textContent = tokenCount;
-                                document.getElementById('tokenSpeed').textContent = speed.toFixed(1);
-                                const estimatedTotal = 4000;
-                                const remainingTokens = estimatedTotal - tokenCount;
-                                const etaSeconds = remainingTokens / speed;
-                                if (etaSeconds > 0 && etaSeconds < 600) {
-                                    const etaMin = Math.floor(etaSeconds / 60);
-                                    const etaSec = Math.floor(etaSeconds % 60);
-                                    document.getElementById('etaTime').textContent = `${etaMin}:${String(etaSec).padStart(2, '0')}`;
-                                }
-                                const progress = Math.min(90, Math.round((tokenCount / estimatedTotal) * 90));
-                                document.getElementById('progressBar').style.width = progress + '%';
-                                document.getElementById('progressPercent').textContent = progress + '%';
-                                streamingPreview.textContent = fullContent.slice(-500);
-                            }
-                        }
-                        if (json.done) {
-                            const totalTime = (Date.now() - startTime) / 1000;
-                            const finalSpeed = tokenCount / totalTime;
-                            document.getElementById('tokenCount').textContent = tokenCount;
-                            document.getElementById('tokenSpeed').textContent = finalSpeed.toFixed(1);
-                            document.getElementById('etaTime').textContent = '0:00';
-                            document.getElementById('progressBar').style.width = '95%';
-                            document.getElementById('progressPercent').textContent = '95%';
-                            detailsEl.textContent = tr(T.done_tokens, { tokens: tokenCount, seconds: Math.round(totalTime), speed: finalSpeed.toFixed(1) });
-                            streamingPreview.textContent = fullContent;
-                            break;
-                        }
-                    } catch (e) { continue; }
-                }
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data || data.ok !== true) {
+                throw new Error((data && data.error) || `HTTP ${response.status}`);
             }
-            if (!fullContent) throw new Error(T.empty_response);
-            return fullContent;
+            document.getElementById('progressBar').style.width = '95%';
+            document.getElementById('progressPercent').textContent = '95%';
+            detailsEl.textContent = T.connected_receiving;
+            streamingPreview.textContent = JSON.stringify(data.result, null, 2).slice(0, 2000);
+            return JSON.stringify(data.result);
         } catch (err) {
             if (err.name === 'AbortError') {
                 throw new Error(T.cancelled_by_user);
@@ -1978,110 +1885,6 @@ ${tr(T.diffs_and_recs, { diffs: entry.result?.findings?.length || 0, recs: entry
         showToast(T.analysis_cancelled, 'warning');
     }
     // =================================================================
-    // PROFESSIONAL PROMPT
-    // =================================================================
-    function buildComparisonPrompt(textA, textB, nameA, nameB) {
-        const maxLen = 5000;
-        const tA = textA.length > maxLen ? textA.slice(0, maxLen) + T.text_truncated : textA;
-        const tB = textB.length > maxLen ? textB.slice(0, maxLen) + T.text_truncated : textB;
-        const systemPrompt = `# РОЛЬ
-Ты — старший партнёр юридической фирмы Республики Таджикистан с 20-летним опытом в договорном и корпоративном праве. Ты специализируешься на сравнительном правовом анализе договоров и выявлении юридических рисков.
-# ТВОЯ ЭКСПЕРТИЗА
-- Гражданский кодекс Республики Таджикистан (части 1, 2, 3)
-- Закон РТ «Об обществах с ограниченной ответственностью»
-- Закон РТ «Об акционерных обществах»
-- Закон РТ «О защите прав потребителей»
-- Закон РТ «О контрактной системе закупок»
-- Практика арбитражных судов РТ
-# ПРИНЦИПЫ АНАЛИЗА
-1. **Точность**: анализируй только реальные различия из текстов, не выдумывай
-2. **Конкретность**: приводи точные цитаты из обоих документов в полях inDocA/inDocB
-3. **Практичность**: рекомендации должны быть применимы в реальных переговорах
-4. **Сдержанность**: если не уверен в ссылке на статью — не ссылайся, лучше пропусти
-5. **Приоритизация**: critical > warning > info по юридической значимости
-# ФОРМАТ ОТВЕТА
-Верни ТОЛЬКО валидный JSON-объект. Никаких пояснений, markdown-обёрток, комментариев.
-Массив "recommendations" ОБЯЗАТЕЛЬНО должен содержать минимум 3 элемента.
-Язык ответа: ${T.response_language}.`;
-        const userPrompt = `# ЗАДАЧА
-Проведи сравнительный правовой анализ двух договоров. Выяви все юридически значимые различия и дай профессиональные рекомендации.
-# ДОКУМЕНТЫ
-## ДОГОВОР A (эталон): "${nameA}"
-\`\`\`
-${tA}
-\`\`\`
-## ДОГОВОР B (сравниваемый): "${nameB}"
-\`\`\`
-${tB}
-\`\`\`
-# КАТЕГОРИИ АНАЛИЗА (в порядке юридической значимости)
-1. **ФИНАНСОВЫЕ УСЛОВИЯ** — сумма, валюта, НДС, порядок оплаты, предоплата, индексация
-2. **СРОКИ И ДАТЫ** — даты начала/окончания, сроки исполнения, пролонгация, расторжение
-3. **ОТВЕТСТВЕННОСТЬ СТОРОН** — штрафы, пени, неустойки, лимиты ответственности
-4. **ПРАВА И ОБЯЗАННОСТИ** — объём и характер обязательств, порядок приёмки
-5. **КОНФИДЕНЦИАЛЬНОСТЬ И IP** — режим NDA, права на интеллектуальную собственность
-6. **ПОДСУДНОСТЬ И ПРИМЕНИМОЕ ПРАВО** — арбитраж, суд, применимое законодательство
-7. **ФОРС-МАЖОР** — перечень обстоятельств, порядок уведомления, сроки
-8. **РАСТОРЖЕНИЕ** — основания и порядок прекращения договора
-9. **ГАРАНТИИ И ЗАВЕРЕНИЯ** — representations & warranties сторон
-10. **ПРОЧИЕ РАЗЛИЧИЯ** — остальные значимые изменения
-# УРОВНИ ВАЖНОСТИ
-- **"critical"** — юридический конфликт, делающий договоры несовместимыми; требует немедленного устранения
-- **"warning"** — потенциальный риск; требует внимания и обсуждения с контрагентом
-- **"info"** — информационное различие, не создающее существенных рисков
-# ПРИМЕР ВЫВОДА (СТРОГО ЭТОТ ФОРМАТ)
-{
-"summary": "Документы имеют 5 существенных различий, из них 2 критических в финансовых условиях и сроках. Совместимость — 72%. Требуется согласование перед подписанием.",
-"compatibilityScore": 72,
-"compatibilityLabel": "Удовлетворительная",
-"findings": [
-{
-"id": 1,
-"category": "ФИНАНСОВЫЕ УСЛОВИЯ",
-"severity": "critical",
-"title": "Различие в сумме договора",
-"inDocA": "Общая сумма договора составляет 500 000 (пятьсот тысяч) сомони, включая НДС 20%",
-"inDocB": "Цена договора — 450 000 сомони без НДС",
-"legalRisk": "Несогласованность цены и режима НДС создаёт риск спора об оплате и налоговых последствий для обеих сторон",
-"recommendation": "Согласовать единую сумму и режим НДС. Рекомендуется использовать формулировку 'включая НДС 20%' согласно ст. 184 НК РТ"
-}
-],
-"recommendations": [
-{
-"priority": "high",
-"action": "Согласовать финансовые условия (сумма, валюта, НДС)",
-"rationale": "Финансовые условия — существенное условие договора (ст. 424 ГК РТ). Без их согласования договор может быть признан незаключённым"
-},
-{
-"priority": "medium",
-"action": "Сверить сроки исполнения и порядок приёмки",
-"rationale": "Несоответствие сроков может привести к просрочке и начислению неустойки"
-},
-{
-"priority": "low",
-"action": "Составить протокол разногласий к договору",
-"rationale": "Протокол зафиксирует согласованные позиции и защитит интересы обеих сторон"
-}
-],
-"overallConclusion": "Документы требуют дополнительного согласования по 2 критическим пунктам. После устранения разногласий договор может быть подписан."
-}
-# ТРЕБОВАНИЯ К ВЫВОДУ
-1. **summary** — 2-3 предложения на языке ответа с ключевыми выводами
-2. **compatibilityScore** — число 0-100 (100 = идентичны)
-3. **compatibilityLabel** — одно из: "${T.score_excellent}" (≥95), "${T.score_good}" (85-94), "${T.score_satisfactory}" (70-84), "${T.score_low}" (50-69), "${T.score_critical}" (<50)
-4. **findings** — массив всех выявленных различий (каждое с полной структурой)
-5. **recommendations** — массив минимум из 3 рекомендаций с приоритетами
-6. **overallConclusion** — итоговое заключение: можно ли подписывать после устранения разногласий
-# ВАЖНО
-- Анализируй ТОЛЬКО реальные различия из текстов
-- Давай точные цитаты из обоих документов
-- Severity распределяй по юридической значимости, а не по количеству
-- Если различий мало — честно об этом напиши
-- Верни ТОЛЬКО JSON
-JSON:`;
-        return { systemPrompt, userPrompt };
-    }
-    // =================================================================
     // JSON PARSER
     // =================================================================
     function parseAIResponse(content) {
@@ -2090,7 +1893,7 @@ JSON:`;
         const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
         if (jsonMatch) { try { return JSON.parse(jsonMatch[1].trim()); } catch (e) {} }
         const braceMatch = content.match(/\{[\s\S]*\}/);
-        if (bracematch) { try { return JSON.parse(bracematch[0]); } catch (e) {} }
+        if (braceMatch) { try { return JSON.parse(braceMatch[0]); } catch (e) {} }
         const start = content.indexOf('{');
         const end = content.lastIndexOf('}');
         if (start !== -1 && end > start) {
@@ -2158,9 +1961,8 @@ JSON:`;
     // AI ANALYSIS
     // =================================================================
     async function analyzeWithAI(textA, textB, nameA, nameB) {
-        const { systemPrompt, userPrompt } = buildComparisonPrompt(textA, textB, nameA, nameB);
         try {
-            const content = await callOllamaStreaming(systemPrompt, userPrompt);
+            const content = await callBackendCompare(textA, textB, nameA, nameB);
             const result = parseAIResponse(content);
             if (!result) {
                 showToast(T.json_parse_failed, 'warning');
@@ -2468,7 +2270,7 @@ JSON:`;
         document.getElementById('uploadSection').classList.add('hidden');
         document.getElementById('compareBtn').disabled = true;
         startProgressTimer();
-        const useAI = document.getElementById('useAI').checked && state.ollamaConnected;
+        const useAI = document.getElementById('useAI').checked && state.backendReady;
         const useCache = document.getElementById('useCache').checked;
         try {
             updateProgress(15, T.progress_reading, 'stage-read');
@@ -2741,7 +2543,7 @@ ${T.label_compared}
                 date: new Date().toISOString(),
                 documentA: state.nameA,
                 documentB: state.nameB,
-                source: state.result.fromCache ? 'cache' : (state.result.usedAI ? document.getElementById('ollamaModel').value : 'local')
+                source: state.result.fromCache ? 'cache' : (state.result.usedAI ? (state.backendLabel || 'AI') : 'local')
             },
             result: state.result
         };

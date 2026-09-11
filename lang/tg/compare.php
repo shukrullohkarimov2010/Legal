@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'checking_ollama' => 'Санҷиши Ollama...',
+    'checking_ollama' => 'Санҷиши хидмати AI...',
     'cache_short' => 'Кэш',
     'theme_toggle' => 'Иваз кардани мавзӯъ',
     'history_btn' => '📚 Таърих',
@@ -18,8 +18,8 @@ return [
     'drop_file' => 'Файлро ин ҷо кашед',
     'or_click' => 'ё барои интихоб зер кунед',
 
-    'ai_via_ollama' => 'Таҳлили AI тавассути Ollama',
-    'ai_subtitle' => 'Streaming · Промпти пурра · Кэш',
+    'ai_via_ollama' => 'Таҳлили AI аз LegalAI',
+    'ai_subtitle' => 'Промпти пурра · Кэш',
     'ollama_url_placeholder' => 'URL-и Ollama',
     'model_faster' => '⚡ llama3.2:3b (тезтар)',
     'model_fastest' => '🚀 phi3:mini (тезтарин)',
@@ -98,22 +98,22 @@ return [
         'confirm_clear_cache' => 'Тамоми кэш тоза карда шавад? Ин амалро бекор кардан мумкин нест.',
         'cache_cleared' => 'Кэш тоза карда шуд',
 
-        'checking_ollama' => 'Санҷиши Ollama...',
+        'checking_ollama' => 'Санҷиши хидмати AI...',
         'no_models' => 'Модел нест',
-        'ollama_no_models_html' => '<strong>⚠️ Ollama кор мекунад, вале модел надорад.</strong><br>',
-        'ollama_connected' => 'Ollama пайваст шуд.',
+        'ollama_no_models_html' => '<strong>⚠️ Хидмат кор мекунад, вале модел надорад.</strong><br>',
+        'ollama_connected' => 'Хидмати AI пайваст шуд.',
         'ollama_models_available' => ':count модел дастрас аст.',
-        'ollama_connected_toast' => 'Ollama пайваст шуд · :count модел',
-        'ollama_unavailable' => 'Ollama дастрас нест',
-        'ollama_connect_failed' => '<strong>❌ Пайвастшавӣ муяссар нашуд.</strong><br>',
+        'ollama_connected_toast' => 'Хидмати AI пайваст шуд',
+        'ollama_unavailable' => 'Хидмати AI дастрас нест',
+        'ollama_connect_failed' => '<strong>❌ Пайваст ба хидмати AI муяссар нашуд.</strong><br>Мутмаин шавед, ки python/app.py кор мекунад.',
 
-        'connecting_to' => '⏳ Пайвастшавӣ ба :model...',
+        'connecting_to' => '⏳ Фиристодани дархост (:model)...',
         'streaming_unsupported' => 'Streaming дастгирӣ намешавад',
-        'connected_receiving' => '✅ Пайваст шуд. Токенҳо гирифта мешаванд...',
+        'connected_receiving' => '✅ Интизори ҷавоби модел...',
         'done_tokens' => '✅ Тайёр! :tokens токен дар :seconds сония (:speed ток/сон)',
         'empty_response' => 'Ҷавоби холӣ',
         'cancelled_by_user' => 'Таҳлил аз ҷониби корбар бекор карда шуд',
-        'ollama_unavailable_hint' => 'Ollama дастрас нест. Иҷро кунед: OLLAMA_ORIGINS="*" ollama serve',
+        'ollama_unavailable_hint' => 'Хидмати AI дастрас нест. Мутмаин шавед, ки python/app.py кор мекунад.',
         'analysis_cancelled' => 'Таҳлил бекор карда шуд',
         'cancelled_keyword' => 'бекор',
 

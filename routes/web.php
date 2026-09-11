@@ -45,8 +45,11 @@ Route::get('/contract/create', [ContractController::class, 'create'])
 Route::get('/contract/analyze', [ContractController::class, 'showForm'])->name('contract.analyze');
 Route::get('/contract/codex', [ContractController::class, 'codex'])
     ->name('contract.codex');
-Route::post('/contract/analyze', [ContractController::class, 'upload'])->name('contract.upload');
-Route::get('/contract/stream/{requestId}', [ContractController::class, 'streamProxy'])->name('contract.stream');
+// Маршруты contract.upload и contract.stream убраны: они указывали на методы
+// upload() и streamProxy(), которых в ContractController нет, и обращение к
+// ним возвращало HTTP 500. Загрузка договора и поток анализа идут напрямую в
+// python/app.py (POST /api/analyze и GET /api/stream/{id}) — см. вызовы в
+// resources/views/contract/analyze.blade.php.
 Route::get('/tasks/chat', function () {return view('admin.pages.tasks.chat');
 })->name('tasks.chat');Route::get('/tasks/calc', [TaskController::class, 'calc'])->name('tasks.calc');
 Route::post('/tasks/report', [TaskController::class, 'report'])->name('tasks.report');

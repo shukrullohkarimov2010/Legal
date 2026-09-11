@@ -69,6 +69,16 @@ $L = match (app()->getLocale()) {
     ],
     'ticker' => ['Кодекси гражданӣ', 'Кодекси меҳнат', 'Кодекси андоз', 'Кодекси ҷиноят', 'КҲМ ҶТ', 'Қонун дар бораи ҶДММ', 'Иҷора', 'Мерос', 'NDA', 'Таҳвил'],
     'stats' => [['v' => 20000, 's' => '+', 'l' => 'санад дар база'], ['v' => 98.7, 'd' => 1, 's' => '%', 'l' => 'дақиқӣ'], ['v' => 60, 's' => '', 'l' => 'сония таҳлил'], ['v' => 8, 's' => '', 'l' => 'абзори AI']],
+    'showcase' => [
+        'eyebrow' => 'Дар амал',
+        'title' => 'Се абзор, ки ҳуқуқшиносии шуморо',
+        'accent' => 'ба сатҳи дигар мебарорад',
+        'items' => [
+            ['t' => 'Хавфҳоро дар матн фавран мебинед', 'd' => 'AI ҳар банди шартномаро тафтиш карда, дараҷаи хавфро бо ишора ба моддаи мушаххас нишон медиҳад.'],
+            ['t' => 'Ҳуҷҷатро дар якчанд дақиқа месозед', 'd' => 'Шаблонҳои санҷидашуда аз рӯи ГК ҶТ — танҳо тағйирёбандаҳоро пур кунед.'],
+            ['t' => 'Ҳар хулоса ба модда пайваст аст', 'd' => 'Граф аз банди шартнома то моддаи дахлдори кодекс — шаффоф ва санҷидашаванда.'],
+        ],
+    ],
     'prob' => [
         'badge' => 'Шинос аст?', 'title' => 'Ҳар як шартнома бе санҷиш', 'accent' => 'пул ва асабро мегирад',
         'sub' => 'Мо ҳисоб кардем, ки имзои шартнома «кӯр-кӯрона» ба тиҷорат дар Тоҷикистон чӣ қадар арзиш дорад.',
@@ -215,6 +225,16 @@ $L = match (app()->getLocale()) {
     ],
     'ticker' => ['Civil Code', 'Labor Code', 'Tax Code', 'Criminal Code', 'CAO of RT', 'LLC Law', 'Lease', 'Inheritance', 'NDA', 'Supply'],
     'stats' => [['v' => 20000, 's' => '+', 'l' => 'acts in the base'], ['v' => 98.7, 'd' => 1, 's' => '%', 'l' => 'accuracy'], ['v' => 60, 's' => '', 'l' => 'sec per analysis'], ['v' => 8, 's' => '', 'l' => 'AI tools']],
+    'showcase' => [
+        'eyebrow' => 'In practice',
+        'title' => 'Three tools that take your legal work',
+        'accent' => 'to another level',
+        'items' => [
+            ['t' => 'See risks in the text instantly', 'd' => 'AI checks every clause of the contract and flags the risk level with a reference to the exact article.'],
+            ['t' => 'Assemble a document in minutes', 'd' => 'Templates verified against the Civil Code of RT — just fill in the variables.'],
+            ['t' => 'Every conclusion is linked to a law', 'd' => 'A graph from the contract clause to the relevant code article — transparent and verifiable.'],
+        ],
+    ],
     'prob' => [
         'badge' => 'Sound familiar?', 'title' => 'Every contract signed unchecked', 'accent' => 'costs you money and nerves',
         'sub' => 'We calculated what signing without review actually costs businesses in Tajikistan.',
@@ -361,6 +381,16 @@ default => [
     ],
     'ticker' => ['Гражданский кодекс', 'Трудовой кодекс', 'Налоговый кодекс', 'Уголовный кодекс', 'КоАП РТ', 'Закон об ООО', 'Аренда', 'Наследство', 'NDA', 'Поставка'],
     'stats' => [['v' => 20000, 's' => '+', 'l' => 'актов в базе'], ['v' => 98.7, 'd' => 1, 's' => '%', 'l' => 'точность'], ['v' => 60, 's' => '', 'l' => 'секунд анализ'], ['v' => 8, 's' => '', 'l' => 'AI-инструментов']],
+    'showcase' => [
+        'eyebrow' => 'На практике',
+        'title' => 'Три инструмента, которые выводят вашу юридическую работу',
+        'accent' => 'на другой уровень',
+        'items' => [
+            ['t' => 'Видите риски прямо в тексте', 'd' => 'AI проверяет каждый пункт договора и подсвечивает уровень риска со ссылкой на конкретную статью.'],
+            ['t' => 'Собираете документ за минуты', 'd' => 'Шаблоны, выверенные по ГК РТ, — просто заполните переменные.'],
+            ['t' => 'Каждый вывод привязан к норме закона', 'd' => 'Граф от пункта договора до статьи кодекса — прозрачно и проверяемо.'],
+        ],
+    ],
     'prob' => [
         'badge' => 'Знакомо?', 'title' => 'Каждый договор без проверки', 'accent' => 'стоит денег и нервов',
         'sub' => 'Мы посчитали, во что бизнесу в Таджикистане обходится подписание документов «не глядя».',
@@ -1271,6 +1301,250 @@ body.dark-theme .icon-tile {
 }
 
 /* ================================================================
+   9b. STARBURST — фирменный лучевой визуал (hero / stats)
+   ================================================================ */
+.starburst-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-card);
+    min-height: 340px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 3.25rem;
+}
+
+.starburst-parallax {
+    position: absolute;
+    inset: -6%;
+    z-index: 0;
+    /* Плавное растворение к краям, чтобы луч не «обрубался» о рамку */
+    mask-image: radial-gradient(120% 95% at 50% 105%, black 45%, transparent 100%);
+    -webkit-mask-image: radial-gradient(120% 95% at 50% 105%, black 45%, transparent 100%);
+    animation: parallaxDrift 14s ease-in-out infinite;
+}
+
+@keyframes parallaxDrift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(0, -10px) scale(1.015); }
+}
+
+.starburst-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.starburst-svg line,
+.starburst-svg circle {
+    transition: stroke-opacity var(--t-slow), fill-opacity var(--t-slow);
+}
+
+.starburst-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 0 1.5rem 2.75rem;
+}
+
+@keyframes starburstDrift {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-4px) scale(1.008); }
+}
+
+.starburst-svg {
+    animation: starburstDrift 10s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .32; }
+}
+
+.starburst-svg circle {
+    animation: twinkle 3.2s ease-in-out infinite;
+    transform-origin: center;
+}
+
+.starburst-svg circle:nth-of-type(3n) { animation-delay: .4s; animation-duration: 3.8s; }
+.starburst-svg circle:nth-of-type(5n) { animation-delay: 1.1s; animation-duration: 2.6s; }
+.starburst-svg circle:nth-of-type(7n) { animation-delay: 1.8s; animation-duration: 4.4s; }
+
+/* Мягкая дышащая подсветка в основании луча — фон живёт сам по себе, без наведения */
+.starburst-wrap::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -10%;
+    width: 60%;
+    aspect-ratio: 1;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+    filter: blur(30px);
+    z-index: 0;
+    pointer-events: none;
+    animation: burstPulse 4.5s ease-in-out infinite;
+}
+
+@keyframes burstPulse {
+    0%, 100% { opacity: .55; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.12); }
+}
+
+@media (max-width: 640px) {
+    .starburst-wrap { min-height: 280px; padding-top: 2.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .starburst-svg { animation: none; }
+    .starburst-svg circle { animation: none; }
+    .starburst-parallax { animation: none; }
+    .starburst-wrap::before { animation: none; }
+}
+
+/* ================================================================
+   9c. CARD GLOW — лёгкий отклик на наведение (без наклона и поворота)
+   Карточка чуть приподнимается (1-2px) и по ней скользит мягкий блик
+   в точке курсора — «живой» отклик без физического движения/тряски.
+   ================================================================ */
+.tilt-card {
+    --mx: 50%;
+    --my: 50%;
+    transition: transform .35s cubic-bezier(.22, 1, .36, 1), box-shadow .35s ease, border-color .35s ease;
+}
+
+.tilt-card.has-glare {
+    position: relative;
+}
+
+.tilt-card.has-glare::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(380px circle at var(--mx) var(--my), rgba(255, 255, 255, .45), transparent 55%);
+    opacity: 0;
+    transition: opacity .4s ease;
+    mix-blend-mode: overlay;
+}
+
+body.dark-theme .tilt-card.has-glare::after {
+    background: radial-gradient(380px circle at var(--mx) var(--my), rgba(255, 255, 255, .18), transparent 55%);
+}
+
+.tilt-card.has-glare.tilting::after {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tilt-card.has-glare::after { display: none; }
+}
+
+/* Карточка-документ мягко «парит», как настоящая карта в воздухе */
+@keyframes docFloat {
+    0%, 100% { transform: translateY(0) rotate(-1.4deg); }
+    50% { transform: translateY(-9px) rotate(1.4deg); }
+}
+
+.mock-doc-card {
+    animation: docFloat 6s ease-in-out infinite;
+}
+
+/* Узлы графа норм права мягко пульсируют */
+@keyframes pinPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .55; }
+}
+
+/* Мягкий блик пробегает по карточкам отчёта —живой фон без наведения */
+.mock-report {
+    position: relative;
+    overflow: hidden;
+}
+
+.mock-report::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    left: -160%;
+    width: 55%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .55), transparent);
+    animation: shimmerSweep 5.5s ease-in-out infinite;
+}
+
+body.dark-theme .mock-report::after {
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .12), transparent);
+}
+
+.mock-report:nth-child(2)::after { animation-delay: .5s; }
+.mock-report:nth-child(3)::after { animation-delay: 1s; }
+
+@keyframes shimmerSweep {
+    0% { left: -160%; }
+    45%, 100% { left: 160%; }
+}
+
+/* Иконки 8 инструментов — объёмная подача: градиент, лёгкий разворот,
+   спокойное «дыхание» в фоне и уверенный pop при наведении на карточку */
+.tool-card-3d .icon-tile-pop {
+    background: var(--accent-gradient);
+    color: #fff;
+    border: none;
+    box-shadow: 0 10px 22px -9px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, .28);
+    transform: rotate(-6deg);
+    transition: transform .4s cubic-bezier(.22, 1, .36, 1), box-shadow .4s ease;
+    animation: iconBob 4.2s ease-in-out infinite;
+}
+
+.tool-card-3d:nth-child(4n+2) .icon-tile-pop { animation-delay: .6s; }
+.tool-card-3d:nth-child(4n+3) .icon-tile-pop { animation-delay: 1.3s; }
+.tool-card-3d:nth-child(4n+4) .icon-tile-pop { animation-delay: 2s; }
+
+@keyframes iconBob {
+    0%, 100% { transform: rotate(-6deg) translateY(0); }
+    50% { transform: rotate(-1deg) translateY(-4px); }
+}
+
+.card-hover.tilt-card.tilting .icon-tile-pop {
+    transform: rotate(0deg) scale(1.14) translateY(-2px);
+    box-shadow: 0 16px 28px -8px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, .34);
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mock-report::after { display: none; }
+    .tool-card-3d .icon-tile-pop { animation: none; transform: rotate(-6deg); }
+}
+
+/* ================================================================
+   9d. REVEAL-3D — кинематографичное появление при скролле
+   («всплытие» из глубины с лёгким наклоном, вместо плоского слайда)
+   ================================================================ */
+.reveal-3d {
+    opacity: 0;
+    transform: perspective(1400px) rotateX(14deg) translateY(48px) scale(.96);
+    transform-origin: 50% 100%;
+    transition: opacity 1s cubic-bezier(.16, 1, .3, 1), transform 1s cubic-bezier(.16, 1, .3, 1);
+}
+
+.reveal-3d.active {
+    opacity: 1;
+    transform: perspective(1400px) rotateX(0deg) translateY(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal-3d { opacity: 1; transform: none; }
+}
+
+/* ================================================================
    10. TICKER (бегущая строка кодексов)
    ================================================================ */
 .ticker {
@@ -1308,6 +1582,482 @@ body.dark-theme .icon-tile {
     font-weight: 500;
     letter-spacing: -0.005em;
     color: var(--text-muted);
+}
+
+/* ================================================================
+   10b. SHOWCASE — 3-карточная витрина флагманских инструментов
+   (в духе крупных продуктовых карточек с собственной иллюстрацией)
+   ================================================================ */
+.showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+    .showcase-grid { grid-template-columns: 1fr; }
+}
+
+.showcase-card {
+    position: relative;
+    background: var(--card-solid);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-xl);
+    padding: 1.75rem 1.75rem 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 460px;
+    box-shadow: var(--shadow-card);
+    transition: transform var(--t-normal), box-shadow var(--t-normal), border-color var(--t-normal);
+}
+
+.showcase-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--card-hover-border);
+}
+
+.showcase-expand {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--soft-blue);
+    color: var(--accent-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+}
+
+.showcase-heading {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    max-width: 78%;
+    margin-bottom: .5rem;
+    position: relative;
+    z-index: 3;
+}
+
+.showcase-desc {
+    font-size: .8125rem;
+    color: var(--text-secondary);
+    max-width: 86%;
+    margin-bottom: 1.25rem;
+    position: relative;
+    z-index: 3;
+}
+
+.showcase-visual {
+    flex: 1;
+    position: relative;
+    margin: 0 -1.75rem;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    overflow: hidden;
+    background: var(--soft-blue);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 0;
+}
+
+/* --- Card 1: анализ рисков — мини-мокап чата с отчётом --- */
+.mock-report {
+    width: 92%;
+    margin-bottom: 1.1rem;
+    background: var(--card-solid);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-hover);
+    padding: .85rem .9rem;
+    font-size: .72rem;
+}
+
+.mock-report + .mock-report { margin-top: -.6rem; }
+
+.mock-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+
+.mock-row:last-child { margin-bottom: 0; }
+
+.mock-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+
+.mock-bar {
+    height: 6px;
+    border-radius: 4px;
+    background: var(--card-border);
+    flex: 1;
+}
+
+.mock-badge {
+    font-size: .625rem;
+    font-weight: 700;
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* Круговой риск-балл: дорисовывается при появлении карточки на экране */
+.mock-gauge-card {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.mock-gauge-wrap {
+    position: relative;
+    width: 62px;
+    height: 62px;
+    flex-shrink: 0;
+}
+
+.mock-gauge {
+    width: 100%;
+    height: 100%;
+    animation: gaugeGlow 3s ease-in-out infinite;
+}
+
+@keyframes gaugeGlow {
+    0%, 100% { filter: drop-shadow(0 0 3px var(--accent-glow)); }
+    50% { filter: drop-shadow(0 0 9px var(--accent-glow)); }
+}
+
+.mock-gauge-progress {
+    stroke-dasharray: 264;
+    stroke-dashoffset: 264;
+    transition: stroke-dashoffset 1.5s cubic-bezier(.16, 1, .3, 1) .3s;
+}
+
+.showcase-card.active .mock-gauge-progress {
+    stroke-dashoffset: 74;
+}
+
+.mock-gauge-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mock-gauge { animation: none; }
+    .mock-gauge-progress { transition: none; stroke-dashoffset: 74; }
+}
+
+/* --- Card 2: генератор — стилизованный документ, как «карта» --- */
+.mock-doc-card {
+    width: 62%;
+    aspect-ratio: 5 / 7;
+    margin-bottom: -6%;
+    border-radius: 16px;
+    background: var(--accent-gradient);
+    box-shadow: var(--shadow-hover);
+    position: relative;
+    overflow: hidden;
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.mock-doc-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(120% 60% at 15% 0%, rgba(255,255,255,.35), transparent 55%),
+        radial-gradient(90% 50% at 100% 100%, rgba(0,0,0,.18), transparent 60%);
+}
+
+.mock-doc-lines span {
+    display: block;
+    height: 5px;
+    border-radius: 4px;
+    background: rgba(255,255,255,.55);
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+}
+
+.mock-doc-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+}
+
+.mock-doc-seal {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(255,255,255,.22);
+    border: 1px solid rgba(255,255,255,.5);
+    display: flex; align-items: center; justify-content: center;
+}
+
+.mock-doc-word {
+    font-size: .78rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.01em;
+}
+
+/* Печать организации периодически «опускается» на документ */
+.mock-stamp {
+    position: absolute;
+    width: 112px;
+    height: 112px;
+    left: 50%;
+    top: 42%;
+    margin: -56px 0 0 -56px;
+    z-index: 4;
+    pointer-events: none;
+    filter: drop-shadow(0 8px 14px rgba(37, 99, 235, .22));
+    animation: stampDrop 5.5s cubic-bezier(.34, 1.4, .4, 1) infinite;
+}
+
+.mock-stamp svg {
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes stampDrop {
+    0% { transform: translateY(-95px) scale(1.35) rotate(-20deg); opacity: 0; }
+    26% { transform: translateY(0) scale(1) rotate(-8deg); opacity: 1; }
+    32% { transform: translateY(2px) scale(.93) rotate(-8deg); opacity: 1; }
+    40%, 76% { transform: translateY(0) scale(1) rotate(-8deg); opacity: 1; }
+    92%, 100% { transform: translateY(-95px) scale(1.35) rotate(-20deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mock-stamp {
+        animation: none;
+        transform: translateY(0) scale(1) rotate(-8deg);
+        opacity: 1;
+    }
+}
+
+/* --- Card 3: вращающийся шар из точек (в стиле Stripe) --- */
+.mock-globe-scene {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 700px;
+    position: relative;
+}
+
+.mock-globe-sphere {
+    position: relative;
+    width: 1px;
+    height: 1px;
+    transform-style: preserve-3d;
+    animation: globeSpin 18s linear infinite;
+}
+
+@keyframes globeSpin {
+    from { transform: rotateY(0deg) rotateX(-8deg); }
+    to { transform: rotateY(360deg) rotateX(-8deg); }
+}
+
+.globe-dot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: -1px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    pointer-events: none;
+}
+
+.globe-pin {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 7px;
+    height: 7px;
+    margin: -3.5px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-primary) 22%, transparent), 0 0 14px 2px var(--accent-primary);
+    animation: pinPulse 2.4s ease-in-out infinite;
+}
+
+.globe-pin:nth-of-type(2n) { animation-delay: .5s; }
+.globe-pin:nth-of-type(3n) { animation-delay: 1s; }
+
+/* Декоративные орбитальные кольца — вращаются независимо, для глубины */
+.mock-globe-orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.mock-globe-orbit-a {
+    width: 230px;
+    height: 230px;
+    margin: -115px 0 0 -115px;
+    transform: rotateX(78deg) rotate(0deg);
+    animation: orbitSpin 12s linear infinite;
+}
+
+.mock-globe-orbit-b {
+    width: 260px;
+    height: 260px;
+    margin: -130px 0 0 -130px;
+    border-color: color-mix(in srgb, var(--accent-primary) 16%, transparent);
+    transform: rotateX(78deg) rotate(90deg);
+    animation: orbitSpin 18s linear infinite reverse;
+}
+
+@keyframes orbitSpin {
+    from { transform: rotateX(78deg) rotate(0deg); }
+    to { transform: rotateX(78deg) rotate(360deg); }
+}
+
+.mock-globe-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(140px circle at 50% 50%, var(--accent-glow), transparent 70%);
+    pointer-events: none;
+    animation: burstPulse 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mock-globe-sphere { animation: none; }
+    .mock-globe-orbit { animation: none; }
+    .globe-pin { animation: none; }
+    .mock-globe-glow { animation: none; }
+}
+
+/* Увеличенная версия шара для «featured»-карточки (крупнее соседних) */
+.showcase-card-lg {
+    min-height: 560px;
+}
+
+@media (min-width: 901px) {
+    .showcase-card-lg {
+        margin-top: -18px;
+        margin-bottom: -18px;
+    }
+}
+
+.mock-globe-scene-lg {
+    perspective: 900px;
+}
+
+.mock-globe-scene-lg .mock-globe-orbit-a {
+    width: 320px;
+    height: 320px;
+    margin: -160px 0 0 -160px;
+}
+
+.mock-globe-scene-lg .mock-globe-orbit-b {
+    width: 362px;
+    height: 362px;
+    margin: -181px 0 0 -181px;
+}
+
+.mock-globe-scene-lg .globe-pin {
+    width: 8px;
+    height: 8px;
+    margin: -4px;
+}
+
+.mock-globe-scene-lg .mock-globe-glow {
+    background: radial-gradient(220px circle at 50% 50%, var(--accent-glow), transparent 70%);
+}
+
+/* Дуга «перелёта» пролетает над шаром по кругу */
+.mock-globe-arc {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.mock-globe-arc-path {
+    stroke-dasharray: 460;
+    stroke-dashoffset: 460;
+    animation: arcFly 4.5s ease-in-out infinite;
+}
+
+@keyframes arcFly {
+    0% { stroke-dashoffset: 460; opacity: 0; }
+    10% { opacity: 1; }
+    48%, 58% { stroke-dashoffset: 0; opacity: 1; }
+    88%, 100% { stroke-dashoffset: -460; opacity: 0; }
+}
+
+/* Всплывающие бейджи со статистикой поверх шара */
+.mock-globe-badge {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    background: var(--card-solid);
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: .35rem .75rem .35rem .35rem;
+    box-shadow: var(--shadow-hover);
+    z-index: 5;
+    animation: badgeFloat 5s ease-in-out infinite;
+}
+
+.mock-globe-badge-a {
+    left: 4%;
+    bottom: 20%;
+    animation-delay: .3s;
+}
+
+.mock-globe-badge-b {
+    right: 6%;
+    top: 12%;
+    animation-delay: 1.7s;
+}
+
+@keyframes badgeFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+}
+
+@media (max-width: 900px) {
+    .showcase-card-lg { min-height: 500px; }
+    .mock-globe-badge { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mock-globe-arc-path { animation: none; stroke-dashoffset: 0; opacity: .8; }
+    .mock-globe-badge { animation: none; }
+}
+
+.showcase-section-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 2.25rem;
 }
 
 /* ================================================================
@@ -2106,6 +2856,24 @@ footer {
     html { scroll-behavior: auto; }
     .reveal { opacity: 1; transform: none; }
 }
+
+/* ================================================================
+   20. CARD HOVER OVERRIDES — объявлены в конце файла намеренно,
+   чтобы гарантированно перебивать более ранние правила :hover
+   (card-hover, showcase-card) с равной специфичностью.
+   Только лёгкий подъём (1-2px) и свечение — без наклона/поворота.
+   ================================================================ */
+.showcase-card.tilting {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+    border-color: var(--card-hover-border);
+}
+
+.card-hover.tilt-card.tilting {
+    transform: translateY(-2px);
+    border-color: var(--card-hover-border);
+    box-shadow: var(--shadow-hover);
+}
 </style>
 </head>
 
@@ -2290,17 +3058,713 @@ footer {
         </div>
     </div>
 
-    <!-- STATS BAND -->
-    <section class="py-16 px-4 sm:px-6 reveal">
-        <div class="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6">
-            @foreach($L['stats'] as $i => $s)
-                <div class="card-gradient card-hover p-6 text-center reveal rd{{ $i + 1 }}">
-                    <div class="text-3xl md:text-4xl font-extrabold text-gradient">
-                        <span class="counter" data-count="{{ $s['v'] }}" data-decimals="{{ $s['d'] ?? 0 }}">0</span>{{ $s['s'] }}
-                    </div>
-                    <div class="text-sm mt-1 c2">{{ $s['l'] }}</div>
+       <!-- STATS BAND — фирменный «звёздный взрыв» под цифрами -->
+    <section class="pt-16 pb-4 px-4 sm:px-6 reveal reveal-3d">
+        <div class="max-w-7xl mx-auto">
+            <div class="starburst-wrap tilt-card" data-tilt-max="4">
+                <div class="starburst-parallax">
+                <svg class="starburst-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+<line x1="500" y1="470" x2="362.4" y2="464.5" stroke="var(--accent-primary)" stroke-opacity="0.32" stroke-width="0.87" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="160.9" y2="448.5" stroke="var(--accent-primary)" stroke-opacity="0.77" stroke-width="0.7" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="361.1" y2="460.2" stroke="var(--accent-primary)" stroke-opacity="0.28" stroke-width="1.21" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="308.9" y2="455.7" stroke="var(--accent-primary)" stroke-opacity="0.59" stroke-width="1.25" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="188.9" y2="438.3" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="0.61" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="157.1" y2="420.5" stroke="var(--accent-primary)" stroke-opacity="0.37" stroke-width="0.79" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="269.0" y2="430.7" stroke="var(--accent-primary)" stroke-opacity="0.19" stroke-width="0.72" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="188.2" y2="412.1" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="1.48" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="76.2" y2="388.1" stroke="var(--accent-primary)" stroke-opacity="0.4" stroke-width="1.26" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="186.1" y2="399.3" stroke="var(--accent-primary)" stroke-opacity="0.75" stroke-width="1.29" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="359.8" y2="436.3" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="0.95" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="303.2" y2="423.7" stroke="var(--accent-primary)" stroke-opacity="0.19" stroke-width="0.93" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="265.8" y2="404.7" stroke="var(--accent-primary)" stroke-opacity="0.39" stroke-width="0.85" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="95.7" y2="355.0" stroke="var(--accent-primary)" stroke-opacity="0.59" stroke-width="1.33" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="159.1" y2="367.3" stroke="var(--accent-primary)" stroke-opacity="0.24" stroke-width="1.06" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="190.8" y2="359.4" stroke="var(--accent-primary)" stroke-opacity="0.53" stroke-width="1.42" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="152.8" y2="340.4" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="0.64" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="300.4" y2="395.7" stroke="var(--accent-primary)" stroke-opacity="0.27" stroke-width="1.73" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="290.2" y2="382.0" stroke="var(--accent-primary)" stroke-opacity="0.6" stroke-width="1.07" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="251.2" y2="359.5" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="0.9" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="307.2" y2="383.1" stroke="var(--accent-primary)" stroke-opacity="0.55" stroke-width="1.68" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="320.6" y2="386.3" stroke="var(--accent-primary)" stroke-opacity="0.85" stroke-width="1.21" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="369.4" y2="407.9" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.35" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="269.9" y2="347.1" stroke="var(--accent-primary)" stroke-opacity="0.17" stroke-width="1.06" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="244.5" y2="324.5" stroke="var(--accent-primary)" stroke-opacity="0.83" stroke-width="1.63" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="189.7" y2="300.8" stroke="var(--accent-primary)" stroke-opacity="0.62" stroke-width="1.24" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="216.1" y2="304.3" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.12" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="138.2" y2="245.8" stroke="var(--accent-primary)" stroke-opacity="0.76" stroke-width="0.92" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="344.5" y2="369.0" stroke="var(--accent-primary)" stroke-opacity="0.79" stroke-width="1.64" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="226.9" y2="288.2" stroke="var(--accent-primary)" stroke-opacity="0.56" stroke-width="0.78" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="258.9" y2="296.2" stroke="var(--accent-primary)" stroke-opacity="0.69" stroke-width="1.24" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="311.7" y2="337.1" stroke="var(--accent-primary)" stroke-opacity="0.13" stroke-width="1.71" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="195.5" y2="229.9" stroke="var(--accent-primary)" stroke-opacity="0.34" stroke-width="0.67" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="172.5" y2="201.4" stroke="var(--accent-primary)" stroke-opacity="0.18" stroke-width="1.18" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="214.5" y2="241.4" stroke="var(--accent-primary)" stroke-opacity="0.68" stroke-width="0.75" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="272.2" y2="274.1" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="1.65" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="353.9" y2="339.9" stroke="var(--accent-primary)" stroke-opacity="0.51" stroke-width="1.48" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="332.4" y2="317.5" stroke="var(--accent-primary)" stroke-opacity="0.85" stroke-width="1.38" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="290.8" y2="268.5" stroke="var(--accent-primary)" stroke-opacity="0.21" stroke-width="0.87" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="278.4" y2="249.8" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="0.86" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="271.1" y2="238.4" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="1.69" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="398.7" y2="356.8" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="385.3" y2="343.2" stroke="var(--accent-primary)" stroke-opacity="0.8" stroke-width="1.29" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="257.8" y2="186.0" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="0.83" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="329.9" y2="268.6" stroke="var(--accent-primary)" stroke-opacity="0.43" stroke-width="1.16" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="292.9" y2="201.9" stroke="var(--accent-primary)" stroke-opacity="0.84" stroke-width="0.72" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="357.5" y2="282.9" stroke="var(--accent-primary)" stroke-opacity="0.75" stroke-width="0.9" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="339.4" y2="254.1" stroke="var(--accent-primary)" stroke-opacity="0.43" stroke-width="0.93" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="258.8" y2="130.8" stroke="var(--accent-primary)" stroke-opacity="0.44" stroke-width="1.63" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="419.3" y2="348.7" stroke="var(--accent-primary)" stroke-opacity="0.85" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="281.3" y2="114.8" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="0.8" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="397.2" y2="302.8" stroke="var(--accent-primary)" stroke-opacity="0.41" stroke-width="0.67" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="277.6" y2="95.6" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="1.54" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="371.7" y2="242.6" stroke="var(--accent-primary)" stroke-opacity="0.82" stroke-width="1.79" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="333.9" y2="158.9" stroke="var(--accent-primary)" stroke-opacity="0.23" stroke-width="0.96" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="363.9" y2="192.0" stroke="var(--accent-primary)" stroke-opacity="0.52" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="358.8" y2="192.8" stroke="var(--accent-primary)" stroke-opacity="0.49" stroke-width="1.62" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="314.7" y2="84.4" stroke="var(--accent-primary)" stroke-opacity="0.18" stroke-width="0.82" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="364.2" y2="159.0" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="0.74" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="423.3" y2="278.5" stroke="var(--accent-primary)" stroke-opacity="0.55" stroke-width="1.34" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="384.7" y2="181.2" stroke="var(--accent-primary)" stroke-opacity="0.5" stroke-width="1.72" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="373.1" y2="141.6" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="1.07" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="427.4" y2="259.1" stroke="var(--accent-primary)" stroke-opacity="0.35" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="410.5" y2="213.1" stroke="var(--accent-primary)" stroke-opacity="0.85" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="439.1" y2="283.6" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="1.72" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="394.4" y2="81.5" stroke="var(--accent-primary)" stroke-opacity="0.39" stroke-width="0.79" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="414.6" y2="132.6" stroke="var(--accent-primary)" stroke-opacity="0.57" stroke-width="1.78" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="469.1" y2="341.2" stroke="var(--accent-primary)" stroke-opacity="0.72" stroke-width="0.96" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="409.8" y2="58.7" stroke="var(--accent-primary)" stroke-opacity="0.22" stroke-width="0.74" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="434.8" y2="175.6" stroke="var(--accent-primary)" stroke-opacity="0.32" stroke-width="1.33" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="466.3" y2="279.8" stroke="var(--accent-primary)" stroke-opacity="0.58" stroke-width="0.92" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="432.7" y2="64.9" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="0.71" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="468.2" y2="256.6" stroke="var(--accent-primary)" stroke-opacity="0.12" stroke-width="1.53" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="474.7" y2="260.3" stroke="var(--accent-primary)" stroke-opacity="0.66" stroke-width="1.26" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="485.5" y2="337.8" stroke="var(--accent-primary)" stroke-opacity="0.17" stroke-width="1.66" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="478.7" y2="171.6" stroke="var(--accent-primary)" stroke-opacity="0.73" stroke-width="1.3" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="486.3" y2="301.0" stroke="var(--accent-primary)" stroke-opacity="0.35" stroke-width="1.68" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="485.3" y2="73.5" stroke="var(--accent-primary)" stroke-opacity="0.78" stroke-width="0.85" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="493.8" y2="308.3" stroke="var(--accent-primary)" stroke-opacity="0.69" stroke-width="1.66" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="495.7" y2="147.6" stroke="var(--accent-primary)" stroke-opacity="0.23" stroke-width="1.72" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="510.2" y2="37.5" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="1.66" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="503.8" y2="111.7" stroke="var(--accent-primary)" stroke-opacity="0.36" stroke-width="1.72" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="523.8" y2="72.9" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="0.92" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="512.8" y2="307.0" stroke="var(--accent-primary)" stroke-opacity="0.76" stroke-width="1.63" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="529.2" y2="88.0" stroke="var(--accent-primary)" stroke-opacity="0.46" stroke-width="0.97" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="523.5" y2="270.8" stroke="var(--accent-primary)" stroke-opacity="0.14" stroke-width="0.83" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="547.2" y2="74.9" stroke="var(--accent-primary)" stroke-opacity="0.83" stroke-width="0.93" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="538.0" y2="219.0" stroke="var(--accent-primary)" stroke-opacity="0.84" stroke-width="1.24" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="529.9" y2="307.0" stroke="var(--accent-primary)" stroke-opacity="0.83" stroke-width="0.81" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="542.4" y2="262.0" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.12" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="547.7" y2="247.8" stroke="var(--accent-primary)" stroke-opacity="0.56" stroke-width="1.21" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="566.7" y2="168.5" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="1.45" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="591.9" y2="63.3" stroke="var(--accent-primary)" stroke-opacity="0.51" stroke-width="1.46" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="590.2" y2="144.4" stroke="var(--accent-primary)" stroke-opacity="0.39" stroke-width="0.68" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="565.7" y2="247.1" stroke="var(--accent-primary)" stroke-opacity="0.35" stroke-width="1.62" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="567.6" y2="257.4" stroke="var(--accent-primary)" stroke-opacity="0.35" stroke-width="1.09" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="568.7" y2="259.3" stroke="var(--accent-primary)" stroke-opacity="0.21" stroke-width="1.1" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="618.2" y2="151.2" stroke="var(--accent-primary)" stroke-opacity="0.78" stroke-width="1.34" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="602.8" y2="188.3" stroke="var(--accent-primary)" stroke-opacity="0.12" stroke-width="0.94" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="613.2" y2="181.6" stroke="var(--accent-primary)" stroke-opacity="0.6" stroke-width="1.16" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="575.3" y2="288.8" stroke="var(--accent-primary)" stroke-opacity="0.47" stroke-width="1.68" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="575.6" y2="303.8" stroke="var(--accent-primary)" stroke-opacity="0.18" stroke-width="1.22" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="599.6" y2="258.4" stroke="var(--accent-primary)" stroke-opacity="0.72" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="588.7" y2="291.2" stroke="var(--accent-primary)" stroke-opacity="0.27" stroke-width="0.63" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="624.0" y2="222.0" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="0.69" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="652.9" y2="182.9" stroke="var(--accent-primary)" stroke-opacity="0.26" stroke-width="1.44" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="600.7" y2="290.7" stroke="var(--accent-primary)" stroke-opacity="0.6" stroke-width="0.61" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="689.9" y2="153.9" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.11" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="718.8" y2="103.4" stroke="var(--accent-primary)" stroke-opacity="0.5" stroke-width="0.66" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="708.8" y2="137.1" stroke="var(--accent-primary)" stroke-opacity="0.45" stroke-width="1.56" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="744.8" y2="108.9" stroke="var(--accent-primary)" stroke-opacity="0.55" stroke-width="1.74" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="686.8" y2="210.3" stroke="var(--accent-primary)" stroke-opacity="0.65" stroke-width="1.21" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="679.2" y2="229.6" stroke="var(--accent-primary)" stroke-opacity="0.77" stroke-width="1.49" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="626.7" y2="302.1" stroke="var(--accent-primary)" stroke-opacity="0.3" stroke-width="1.37" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="682.6" y2="242.7" stroke="var(--accent-primary)" stroke-opacity="0.58" stroke-width="0.93" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="635.7" y2="298.6" stroke="var(--accent-primary)" stroke-opacity="0.32" stroke-width="0.98" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="612.3" y2="338.5" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="1.43" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="600.2" y2="358.5" stroke="var(--accent-primary)" stroke-opacity="0.42" stroke-width="1.25" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="631.0" y2="326.7" stroke="var(--accent-primary)" stroke-opacity="0.43" stroke-width="1.69" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="739.7" y2="221.0" stroke="var(--accent-primary)" stroke-opacity="0.75" stroke-width="1.52" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="592.5" y2="376.1" stroke="var(--accent-primary)" stroke-opacity="0.38" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="809.8" y2="178.2" stroke="var(--accent-primary)" stroke-opacity="0.43" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="732.4" y2="254.4" stroke="var(--accent-primary)" stroke-opacity="0.28" stroke-width="0.86" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="603.3" y2="377.0" stroke="var(--accent-primary)" stroke-opacity="0.37" stroke-width="1.41" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="636.8" y2="351.3" stroke="var(--accent-primary)" stroke-opacity="0.46" stroke-width="0.75" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="607.0" y2="382.2" stroke="var(--accent-primary)" stroke-opacity="0.41" stroke-width="1.28" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="753.8" y2="260.3" stroke="var(--accent-primary)" stroke-opacity="0.22" stroke-width="1.15" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="694.0" y2="316.2" stroke="var(--accent-primary)" stroke-opacity="0.27" stroke-width="0.99" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="700.9" y2="325.4" stroke="var(--accent-primary)" stroke-opacity="0.67" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="626.1" y2="379.2" stroke="var(--accent-primary)" stroke-opacity="0.13" stroke-width="1.25" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="700.0" y2="340.1" stroke="var(--accent-primary)" stroke-opacity="0.59" stroke-width="1.54" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="806.3" y2="273.7" stroke="var(--accent-primary)" stroke-opacity="0.81" stroke-width="0.84" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="648.7" y2="373.6" stroke="var(--accent-primary)" stroke-opacity="0.21" stroke-width="1.4" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="670.0" y2="369.3" stroke="var(--accent-primary)" stroke-opacity="0.63" stroke-width="1.52" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="774.5" y2="308.9" stroke="var(--accent-primary)" stroke-opacity="0.67" stroke-width="0.74" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="879.3" y2="269.5" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="0.63" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="800.5" y2="311.1" stroke="var(--accent-primary)" stroke-opacity="0.82" stroke-width="1.08" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="638.2" y2="403.0" stroke="var(--accent-primary)" stroke-opacity="0.62" stroke-width="1.35" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="831.7" y2="307.3" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="1.32" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="894.3" y2="286.4" stroke="var(--accent-primary)" stroke-opacity="0.69" stroke-width="1.02" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="725.1" y2="373.6" stroke="var(--accent-primary)" stroke-opacity="0.49" stroke-width="1.01" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="859.0" y2="331.1" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.75" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="862.4" y2="334.4" stroke="var(--accent-primary)" stroke-opacity="0.64" stroke-width="1.12" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="905.4" y2="328.8" stroke="var(--accent-primary)" stroke-opacity="0.32" stroke-width="1.57" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="765.4" y2="381.1" stroke="var(--accent-primary)" stroke-opacity="0.44" stroke-width="1.48" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="874.7" y2="348.2" stroke="var(--accent-primary)" stroke-opacity="0.73" stroke-width="0.7" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="698.1" y2="414.9" stroke="var(--accent-primary)" stroke-opacity="0.46" stroke-width="1.33" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="633.8" y2="432.8" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="0.82" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="864.8" y2="373.6" stroke="var(--accent-primary)" stroke-opacity="0.37" stroke-width="1.66" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="710.4" y2="422.9" stroke="var(--accent-primary)" stroke-opacity="0.13" stroke-width="1.74" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="844.3" y2="391.3" stroke="var(--accent-primary)" stroke-opacity="0.48" stroke-width="1.51" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="824.8" y2="410.2" stroke="var(--accent-primary)" stroke-opacity="0.48" stroke-width="1.55" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="695.3" y2="433.3" stroke="var(--accent-primary)" stroke-opacity="0.63" stroke-width="0.97" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="773.7" y2="429.3" stroke="var(--accent-primary)" stroke-opacity="0.51" stroke-width="1.11" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="730.8" y2="441.7" stroke="var(--accent-primary)" stroke-opacity="0.63" stroke-width="0.93" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="666.2" y2="449.7" stroke="var(--accent-primary)" stroke-opacity="0.26" stroke-width="0.74" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="864.7" y2="436.5" stroke="var(--accent-primary)" stroke-opacity="0.26" stroke-width="0.86" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="853.6" y2="443.7" stroke="var(--accent-primary)" stroke-opacity="0.83" stroke-width="1.23" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="660.8" y2="459.9" stroke="var(--accent-primary)" stroke-opacity="0.26" stroke-width="0.87" stroke-linecap="round"/>
+<line x1="500" y1="470" x2="634.2" y2="463.7" stroke="var(--accent-primary)" stroke-opacity="0.51" stroke-width="0.93" stroke-linecap="round"/>
+<circle cx="308.9" cy="455.7" r="3.2" fill="var(--accent-primary)" fill-opacity="0.74"/>
+<circle cx="186.1" cy="399.3" r="1.7" fill="var(--accent-primary)" fill-opacity="0.9"/>
+<circle cx="159.1" cy="367.3" r="2.7" fill="var(--accent-primary)" fill-opacity="0.39"/>
+<circle cx="190.8" cy="359.4" r="1.9" fill="var(--accent-primary)" fill-opacity="0.68"/>
+<circle cx="300.4" cy="395.7" r="3.4" fill="var(--accent-primary)" fill-opacity="0.42000000000000004"/>
+<circle cx="290.2" cy="382.0" r="3.0" fill="var(--accent-primary)" fill-opacity="0.75"/>
+<circle cx="320.6" cy="386.3" r="2.5" fill="var(--accent-primary)" fill-opacity="1"/>
+<circle cx="216.1" cy="304.3" r="2.7" fill="var(--accent-primary)" fill-opacity="0.35"/>
+<circle cx="258.9" cy="296.2" r="2.0" fill="var(--accent-primary)" fill-opacity="0.84"/>
+<circle cx="195.5" cy="229.9" r="1.9" fill="var(--accent-primary)" fill-opacity="0.49"/>
+<circle cx="172.5" cy="201.4" r="1.6" fill="var(--accent-primary)" fill-opacity="0.32999999999999996"/>
+<circle cx="353.9" cy="339.9" r="2.0" fill="var(--accent-primary)" fill-opacity="0.66"/>
+<circle cx="397.2" cy="302.8" r="1.9" fill="var(--accent-primary)" fill-opacity="0.5599999999999999"/>
+<circle cx="277.6" cy="95.6" r="2.9" fill="var(--accent-primary)" fill-opacity="0.45999999999999996"/>
+<circle cx="333.9" cy="158.9" r="1.8" fill="var(--accent-primary)" fill-opacity="0.38"/>
+<circle cx="384.7" cy="181.2" r="1.7" fill="var(--accent-primary)" fill-opacity="0.65"/>
+<circle cx="427.4" cy="259.1" r="2.1" fill="var(--accent-primary)" fill-opacity="0.5"/>
+<circle cx="410.5" cy="213.1" r="3.3" fill="var(--accent-primary)" fill-opacity="1"/>
+<circle cx="434.8" cy="175.6" r="1.7" fill="var(--accent-primary)" fill-opacity="0.47"/>
+<circle cx="485.5" cy="337.8" r="2.7" fill="var(--accent-primary)" fill-opacity="0.32"/>
+<circle cx="485.3" cy="73.5" r="2.2" fill="var(--accent-primary)" fill-opacity="0.93"/>
+<circle cx="493.8" cy="308.3" r="2.8" fill="var(--accent-primary)" fill-opacity="0.84"/>
+<circle cx="510.2" cy="37.5" r="2.8" fill="var(--accent-primary)" fill-opacity="0.86"/>
+<circle cx="503.8" cy="111.7" r="3.3" fill="var(--accent-primary)" fill-opacity="0.51"/>
+<circle cx="523.5" cy="270.8" r="2.2" fill="var(--accent-primary)" fill-opacity="0.29000000000000004"/>
+<circle cx="590.2" cy="144.4" r="2.3" fill="var(--accent-primary)" fill-opacity="0.54"/>
+<circle cx="618.2" cy="151.2" r="2.6" fill="var(--accent-primary)" fill-opacity="0.93"/>
+<circle cx="575.6" cy="303.8" r="3.4" fill="var(--accent-primary)" fill-opacity="0.32999999999999996"/>
+<circle cx="588.7" cy="291.2" r="1.9" fill="var(--accent-primary)" fill-opacity="0.42000000000000004"/>
+<circle cx="600.7" cy="290.7" r="3.4" fill="var(--accent-primary)" fill-opacity="0.75"/>
+<circle cx="708.8" cy="137.1" r="3.1" fill="var(--accent-primary)" fill-opacity="0.6"/>
+<circle cx="626.7" cy="302.1" r="3.1" fill="var(--accent-primary)" fill-opacity="0.44999999999999996"/>
+<circle cx="635.7" cy="298.6" r="2.6" fill="var(--accent-primary)" fill-opacity="0.47"/>
+<circle cx="809.8" cy="178.2" r="3.0" fill="var(--accent-primary)" fill-opacity="0.58"/>
+<circle cx="753.8" cy="260.3" r="2.1" fill="var(--accent-primary)" fill-opacity="0.37"/>
+<circle cx="700.0" cy="340.1" r="2.6" fill="var(--accent-primary)" fill-opacity="0.74"/>
+<circle cx="806.3" cy="273.7" r="2.6" fill="var(--accent-primary)" fill-opacity="0.9600000000000001"/>
+<circle cx="774.5" cy="308.9" r="1.9" fill="var(--accent-primary)" fill-opacity="0.8200000000000001"/>
+<circle cx="638.2" cy="403.0" r="3.0" fill="var(--accent-primary)" fill-opacity="0.77"/>
+<circle cx="831.7" cy="307.3" r="2.9" fill="var(--accent-primary)" fill-opacity="0.89"/>
+<circle cx="698.1" cy="414.9" r="2.5" fill="var(--accent-primary)" fill-opacity="0.61"/>
+<circle cx="864.7" cy="436.5" r="2.4" fill="var(--accent-primary)" fill-opacity="0.41000000000000003"/>
+<circle cx="660.8" cy="459.9" r="2.8" fill="var(--accent-primary)" fill-opacity="0.41000000000000003"/>
+                </svg>
                 </div>
-            @endforeach
+                <div class="starburst-content">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        @foreach($L['stats'] as $i => $s)
+                            <div class="text-center reveal rd{{ $i + 1 }}">
+                                <div class="text-4xl md:text-5xl font-extrabold text-gradient tabular">
+                                    <span class="counter" data-count="{{ $s['v'] }}" data-decimals="{{ $s['d'] ?? 0 }}">0</span>{{ $s['s'] }}
+                                </div>
+                                <div class="text-sm mt-2 c2">{{ $s['l'] }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- SHOWCASE — 3 флагманских инструмента с фирменными иллюстрациями -->
+    <section class="pt-8 pb-20 px-4 sm:px-6 reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="showcase-section-head text-center max-w-2xl mx-auto reveal">
+                <div class="badge-pill mx-auto"><span class="dot"></span>{{ $L['showcase']['eyebrow'] }}</div>
+                <h2 class="text-3xl md:text-5xl font-extrabold">{{ $L['showcase']['title'] }} <span class="h-accent">{{ $L['showcase']['accent'] }}</span></h2>
+            </div>
+            <div class="showcase-grid">
+                <!-- Card 1: анализ рисков — мокап отчёта -->
+                <div class="showcase-card tilt-card has-glare reveal reveal-3d rd1" data-tilt-max="9">
+                    <span class="showcase-expand" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg>
+                    </span>
+                    <h3 class="showcase-heading">{{ $L['showcase']['items'][0]['t'] }}</h3>
+                    <p class="showcase-desc">{{ $L['showcase']['items'][0]['d'] }}</p>
+                    <div class="showcase-visual">
+                        <div class="mock-report" style="text-align:left;">
+                            <div class="mock-row" style="margin-bottom:0; gap:.6rem;">
+                                <span class="tint tint-accent" style="width:26px; height:26px; border-radius:8px; flex-shrink:0;">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['doc'] !!}</svg>
+                                </span>
+                                <div style="min-width:0;">
+                                    <div class="c1" style="font-size:.7rem; font-weight:700;">{{ app()->getLocale() === 'en' ? 'Supply_agreement.docx' : (app()->getLocale() === 'tg' ? 'Шартномаи_таҳвил.docx' : 'Договор_поставки.docx') }}</div>
+                                    <div class="c3" style="font-size:.62rem;">{{ app()->getLocale() === 'en' ? 'Analyzed in 58 sec' : (app()->getLocale() === 'tg' ? 'Дар 58 сония таҳлил шуд' : 'Проанализирован за 58 сек') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mock-report mock-gauge-card">
+                            <div class="mock-row" style="margin-bottom:0; gap:.85rem; align-items:center;">
+                                <span class="mock-gauge-wrap">
+                                    <svg class="mock-gauge" viewBox="0 0 100 100">
+                                        <defs>
+                                            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#F59E0B"/>
+                                                <stop offset="100%" stop-color="#DC2626"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--card-border)" stroke-width="8"/>
+                                        <circle class="mock-gauge-progress" cx="50" cy="50" r="42" fill="none" stroke="url(#gaugeGrad)" stroke-width="8" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                                    </svg>
+                                    <span class="mock-gauge-num c1">72</span>
+                                </span>
+                                <div style="min-width:0;">
+                                    <div class="c1" style="font-size:.78rem; font-weight:800;">{{ app()->getLocale() === 'en' ? 'Risk score: 72/100' : (app()->getLocale() === 'tg' ? 'Балли хавф: 72/100' : 'Риск-балл: 72/100') }}</div>
+                                    <span class="mock-badge" style="background:rgba(239,68,68,.12); color:#DC2626; margin-top:.3rem; display:inline-block;">{{ app()->getLocale() === 'en' ? 'High risk' : (app()->getLocale() === 'tg' ? 'Хавфи баланд' : 'Высокий риск') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mock-report">
+                            <div class="mock-row" style="margin-bottom:0;">
+                                <svg class="w-3.5 h-3.5 shrink-0" style="color:var(--accent-primary)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['book'] !!}</svg>
+                                <span class="c2" style="font-size:.68rem;">{{ app()->getLocale() === 'en' ? 'Art. 350, Art. 421 — Civil Code RT' : (app()->getLocale() === 'tg' ? 'мод. 350, мод. 421 — КГ ҶТ' : 'ст. 350, ст. 421 — ГК РТ') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: генератор договоров — «карточка» документа -->
+                <div class="showcase-card tilt-card has-glare reveal reveal-3d rd2" data-tilt-max="9">
+                    <span class="showcase-expand" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg>
+                    </span>
+                    <h3 class="showcase-heading">{{ $L['showcase']['items'][1]['t'] }}</h3>
+                    <p class="showcase-desc">{{ $L['showcase']['items'][1]['d'] }}</p>
+                    <div class="showcase-visual">
+                        <div class="mock-doc-card">
+                            <div class="mock-doc-lines">
+                                <span style="width:60%;"></span>
+                                <span style="width:85%;"></span>
+                                <span style="width:40%;"></span>
+                            </div>
+                            <div class="mock-doc-foot">
+                                <span class="mock-doc-word">LegalAI Pro</span>
+                                <span class="mock-doc-seal">
+                                    <svg class="w-3.5 h-3.5" style="color:#fff" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">{!! $icons['check'] !!}</svg>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mock-stamp" aria-hidden="true">
+                            <svg viewBox="0 0 120 120">
+                                <defs>
+                                    <path id="stampCirclePath" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/>
+                                </defs>
+                                <circle cx="60" cy="60" r="50" fill="var(--card-solid)" opacity=".98"/>
+                                <circle cx="60" cy="60" r="52" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-dasharray="3 4" opacity=".85"/>
+                                <circle cx="60" cy="60" r="44" fill="none" stroke="var(--accent-primary)" stroke-width="1.4" opacity=".6"/>
+                                <text font-size="8" font-weight="700" fill="var(--accent-primary)" letter-spacing="2">
+                                    <textPath href="#stampCirclePath" startOffset="0%">{{ app()->getLocale() === 'en' ? 'VERIFIED · LEGALAI PRO · VERIFIED ·' : (app()->getLocale() === 'tg' ? 'САНҶИДА ШУД · LEGALAI PRO · САНҶИДА ШУД ·' : 'ПРОВЕРЕНО · LEGALAI PRO · ПРОВЕРЕНО ·') }}</textPath>
+                                </text>
+                                <path d="M42 61l12 12 24-26" stroke="var(--accent-primary)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: сеть норм права — точечный граф -->
+                <div class="showcase-card showcase-card-lg tilt-card has-glare reveal reveal-3d rd3" data-tilt-max="9">
+                    <span class="showcase-expand" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg>
+                    </span>
+                    <h3 class="showcase-heading">{{ $L['showcase']['items'][2]['t'] }}</h3>
+                    <p class="showcase-desc">{{ $L['showcase']['items'][2]['d'] }}</p>
+                    <div class="showcase-visual showcase-visual-lg">
+                        <div class="mock-globe-scene mock-globe-scene-lg">
+                            <div class="mock-globe-orbit mock-globe-orbit-a"></div>
+                            <div class="mock-globe-orbit mock-globe-orbit-b"></div>
+                            <div class="mock-globe-sphere mock-globe-sphere-lg">
+<span class="globe-dot" style="transform:translate3d(0.0px,128.0px,0.0px);width:2.35px;height:2.35px;opacity:0.62"></span>
+<span class="globe-dot" style="transform:translate3d(-10.2px,127.2px,9.4px);width:2.43px;height:2.43px;opacity:0.64"></span>
+<span class="globe-dot" style="transform:translate3d(1.7px,126.5px,-19.5px);width:2.19px;height:2.19px;opacity:0.57"></span>
+<span class="globe-dot" style="transform:translate3d(14.6px,125.7px,19.0px);width:2.51px;height:2.51px;opacity:0.66"></span>
+<span class="globe-dot" style="transform:translate3d(-27.2px,125.0px,-4.8px);width:2.31px;height:2.31px;opacity:0.61"></span>
+<span class="globe-dot" style="transform:translate3d(26.0px,124.2px,-16.6px);width:2.21px;height:2.21px;opacity:0.58"></span>
+<span class="globe-dot" style="transform:translate3d(-8.8px,123.5px,32.6px);width:2.62px;height:2.62px;opacity:0.7"></span>
+<span class="globe-dot" style="transform:translate3d(-16.8px,122.7px,-32.3px);width:2.08px;height:2.08px;opacity:0.54"></span>
+<span class="globe-dot" style="transform:translate3d(36.5px,122.0px,13.3px);width:2.46px;height:2.46px;opacity:0.65"></span>
+<span class="globe-dot" style="transform:translate3d(-38.0px,121.2px,15.7px);width:2.48px;height:2.48px;opacity:0.66"></span>
+<span class="globe-dot" style="transform:translate3d(18.4px,120.4px,-39.2px);width:2.03px;height:2.03px;opacity:0.53"></span>
+<span class="globe-dot" style="transform:translate3d(13.6px,119.7px,43.3px);width:2.71px;height:2.71px;opacity:0.72"></span>
+<span class="globe-dot" style="transform:translate3d(-40.9px,118.9px,-23.7px);width:2.16px;height:2.16px;opacity:0.56"></span>
+<span class="globe-dot" style="transform:translate3d(48.0px,118.2px,-10.6px);width:2.26px;height:2.26px;opacity:0.6"></span>
+<span class="globe-dot" style="transform:translate3d(-29.3px,117.4px,41.7px);width:2.69px;height:2.69px;opacity:0.72"></span>
+<span class="globe-dot" style="transform:translate3d(-6.8px,116.7px,-52.2px);width:1.92px;height:1.92px;opacity:0.5"></span>
+<span class="globe-dot" style="transform:translate3d(41.5px,115.9px,35.0px);width:2.64px;height:2.64px;opacity:0.7"></span>
+<span class="globe-dot" style="transform:translate3d(-55.8px,115.2px,2.3px);width:2.37px;height:2.37px;opacity:0.63"></span>
+<span class="globe-dot" style="transform:translate3d(40.7px,114.4px,-40.5px);width:2.02px;height:2.02px;opacity:0.53"></span>
+<span class="globe-dot" style="transform:translate3d(-2.7px,113.7px,58.8px);width:2.83px;height:2.83px;opacity:0.76"></span>
+<span class="globe-dot" style="transform:translate3d(-38.6px,112.9px,-46.3px);width:1.97px;height:1.97px;opacity:0.51"></span>
+<span class="globe-dot" style="transform:translate3d(61.2px,112.1px,8.2px);width:2.42px;height:2.42px;opacity:0.64"></span>
+<span class="globe-dot" style="transform:translate3d(-51.8px,111.4px,36.0px);width:2.65px;height:2.65px;opacity:0.7"></span>
+<span class="globe-dot" style="transform:translate3d(14.1px,110.6px,-62.8px);width:1.83px;height:1.83px;opacity:0.47"></span>
+<span class="globe-dot" style="transform:translate3d(32.6px,109.9px,57.0px);width:2.82px;height:2.82px;opacity:0.75"></span>
+<span class="globe-dot" style="transform:translate3d(-63.7px,109.1px,-20.3px);width:2.18px;height:2.18px;opacity:0.57"></span>
+<span class="globe-dot" style="transform:translate3d(61.8px,108.4px,-28.6px);width:2.12px;height:2.12px;opacity:0.55"></span>
+<span class="globe-dot" style="transform:translate3d(-26.8px,107.6px,63.9px);width:2.87px;height:2.87px;opacity:0.77"></span>
+<span class="globe-dot" style="transform:translate3d(-23.9px,106.9px,-66.3px);width:1.81px;height:1.81px;opacity:0.46"></span>
+<span class="globe-dot" style="transform:translate3d(63.4px,106.1px,33.3px);width:2.62px;height:2.62px;opacity:0.7"></span>
+<span class="globe-dot" style="transform:translate3d(-70.3px,105.3px,18.5px);width:2.5px;height:2.5px;opacity:0.66"></span>
+<span class="globe-dot" style="transform:translate3d(39.9px,104.6px,-62.1px);width:1.84px;height:1.84px;opacity:0.47"></span>
+<span class="globe-dot" style="transform:translate3d(12.7px,103.8px,73.8px);width:2.96px;height:2.96px;opacity:0.79"></span>
+<span class="globe-dot" style="transform:translate3d(-60.0px,103.1px,-46.5px);width:1.97px;height:1.97px;opacity:0.51"></span>
+<span class="globe-dot" style="transform:translate3d(76.6px,102.3px,-6.3px);width:2.3px;height:2.3px;opacity:0.61"></span>
+<span class="globe-dot" style="transform:translate3d(-52.9px,101.6px,57.2px);width:2.82px;height:2.82px;opacity:0.75"></span>
+<span class="globe-dot" style="transform:translate3d(0.4px,100.8px,-78.9px);width:1.7px;height:1.7px;opacity:0.44"></span>
+<span class="globe-dot" style="transform:translate3d(53.6px,100.1px,59.1px);width:2.83px;height:2.83px;opacity:0.76"></span>
+<span class="globe-dot" style="transform:translate3d(-80.4px,99.3px,-7.5px);width:2.29px;height:2.29px;opacity:0.6"></span>
+<span class="globe-dot" style="transform:translate3d(65.1px,98.5px,-49.4px);width:1.94px;height:1.94px;opacity:0.5"></span>
+<span class="globe-dot" style="transform:translate3d(-14.8px,97.8px,81.3px);width:3.02px;height:3.02px;opacity:0.81"></span>
+<span class="globe-dot" style="transform:translate3d(-44.5px,97.0px,-70.6px);width:1.77px;height:1.77px;opacity:0.45"></span>
+<span class="globe-dot" style="transform:translate3d(81.3px,96.3px,22.3px);width:2.53px;height:2.53px;opacity:0.67"></span>
+<span class="globe-dot" style="transform:translate3d(-75.8px,95.5px,38.9px);width:2.67px;height:2.67px;opacity:0.71"></span>
+<span class="globe-dot" style="transform:translate3d(29.9px,94.8px,-80.7px);width:1.69px;height:1.69px;opacity:0.43"></span>
+<span class="globe-dot" style="transform:translate3d(32.7px,94.0px,80.4px);width:3.01px;height:3.01px;opacity:0.81"></span>
+<span class="globe-dot" style="transform:translate3d(-79.2px,93.3px,-37.5px);width:2.04px;height:2.04px;opacity:0.53"></span>
+<span class="globe-dot" style="transform:translate3d(84.5px,92.5px,-26.1px);width:2.14px;height:2.14px;opacity:0.56"></span>
+<span class="globe-dot" style="transform:translate3d(-45.1px,91.8px,77.0px);width:2.98px;height:2.98px;opacity:0.8"></span>
+<span class="globe-dot" style="transform:translate3d(-18.9px,91.0px,-88.0px);width:1.63px;height:1.63px;opacity:0.41"></span>
+<span class="globe-dot" style="transform:translate3d(74.0px,90.2px,52.6px);width:2.78px;height:2.78px;opacity:0.74"></span>
+<span class="globe-dot" style="transform:translate3d(-90.8px,89.5px,11.3px);width:2.44px;height:2.44px;opacity:0.65"></span>
+<span class="globe-dot" style="transform:translate3d(59.8px,88.7px,-70.3px);width:1.77px;height:1.77px;opacity:0.46"></span>
+<span class="globe-dot" style="transform:translate3d(3.4px,88.0px,92.9px);width:3.11px;height:3.11px;opacity:0.84"></span>
+<span class="globe-dot" style="transform:translate3d(-65.8px,87.2px,-66.7px);width:1.8px;height:1.8px;opacity:0.46"></span>
+<span class="globe-dot" style="transform:translate3d(94.3px,86.5px,4.8px);width:2.39px;height:2.39px;opacity:0.63"></span>
+<span class="globe-dot" style="transform:translate3d(-73.3px,85.7px,60.6px);width:2.85px;height:2.85px;opacity:0.76"></span>
+<span class="globe-dot" style="transform:translate3d(13.2px,85.0px,-94.8px);width:1.57px;height:1.57px;opacity:0.4"></span>
+<span class="globe-dot" style="transform:translate3d(54.7px,84.2px,79.4px);width:3.0px;height:3.0px;opacity:0.81"></span>
+<span class="globe-dot" style="transform:translate3d(-94.6px,83.4px,-21.8px);width:2.17px;height:2.17px;opacity:0.57"></span>
+<span class="globe-dot" style="transform:translate3d(85.0px,82.7px,-48.2px);width:1.95px;height:1.95px;opacity:0.51"></span>
+<span class="globe-dot" style="transform:translate3d(-30.3px,81.9px,93.5px);width:3.12px;height:3.12px;opacity:0.84"></span>
+<span class="globe-dot" style="transform:translate3d(-41.1px,81.2px,-90.0px);width:1.61px;height:1.61px;opacity:0.41"></span>
+<span class="globe-dot" style="transform:translate3d(91.7px,80.4px,38.9px);width:2.67px;height:2.67px;opacity:0.71"></span>
+<span class="globe-dot" style="transform:translate3d(-94.4px,79.7px,33.4px);width:2.62px;height:2.62px;opacity:0.7"></span>
+<span class="globe-dot" style="transform:translate3d(47.3px,78.9px,-89.0px);width:1.62px;height:1.62px;opacity:0.41"></span>
+<span class="globe-dot" style="transform:translate3d(25.4px,78.2px,98.1px);width:3.16px;height:3.16px;opacity:0.85"></span>
+<span class="globe-dot" style="transform:translate3d(-85.5px,77.4px,-55.6px);width:1.89px;height:1.89px;opacity:0.49"></span>
+<span class="globe-dot" style="transform:translate3d(101.1px,76.6px,-16.9px);width:2.21px;height:2.21px;opacity:0.58"></span>
+<span class="globe-dot" style="transform:translate3d(-63.5px,75.9px,81.2px);width:3.02px;height:3.02px;opacity:0.81"></span>
+<span class="globe-dot" style="transform:translate3d(-8.1px,75.1px,-103.3px);width:1.5px;height:1.5px;opacity:0.38"></span>
+<span class="globe-dot" style="transform:translate3d(76.1px,74.4px,71.1px);width:2.93px;height:2.93px;opacity:0.79"></span>
+<span class="globe-dot" style="transform:translate3d(-104.7px,73.6px,-1.0px);width:2.34px;height:2.34px;opacity:0.62"></span>
+<span class="globe-dot" style="transform:translate3d(78.3px,72.9px,-70.3px);width:1.77px;height:1.77px;opacity:0.46"></span>
+<span class="globe-dot" style="transform:translate3d(-10.3px,72.1px,105.2px);width:3.21px;height:3.21px;opacity:0.87"></span>
+<span class="globe-dot" style="transform:translate3d(-63.8px,71.4px,-85.0px);width:1.65px;height:1.65px;opacity:0.42"></span>
+<span class="globe-dot" style="transform:translate3d(104.9px,70.6px,19.6px);width:2.51px;height:2.51px;opacity:0.67"></span>
+<span class="globe-dot" style="transform:translate3d(-91.1px,69.9px,56.7px);width:2.81px;height:2.81px;opacity:0.75"></span>
+<span class="globe-dot" style="transform:translate3d(29.0px,69.1px,-103.8px);width:1.5px;height:1.5px;opacity:0.38"></span>
+<span class="globe-dot" style="transform:translate3d(48.9px,68.3px,96.5px);width:3.14px;height:3.14px;opacity:0.85"></span>
+<span class="globe-dot" style="transform:translate3d(-101.7px,67.6px,-38.3px);width:2.04px;height:2.04px;opacity:0.53"></span>
+<span class="globe-dot" style="transform:translate3d(101.3px,66.8px,-40.7px);width:2.02px;height:2.02px;opacity:0.52"></span>
+<span class="globe-dot" style="transform:translate3d(-47.4px,66.1px,98.8px);width:3.16px;height:3.16px;opacity:0.85"></span>
+<span class="globe-dot" style="transform:translate3d(-31.9px,65.3px,-105.3px);width:1.49px;height:1.49px;opacity:0.37"></span>
+<span class="globe-dot" style="transform:translate3d(95.1px,64.6px,56.3px);width:2.81px;height:2.81px;opacity:0.75"></span>
+<span class="globe-dot" style="transform:translate3d(-108.6px,63.8px,22.8px);width:2.54px;height:2.54px;opacity:0.67"></span>
+<span class="globe-dot" style="transform:translate3d(65.0px,63.1px,-90.5px);width:1.61px;height:1.61px;opacity:0.41"></span>
+<span class="globe-dot" style="transform:translate3d(13.3px,62.3px,111.0px);width:3.26px;height:3.26px;opacity:0.88"></span>
+<span class="globe-dot" style="transform:translate3d(-85.1px,61.5px,-73.2px);width:1.75px;height:1.75px;opacity:0.45"></span>
+<span class="globe-dot" style="transform:translate3d(112.6px,60.8px,-3.6px);width:2.32px;height:2.32px;opacity:0.61"></span>
+<span class="globe-dot" style="transform:translate3d(-80.9px,60.0px,79.0px);width:3.0px;height:3.0px;opacity:0.81"></span>
+<span class="globe-dot" style="transform:translate3d(6.3px,59.3px,-113.3px);width:1.42px;height:1.42px;opacity:0.35"></span>
+<span class="globe-dot" style="transform:translate3d(72.1px,58.5px,88.1px);width:3.07px;height:3.07px;opacity:0.83"></span>
+<span class="globe-dot" style="transform:translate3d(-113.0px,57.8px,-16.3px);width:2.22px;height:2.22px;opacity:0.58"></span>
+<span class="globe-dot" style="transform:translate3d(94.7px,57.0px,-64.5px);width:1.82px;height:1.82px;opacity:0.47"></span>
+<span class="globe-dot" style="transform:translate3d(-26.3px,56.3px,111.9px);width:3.27px;height:3.27px;opacity:0.88"></span>
+<span class="globe-dot" style="transform:translate3d(-56.4px,55.5px,-100.6px);width:1.52px;height:1.52px;opacity:0.38"></span>
+<span class="globe-dot" style="transform:translate3d(109.9px,54.7px,36.2px);width:2.65px;height:2.65px;opacity:0.7"></span>
+<span class="globe-dot" style="transform:translate3d(-105.8px,54.0px,47.6px);width:2.74px;height:2.74px;opacity:0.73"></span>
+<span class="globe-dot" style="transform:translate3d(46.0px,53.2px,-106.9px);width:1.47px;height:1.47px;opacity:0.37"></span>
+<span class="globe-dot" style="transform:translate3d(38.4px,52.5px,110.2px);width:3.25px;height:3.25px;opacity:0.88"></span>
+<span class="globe-dot" style="transform:translate3d(-103.1px,51.7px,-55.5px);width:1.89px;height:1.89px;opacity:0.49"></span>
+<span class="globe-dot" style="transform:translate3d(113.8px,51.0px,-28.8px);width:2.11px;height:2.11px;opacity:0.55"></span>
+<span class="globe-dot" style="transform:translate3d(-64.6px,50.2px,98.4px);width:3.16px;height:3.16px;opacity:0.85"></span>
+<span class="globe-dot" style="transform:translate3d(-18.9px,49.5px,-116.5px);width:1.39px;height:1.39px;opacity:0.35"></span>
+<span class="globe-dot" style="transform:translate3d(92.9px,48.7px,73.4px);width:2.95px;height:2.95px;opacity:0.79"></span>
+<span class="globe-dot" style="transform:translate3d(-118.4px,48.0px,8.6px);width:2.42px;height:2.42px;opacity:0.64"></span>
+<span class="globe-dot" style="transform:translate3d(81.6px,47.2px,-86.5px);width:1.64px;height:1.64px;opacity:0.42"></span>
+<span class="globe-dot" style="transform:translate3d(-1.7px,46.4px,119.3px);width:3.33px;height:3.33px;opacity:0.9"></span>
+<span class="globe-dot" style="transform:translate3d(-79.5px,45.7px,-89.3px);width:1.62px;height:1.62px;opacity:0.41"></span>
+<span class="globe-dot" style="transform:translate3d(119.2px,44.9px,12.2px);width:2.45px;height:2.45px;opacity:0.65"></span>
+<span class="globe-dot" style="transform:translate3d(-96.4px,44.2px,71.7px);width:2.94px;height:2.94px;opacity:0.79"></span>
+<span class="globe-dot" style="transform:translate3d(22.7px,43.4px,-118.2px);width:1.38px;height:1.38px;opacity:0.34"></span>
+<span class="globe-dot" style="transform:translate3d(63.3px,42.7px,102.8px);width:3.19px;height:3.19px;opacity:0.86"></span>
+<span class="globe-dot" style="transform:translate3d(-116.3px,41.9px,-33.1px);width:2.08px;height:2.08px;opacity:0.54"></span>
+<span class="globe-dot" style="transform:translate3d(108.4px,41.2px,-54.3px);width:1.9px;height:1.9px;opacity:0.49"></span>
+<span class="globe-dot" style="transform:translate3d(-43.3px,40.4px,113.5px);width:3.28px;height:3.28px;opacity:0.89"></span>
+<span class="globe-dot" style="transform:translate3d(-44.8px,39.6px,-113.2px);width:1.42px;height:1.42px;opacity:0.35"></span>
+<span class="globe-dot" style="transform:translate3d(109.7px,38.9px,53.3px);width:2.79px;height:2.79px;opacity:0.74"></span>
+<span class="globe-dot" style="transform:translate3d(-117.1px,38.1px,34.9px);width:2.64px;height:2.64px;opacity:0.7"></span>
+<span class="globe-dot" style="transform:translate3d(62.9px,37.4px,-105.0px);width:1.49px;height:1.49px;opacity:0.37"></span>
+<span class="globe-dot" style="transform:translate3d(24.6px,36.6px,120.2px);width:3.34px;height:3.34px;opacity:0.9"></span>
+<span class="globe-dot" style="transform:translate3d(-99.5px,35.9px,-72.1px);width:1.76px;height:1.76px;opacity:0.45"></span>
+<span class="globe-dot" style="transform:translate3d(122.3px,35.1px,-14.0px);width:2.23px;height:2.23px;opacity:0.59"></span>
+<span class="globe-dot" style="transform:translate3d(-80.8px,34.4px,93.1px);width:3.11px;height:3.11px;opacity:0.84"></span>
+<span class="globe-dot" style="transform:translate3d(-3.3px,33.6px,-123.5px);width:1.34px;height:1.34px;opacity:0.33"></span>
+<span class="globe-dot" style="transform:translate3d(86.0px,32.8px,89.0px);width:3.08px;height:3.08px;opacity:0.83"></span>
+<span class="globe-dot" style="transform:translate3d(-123.7px,32.1px,-7.5px);width:2.29px;height:2.29px;opacity:0.6"></span>
+<span class="globe-dot" style="transform:translate3d(96.4px,31.3px,-78.1px);width:1.71px;height:1.71px;opacity:0.44"></span>
+<span class="globe-dot" style="transform:translate3d(-18.4px,30.6px,122.9px);width:3.36px;height:3.36px;opacity:0.91"></span>
+<span class="globe-dot" style="transform:translate3d(-69.6px,29.8px,-103.2px);width:1.5px;height:1.5px;opacity:0.38"></span>
+<span class="globe-dot" style="transform:translate3d(121.2px,29.1px,29.1px);width:2.59px;height:2.59px;opacity:0.69"></span>
+<span class="globe-dot" style="transform:translate3d(-109.2px,28.3px,60.5px);width:2.85px;height:2.85px;opacity:0.76"></span>
+<span class="globe-dot" style="transform:translate3d(39.7px,27.6px,-118.5px);width:1.38px;height:1.38px;opacity:0.34"></span>
+<span class="globe-dot" style="transform:translate3d(50.8px,26.8px,114.4px);width:3.29px;height:3.29px;opacity:0.89"></span>
+<span class="globe-dot" style="transform:translate3d(-114.9px,26.1px,-50.1px);width:1.94px;height:1.94px;opacity:0.5"></span>
+<span class="globe-dot" style="transform:translate3d(118.7px,25.3px,-40.7px);width:2.02px;height:2.02px;opacity:0.52"></span>
+<span class="globe-dot" style="transform:translate3d(-60.1px,24.5px,110.3px);width:3.26px;height:3.26px;opacity:0.88"></span>
+<span class="globe-dot" style="transform:translate3d(-30.3px,23.8px,-122.1px);width:1.35px;height:1.35px;opacity:0.33"></span>
+<span class="globe-dot" style="transform:translate3d(104.9px,23.0px,69.6px);width:2.92px;height:2.92px;opacity:0.78"></span>
+<span class="globe-dot" style="transform:translate3d(-124.5px,22.3px,19.5px);width:2.51px;height:2.51px;opacity:0.67"></span>
+<span class="globe-dot" style="transform:translate3d(78.7px,21.5px,-98.6px);width:1.54px;height:1.54px;opacity:0.39"></span>
+<span class="globe-dot" style="transform:translate3d(8.6px,20.8px,126.0px);width:3.38px;height:3.38px;opacity:0.92"></span>
+<span class="globe-dot" style="transform:translate3d(-91.5px,20.0px,-87.2px);width:1.63px;height:1.63px;opacity:0.42"></span>
+<span class="globe-dot" style="transform:translate3d(126.5px,19.3px,2.5px);width:2.37px;height:2.37px;opacity:0.63"></span>
+<span class="globe-dot" style="transform:translate3d(-95.0px,18.5px,83.7px);width:3.04px;height:3.04px;opacity:0.82"></span>
+<span class="globe-dot" style="transform:translate3d(13.5px,17.7px,-126.0px);width:1.32px;height:1.32px;opacity:0.32"></span>
+<span class="globe-dot" style="transform:translate3d(75.2px,17.0px,102.2px);width:3.19px;height:3.19px;opacity:0.86"></span>
+<span class="globe-dot" style="transform:translate3d(-124.6px,16.2px,-24.6px);width:2.15px;height:2.15px;opacity:0.56"></span>
+<span class="globe-dot" style="transform:translate3d(108.5px,15.5px,-66.1px);width:1.81px;height:1.81px;opacity:0.47"></span>
+<span class="globe-dot" style="transform:translate3d(-35.4px,14.7px,122.1px);width:3.35px;height:3.35px;opacity:0.91"></span>
+<span class="globe-dot" style="transform:translate3d(-56.4px,14.0px,-114.0px);width:1.41px;height:1.41px;opacity:0.35"></span>
+<span class="globe-dot" style="transform:translate3d(118.7px,13.2px,46.0px);width:2.73px;height:2.73px;opacity:0.73"></span>
+<span class="globe-dot" style="transform:translate3d(-118.7px,12.5px,46.3px);width:2.73px;height:2.73px;opacity:0.73"></span>
+<span class="globe-dot" style="transform:translate3d(56.3px,11.7px,-114.4px);width:1.41px;height:1.41px;opacity:0.35"></span>
+<span class="globe-dot" style="transform:translate3d(35.8px,10.9px,122.4px);width:3.35px;height:3.35px;opacity:0.91"></span>
+<span class="globe-dot" style="transform:translate3d(-109.1px,10.2px,-66.1px);width:1.81px;height:1.81px;opacity:0.47"></span>
+<span class="globe-dot" style="transform:translate3d(125.2px,9.4px,-25.0px);width:2.15px;height:2.15px;opacity:0.56"></span>
+<span class="globe-dot" style="transform:translate3d(-75.5px,8.7px,103.0px);width:3.2px;height:3.2px;opacity:0.86"></span>
+<span class="globe-dot" style="transform:translate3d(-13.9px,7.9px,-127.0px);width:1.31px;height:1.31px;opacity:0.32"></span>
+<span class="globe-dot" style="transform:translate3d(96.1px,7.2px,84.3px);width:3.04px;height:3.04px;opacity:0.82"></span>
+<span class="globe-dot" style="transform:translate3d(-127.8px,6.4px,2.8px);width:2.37px;height:2.37px;opacity:0.63"></span>
+<span class="globe-dot" style="transform:translate3d(92.4px,5.7px,-88.4px);width:1.62px;height:1.62px;opacity:0.41"></span>
+<span class="globe-dot" style="transform:translate3d(-8.4px,4.9px,127.6px);width:3.4px;height:3.4px;opacity:0.92"></span>
+<span class="globe-dot" style="transform:translate3d(-80.0px,4.2px,-99.8px);width:1.53px;height:1.53px;opacity:0.39"></span>
+<span class="globe-dot" style="transform:translate3d(126.5px,3.4px,19.5px);width:2.51px;height:2.51px;opacity:0.67"></span>
+<span class="globe-dot" style="transform:translate3d(-106.5px,2.6px,71.0px);width:2.93px;height:2.93px;opacity:0.79"></span>
+<span class="globe-dot" style="transform:translate3d(30.5px,1.9px,-124.3px);width:1.33px;height:1.33px;opacity:0.33"></span>
+<span class="globe-dot" style="transform:translate3d(61.5px,1.1px,112.3px);width:3.27px;height:3.27px;opacity:0.88"></span>
+<span class="globe-dot" style="transform:translate3d(-121.2px,0.4px,-41.3px);width:2.01px;height:2.01px;opacity:0.52"></span>
+<span class="globe-dot" style="transform:translate3d(117.2px,-0.4px,-51.4px);width:1.93px;height:1.93px;opacity:0.5"></span>
+<span class="globe-dot" style="transform:translate3d(-51.7px,-1.1px,117.1px);width:3.31px;height:3.31px;opacity:0.89"></span>
+<span class="globe-dot" style="transform:translate3d(-41.0px,-1.9px,-121.3px);width:1.36px;height:1.36px;opacity:0.34"></span>
+<span class="globe-dot" style="transform:translate3d(112.1px,-2.6px,61.7px);width:2.86px;height:2.86px;opacity:0.76"></span>
+<span class="globe-dot" style="transform:translate3d(-124.3px,-3.4px,30.2px);width:2.6px;height:2.6px;opacity:0.69"></span>
+<span class="globe-dot" style="transform:translate3d(71.3px,-4.2px,-106.2px);width:1.48px;height:1.48px;opacity:0.37"></span>
+<span class="globe-dot" style="transform:translate3d(19.2px,-4.9px,126.5px);width:3.39px;height:3.39px;opacity:0.92"></span>
+<span class="globe-dot" style="transform:translate3d(-99.6px,-5.7px,-80.3px);width:1.69px;height:1.69px;opacity:0.43"></span>
+<span class="globe-dot" style="transform:translate3d(127.6px,-6.4px,-8.1px);width:2.28px;height:2.28px;opacity:0.6"></span>
+<span class="globe-dot" style="transform:translate3d(-88.6px,-7.2px,92.1px);width:3.11px;height:3.11px;opacity:0.84"></span>
+<span class="globe-dot" style="transform:translate3d(3.1px,-7.9px,-127.7px);width:1.3px;height:1.3px;opacity:0.32"></span>
+<span class="globe-dot" style="transform:translate3d(83.9px,-8.7px,96.2px);width:3.14px;height:3.14px;opacity:0.85"></span>
+<span class="globe-dot" style="transform:translate3d(-126.9px,-9.4px,-14.3px);width:2.23px;height:2.23px;opacity:0.59"></span>
+<span class="globe-dot" style="transform:translate3d(103.1px,-10.2px,-75.1px);width:1.73px;height:1.73px;opacity:0.44"></span>
+<span class="globe-dot" style="transform:translate3d(-25.3px,-10.9px,125.0px);width:3.38px;height:3.38px;opacity:0.91"></span>
+<span class="globe-dot" style="transform:translate3d(-65.8px,-11.7px,-109.2px);width:1.45px;height:1.45px;opacity:0.36"></span>
+<span class="globe-dot" style="transform:translate3d(122.2px,-12.5px,36.1px);width:2.65px;height:2.65px;opacity:0.7"></span>
+<span class="globe-dot" style="transform:translate3d(-114.4px,-13.2px,55.9px);width:2.81px;height:2.81px;opacity:0.75"></span>
+<span class="globe-dot" style="transform:translate3d(46.5px,-14.0px,-118.4px);width:1.38px;height:1.38px;opacity:0.34"></span>
+<span class="globe-dot" style="transform:translate3d(45.6px,-14.7px,118.7px);width:3.32px;height:3.32px;opacity:0.9"></span>
+<span class="globe-dot" style="transform:translate3d(-113.7px,-15.5px,-56.6px);width:1.89px;height:1.89px;opacity:0.49"></span>
+<span class="globe-dot" style="transform:translate3d(122.0px,-16.2px,-35.0px);width:2.06px;height:2.06px;opacity:0.54"></span>
+<span class="globe-dot" style="transform:translate3d(-66.3px,-17.0px,108.2px);width:3.24px;height:3.24px;opacity:0.87"></span>
+<span class="globe-dot" style="transform:translate3d(-24.2px,-17.7px,-124.4px);width:1.33px;height:1.33px;opacity:0.33"></span>
+<span class="globe-dot" style="transform:translate3d(101.8px,-18.5px,75.3px);width:2.97px;height:2.97px;opacity:0.8"></span>
+<span class="globe-dot" style="transform:translate3d(-125.9px,-19.3px,13.2px);width:2.46px;height:2.46px;opacity:0.65"></span>
+<span class="globe-dot" style="transform:translate3d(83.8px,-20.0px,-94.7px);width:1.57px;height:1.57px;opacity:0.4"></span>
+<span class="globe-dot" style="transform:translate3d(2.1px,-20.8px,126.3px);width:3.39px;height:3.39px;opacity:0.92"></span>
+<span class="globe-dot" style="transform:translate3d(-86.8px,-21.5px,-91.6px);width:1.6px;height:1.6px;opacity:0.41"></span>
+<span class="globe-dot" style="transform:translate3d(125.7px,-22.3px,8.9px);width:2.42px;height:2.42px;opacity:0.64"></span>
+<span class="globe-dot" style="transform:translate3d(-98.6px,-23.0px,78.3px);width:2.99px;height:2.99px;opacity:0.8"></span>
+<span class="globe-dot" style="transform:translate3d(19.8px,-23.8px,-124.2px);width:1.33px;height:1.33px;opacity:0.33"></span>
+<span class="globe-dot" style="transform:translate3d(69.2px,-24.5px,104.8px);width:3.21px;height:3.21px;opacity:0.87"></span>
+<span class="globe-dot" style="transform:translate3d(-121.7px,-25.3px,-30.5px);width:2.1px;height:2.1px;opacity:0.55"></span>
+<span class="globe-dot" style="transform:translate3d(110.2px,-26.1px,-59.6px);width:1.86px;height:1.86px;opacity:0.48"></span>
+<span class="globe-dot" style="transform:translate3d(-40.9px,-26.8px,118.3px);width:3.32px;height:3.32px;opacity:0.9"></span>
+<span class="globe-dot" style="transform:translate3d(-49.6px,-27.6px,-114.7px);width:1.41px;height:1.41px;opacity:0.35"></span>
+<span class="globe-dot" style="transform:translate3d(113.9px,-28.3px,51.0px);width:2.77px;height:2.77px;opacity:0.74"></span>
+<span class="globe-dot" style="transform:translate3d(-118.3px,-29.1px,39.3px);width:2.67px;height:2.67px;opacity:0.71"></span>
+<span class="globe-dot" style="transform:translate3d(60.6px,-29.8px,-108.7px);width:1.46px;height:1.46px;opacity:0.37"></span>
+<span class="globe-dot" style="transform:translate3d(28.7px,-30.6px,120.9px);width:3.34px;height:3.34px;opacity:0.9"></span>
+<span class="globe-dot" style="transform:translate3d(-102.7px,-31.3px,-69.6px);width:1.78px;height:1.78px;opacity:0.46"></span>
+<span class="globe-dot" style="transform:translate3d(122.6px,-32.1px,-18.0px);width:2.2px;height:2.2px;opacity:0.58"></span>
+<span class="globe-dot" style="transform:translate3d(-78.1px,-32.8px,95.9px);width:3.14px;height:3.14px;opacity:0.84"></span>
+<span class="globe-dot" style="transform:translate3d(-7.2px,-33.6px,-123.3px);width:1.34px;height:1.34px;opacity:0.33"></span>
+<span class="globe-dot" style="transform:translate3d(88.4px,-34.4px,85.9px);width:3.05px;height:3.05px;opacity:0.82"></span>
+<span class="globe-dot" style="transform:translate3d(-123.0px,-35.1px,-3.6px);width:2.32px;height:2.32px;opacity:0.61"></span>
+<span class="globe-dot" style="transform:translate3d(93.0px,-35.9px,-80.3px);width:1.69px;height:1.69px;opacity:0.43"></span>
+<span class="globe-dot" style="transform:translate3d(-14.3px,-36.6px,121.8px);width:3.35px;height:3.35px;opacity:0.91"></span>
+<span class="globe-dot" style="transform:translate3d(-71.6px,-37.4px,-99.3px);width:1.54px;height:1.54px;opacity:0.39"></span>
+<span class="globe-dot" style="transform:translate3d(119.6px,-38.1px,24.8px);width:2.55px;height:2.55px;opacity:0.68"></span>
+<span class="globe-dot" style="transform:translate3d(-104.8px,-38.9px,62.4px);width:2.86px;height:2.86px;opacity:0.77"></span>
+<span class="globe-dot" style="transform:translate3d(35.0px,-39.6px,-116.6px);width:1.39px;height:1.39px;opacity:0.35"></span>
+<span class="globe-dot" style="transform:translate3d(52.8px,-40.4px,109.4px);width:3.25px;height:3.25px;opacity:0.88"></span>
+<span class="globe-dot" style="transform:translate3d(-112.6px,-41.2px,-44.9px);width:1.98px;height:1.98px;opacity:0.51"></span>
+<span class="globe-dot" style="transform:translate3d(113.1px,-41.9px,-42.9px);width:2.0px;height:2.0px;opacity:0.52"></span>
+<span class="globe-dot" style="transform:translate3d(-54.3px,-42.7px,107.8px);width:3.23px;height:3.23px;opacity:0.87"></span>
+<span class="globe-dot" style="transform:translate3d(-32.7px,-43.4px,-115.9px);width:1.4px;height:1.4px;opacity:0.35"></span>
+<span class="globe-dot" style="transform:translate3d(102.1px,-44.2px,63.3px);width:2.87px;height:2.87px;opacity:0.77"></span>
+<span class="globe-dot" style="transform:translate3d(-117.8px,-44.9px,22.3px);width:2.53px;height:2.53px;opacity:0.67"></span>
+<span class="globe-dot" style="transform:translate3d(71.6px,-45.7px,-95.8px);width:1.56px;height:1.56px;opacity:0.4"></span>
+<span class="globe-dot" style="transform:translate3d(11.9px,-46.4px,118.7px);width:3.32px;height:3.32px;opacity:0.9"></span>
+<span class="globe-dot" style="transform:translate3d(-88.7px,-47.2px,-79.3px);width:1.7px;height:1.7px;opacity:0.43"></span>
+<span class="globe-dot" style="transform:translate3d(118.7px,-48.0px,-1.4px);width:2.34px;height:2.34px;opacity:0.62"></span>
+<span class="globe-dot" style="transform:translate3d(-86.3px,-48.7px,81.0px);width:3.01px;height:3.01px;opacity:0.81"></span>
+<span class="globe-dot" style="transform:translate3d(8.9px,-49.5px,-117.7px);width:1.38px;height:1.38px;opacity:0.34"></span>
+<span class="globe-dot" style="transform:translate3d(72.8px,-50.2px,92.6px);width:3.11px;height:3.11px;opacity:0.84"></span>
+<span class="globe-dot" style="transform:translate3d(-115.9px,-51.0px,-19.1px);width:2.19px;height:2.19px;opacity:0.58"></span>
+<span class="globe-dot" style="transform:translate3d(98.0px,-51.7px,-64.0px);width:1.82px;height:1.82px;opacity:0.47"></span>
+<span class="globe-dot" style="transform:translate3d(-28.9px,-52.5px,113.1px);width:3.28px;height:3.28px;opacity:0.89"></span>
+<span class="globe-dot" style="transform:translate3d(-54.9px,-53.2px,-102.6px);width:1.51px;height:1.51px;opacity:0.38"></span>
+<span class="globe-dot" style="transform:translate3d(109.5px,-54.0px,38.5px);width:2.67px;height:2.67px;opacity:0.71"></span>
+<span class="globe-dot" style="transform:translate3d(-106.4px,-54.7px,45.4px);width:2.72px;height:2.72px;opacity:0.73"></span>
+<span class="globe-dot" style="transform:translate3d(47.6px,-55.5px,-105.0px);width:1.49px;height:1.49px;opacity:0.37"></span>
+<span class="globe-dot" style="transform:translate3d(35.7px,-56.3px,109.3px);width:3.25px;height:3.25px;opacity:0.88"></span>
+<span class="globe-dot" style="transform:translate3d(-99.8px,-57.0px,-56.3px);width:1.89px;height:1.89px;opacity:0.49"></span>
+<span class="globe-dot" style="transform:translate3d(111.3px,-57.8px,-25.9px);width:2.14px;height:2.14px;opacity:0.56"></span>
+<span class="globe-dot" style="transform:translate3d(-64.3px,-58.5px,93.9px);width:3.12px;height:3.12px;opacity:0.84"></span>
+<span class="globe-dot" style="transform:translate3d(-15.9px,-59.3px,-112.3px);width:1.43px;height:1.43px;opacity:0.36"></span>
+<span class="globe-dot" style="transform:translate3d(87.3px,-60.0px,71.8px);width:2.94px;height:2.94px;opacity:0.79"></span>
+<span class="globe-dot" style="transform:translate3d(-112.5px,-60.8px,6.0px);width:2.4px;height:2.4px;opacity:0.63"></span>
+<span class="globe-dot" style="transform:translate3d(78.6px,-61.5px,-80.1px);width:1.69px;height:1.69px;opacity:0.43"></span>
+<span class="globe-dot" style="transform:translate3d(-3.8px,-62.3px,111.7px);width:3.27px;height:3.27px;opacity:0.88"></span>
+<span class="globe-dot" style="transform:translate3d(-72.4px,-63.1px,-84.7px);width:1.66px;height:1.66px;opacity:0.42"></span>
+<span class="globe-dot" style="transform:translate3d(110.1px,-63.8px,13.5px);width:2.46px;height:2.46px;opacity:0.65"></span>
+<span class="globe-dot" style="transform:translate3d(-90.0px,-64.6px,64.2px);width:2.88px;height:2.88px;opacity:0.77"></span>
+<span class="globe-dot" style="transform:translate3d(22.9px,-65.3px,-107.7px);width:1.47px;height:1.47px;opacity:0.37"></span>
+<span class="globe-dot" style="transform:translate3d(55.6px,-66.1px,94.5px);width:3.12px;height:3.12px;opacity:0.84"></span>
+<span class="globe-dot" style="transform:translate3d(-104.4px,-66.8px,-31.9px);width:2.09px;height:2.09px;opacity:0.55"></span>
+<span class="globe-dot" style="transform:translate3d(98.1px,-67.6px,-46.8px);width:1.97px;height:1.97px;opacity:0.51"></span>
+<span class="globe-dot" style="transform:translate3d(-40.6px,-68.3px,100.3px);width:3.17px;height:3.17px;opacity:0.86"></span>
+<span class="globe-dot" style="transform:translate3d(-37.7px,-69.1px,-100.9px);width:1.52px;height:1.52px;opacity:0.38"></span>
+<span class="globe-dot" style="transform:translate3d(95.5px,-69.9px,48.8px);width:2.75px;height:2.75px;opacity:0.73"></span>
+<span class="globe-dot" style="transform:translate3d(-102.9px,-70.6px,28.5px);width:2.58px;height:2.58px;opacity:0.69"></span>
+<span class="globe-dot" style="transform:translate3d(56.4px,-71.4px,-90.1px);width:1.61px;height:1.61px;opacity:0.41"></span>
+<span class="globe-dot" style="transform:translate3d(19.2px,-72.1px,104.0px);width:3.2px;height:3.2px;opacity:0.86"></span>
+<span class="globe-dot" style="transform:translate3d(-84.0px,-72.9px,-63.4px);width:1.83px;height:1.83px;opacity:0.47"></span>
+<span class="globe-dot" style="transform:translate3d(104.2px,-73.6px,-9.9px);width:2.27px;height:2.27px;opacity:0.6"></span>
+<span class="globe-dot" style="transform:translate3d(-69.8px,-74.4px,77.3px);width:2.98px;height:2.98px;opacity:0.8"></span>
+<span class="globe-dot" style="transform:translate3d(-0.7px,-75.1px,-103.6px);width:1.5px;height:1.5px;opacity:0.38"></span>
+<span class="globe-dot" style="transform:translate3d(70.2px,-75.9px,75.5px);width:2.97px;height:2.97px;opacity:0.8"></span>
+<span class="globe-dot" style="transform:translate3d(-102.2px,-76.6px,-8.2px);width:2.28px;height:2.28px;opacity:0.6"></span>
+<span class="globe-dot" style="transform:translate3d(80.5px,-77.4px,-62.6px);width:1.84px;height:1.84px;opacity:0.47"></span>
+<span class="globe-dot" style="transform:translate3d(-16.9px,-78.2px,99.9px);width:3.17px;height:3.17px;opacity:0.85"></span>
+<span class="globe-dot" style="transform:translate3d(-54.7px,-78.9px,-84.6px);width:1.66px;height:1.66px;opacity:0.42"></span>
+<span class="globe-dot" style="transform:translate3d(96.9px,-79.7px,25.3px);width:2.56px;height:2.56px;opacity:0.68"></span>
+<span class="globe-dot" style="transform:translate3d(-88.0px,-80.4px,46.5px);width:2.73px;height:2.73px;opacity:0.73"></span>
+<span class="globe-dot" style="transform:translate3d(33.3px,-81.2px,-93.2px);width:1.59px;height:1.59px;opacity:0.4"></span>
+<span class="globe-dot" style="transform:translate3d(38.2px,-81.9px,90.6px);width:3.09px;height:3.09px;opacity:0.83"></span>
+<span class="globe-dot" style="transform:translate3d(-88.8px,-82.7px,-40.8px);width:2.02px;height:2.02px;opacity:0.52"></span>
+<span class="globe-dot" style="transform:translate3d(92.4px,-83.4px,-29.7px);width:2.11px;height:2.11px;opacity:0.55"></span>
+<span class="globe-dot" style="transform:translate3d(-47.7px,-84.2px,83.8px);width:3.04px;height:3.04px;opacity:0.82"></span>
+<span class="globe-dot" style="transform:translate3d(-21.2px,-85.0px,-93.4px);width:1.58px;height:1.58px;opacity:0.4"></span>
+<span class="globe-dot" style="transform:translate3d(78.2px,-85.7px,54.1px);width:2.79px;height:2.79px;opacity:0.75"></span>
+<span class="globe-dot" style="transform:translate3d(-93.5px,-86.5px,12.8px);width:2.46px;height:2.46px;opacity:0.65"></span>
+<span class="globe-dot" style="transform:translate3d(59.9px,-87.2px,-72.1px);width:1.76px;height:1.76px;opacity:0.45"></span>
+<span class="globe-dot" style="transform:translate3d(4.5px,-88.0px,92.9px);width:3.11px;height:3.11px;opacity:0.84"></span>
+<span class="globe-dot" style="transform:translate3d(-65.5px,-88.7px,-64.9px);width:1.82px;height:1.82px;opacity:0.47"></span>
+<span class="globe-dot" style="transform:translate3d(91.5px,-89.5px,3.6px);width:2.38px;height:2.38px;opacity:0.63"></span>
+<span class="globe-dot" style="transform:translate3d(-69.3px,-90.2px,58.7px);width:2.83px;height:2.83px;opacity:0.76"></span>
+<span class="globe-dot" style="transform:translate3d(11.4px,-91.0px,-89.3px);width:1.62px;height:1.62px;opacity:0.41"></span>
+<span class="globe-dot" style="transform:translate3d(51.5px,-91.8px,72.9px);width:2.95px;height:2.95px;opacity:0.79"></span>
+<span class="globe-dot" style="transform:translate3d(-86.4px,-92.5px,-18.8px);width:2.2px;height:2.2px;opacity:0.58"></span>
+<span class="globe-dot" style="transform:translate3d(75.8px,-93.3px,-44.1px);width:1.99px;height:1.99px;opacity:0.52"></span>
+<span class="globe-dot" style="transform:translate3d(-25.8px,-94.0px,82.9px);width:3.03px;height:3.03px;opacity:0.81"></span>
+<span class="globe-dot" style="transform:translate3d(-36.6px,-94.8px,-77.8px);width:1.71px;height:1.71px;opacity:0.44"></span>
+<span class="globe-dot" style="transform:translate3d(78.8px,-95.5px,32.3px);width:2.62px;height:2.62px;opacity:0.7"></span>
+<span class="globe-dot" style="transform:translate3d(-79.2px,-96.3px,29.1px);width:2.59px;height:2.59px;opacity:0.69"></span>
+<span class="globe-dot" style="transform:translate3d(38.3px,-97.0px,-74.2px);width:1.74px;height:1.74px;opacity:0.45"></span>
+<span class="globe-dot" style="transform:translate3d(21.6px,-97.8px,79.7px);width:3.0px;height:3.0px;opacity:0.81"></span>
+<span class="globe-dot" style="transform:translate3d(-69.0px,-98.5px,-43.7px);width:1.99px;height:1.99px;opacity:0.52"></span>
+<span class="globe-dot" style="transform:translate3d(79.5px,-99.3px,-14.3px);width:2.23px;height:2.23px;opacity:0.59"></span>
+<span class="globe-dot" style="transform:translate3d(-48.4px,-100.1px,63.5px);width:2.87px;height:2.87px;opacity:0.77"></span>
+<span class="globe-dot" style="transform:translate3d(-7.1px,-100.8px,-78.6px);width:1.71px;height:1.71px;opacity:0.44"></span>
+<span class="globe-dot" style="transform:translate3d(57.6px,-101.6px,52.5px);width:2.78px;height:2.78px;opacity:0.74"></span>
+<span class="globe-dot" style="transform:translate3d(-76.9px,-102.3px,0.2px);width:2.35px;height:2.35px;opacity:0.62"></span>
+<span class="globe-dot" style="transform:translate3d(55.8px,-103.1px,-51.4px);width:1.93px;height:1.93px;opacity:0.5"></span>
+<span class="globe-dot" style="transform:translate3d(-6.4px,-103.8px,74.6px);width:2.96px;height:2.96px;opacity:0.79"></span>
+<span class="globe-dot" style="transform:translate3d(-45.0px,-104.6px,-58.5px);width:1.87px;height:1.87px;opacity:0.48"></span>
+<span class="globe-dot" style="transform:translate3d(71.6px,-105.3px,12.5px);width:2.45px;height:2.45px;opacity:0.65"></span>
+<span class="globe-dot" style="transform:translate3d(-60.3px,-106.1px,38.6px);width:2.67px;height:2.67px;opacity:0.71"></span>
+<span class="globe-dot" style="transform:translate3d(18.1px,-106.9px,-68.1px);width:1.79px;height:1.79px;opacity:0.46"></span>
+<span class="globe-dot" style="transform:translate3d(32.1px,-107.6px,61.4px);width:2.85px;height:2.85px;opacity:0.76"></span>
+<span class="globe-dot" style="transform:translate3d(-64.0px,-108.4px,-23.2px);width:2.16px;height:2.16px;opacity:0.57"></span>
+<span class="globe-dot" style="transform:translate3d(61.8px,-109.1px,-25.7px);width:2.14px;height:2.14px;opacity:0.56"></span>
+<span class="globe-dot" style="transform:translate3d(-27.7px,-109.9px,59.5px);width:2.84px;height:2.84px;opacity:0.76"></span>
+<span class="globe-dot" style="transform:translate3d(-19.4px,-110.6px,-61.4px);width:1.85px;height:1.85px;opacity:0.48"></span>
+<span class="globe-dot" style="transform:translate3d(54.6px,-111.4px,31.5px);width:2.61px;height:2.61px;opacity:0.69"></span>
+<span class="globe-dot" style="transform:translate3d(-60.2px,-112.1px,13.4px);width:2.46px;height:2.46px;opacity:0.65"></span>
+<span class="globe-dot" style="transform:translate3d(34.6px,-112.9px,-49.4px);width:1.94px;height:1.94px;opacity:0.5"></span>
+<span class="globe-dot" style="transform:translate3d(7.7px,-113.7px,58.4px);width:2.83px;height:2.83px;opacity:0.76"></span>
+<span class="globe-dot" style="transform:translate3d(-44.0px,-114.4px,-36.9px);width:2.05px;height:2.05px;opacity:0.53"></span>
+<span class="globe-dot" style="transform:translate3d(55.8px,-115.2px,-2.4px);width:2.33px;height:2.33px;opacity:0.61"></span>
+<span class="globe-dot" style="transform:translate3d(-38.4px,-115.9px,38.4px);width:2.66px;height:2.66px;opacity:0.71"></span>
+<span class="globe-dot" style="transform:translate3d(2.3px,-116.7px,-52.6px);width:1.92px;height:1.92px;opacity:0.5"></span>
+<span class="globe-dot" style="transform:translate3d(32.7px,-117.4px,39.0px);width:2.67px;height:2.67px;opacity:0.71"></span>
+<span class="globe-dot" style="transform:translate3d(-48.7px,-118.2px,-6.4px);width:2.3px;height:2.3px;opacity:0.6"></span>
+<span class="globe-dot" style="transform:translate3d(38.8px,-118.9px,-27.1px);width:2.13px;height:2.13px;opacity:0.56"></span>
+<span class="globe-dot" style="transform:translate3d(-9.9px,-119.7px,44.3px);width:2.71px;height:2.71px;opacity:0.72"></span>
+<span class="globe-dot" style="transform:translate3d(-21.6px,-120.4px,-37.5px);width:2.04px;height:2.04px;opacity:0.53"></span>
+<span class="globe-dot" style="transform:translate3d(39.2px,-121.2px,12.4px);width:2.45px;height:2.45px;opacity:0.65"></span>
+<span class="globe-dot" style="transform:translate3d(-35.2px,-122.0px,16.4px);width:2.48px;height:2.48px;opacity:0.66"></span>
+<span class="globe-dot" style="transform:translate3d(14.0px,-122.7px,-33.6px);width:2.07px;height:2.07px;opacity:0.54"></span>
+<span class="globe-dot" style="transform:translate3d(11.5px,-123.5px,31.7px);width:2.61px;height:2.61px;opacity:0.69"></span>
+<span class="globe-dot" style="transform:translate3d(-27.4px,-124.2px,-14.3px);width:2.23px;height:2.23px;opacity:0.59"></span>
+<span class="globe-dot" style="transform:translate3d(26.7px,-125.0px,-7.1px);width:2.29px;height:2.29px;opacity:0.6"></span>
+<span class="globe-dot" style="transform:translate3d(-12.9px,-125.7px,20.2px);width:2.52px;height:2.52px;opacity:0.67"></span>
+<span class="globe-dot" style="transform:translate3d(-3.4px,-126.5px,-19.3px);width:2.19px;height:2.19px;opacity:0.57"></span>
+<span class="globe-dot" style="transform:translate3d(11.0px,-127.2px,8.5px);width:2.42px;height:2.42px;opacity:0.64"></span>
+<span class="globe-dot" style="transform:translate3d(-0.0px,-128.0px,0.0px);width:2.35px;height:2.35px;opacity:0.62"></span>
+<span class="globe-pin" style="transform:translate3d(60.1px,-43.8px,104.2px);"></span>
+<span class="globe-pin" style="transform:translate3d(116.2px,33.1px,-42.3px);"></span>
+<span class="globe-pin" style="transform:translate3d(-78.4px,-90.5px,45.3px);"></span>
+<span class="globe-pin" style="transform:translate3d(-67.4px,73.4px,-80.3px);"></span>
+<span class="globe-pin" style="transform:translate3d(-43.1px,-22.2px,-118.5px);"></span>
+<span class="globe-pin" style="transform:translate3d(52.9px,98.1px,63.0px);"></span>
+                            </div>
+                            <svg class="mock-globe-arc" viewBox="0 0 320 340" aria-hidden="true">
+                                <path class="mock-globe-arc-path" d="M18,236 C 90,60 210,40 300,96" fill="none" stroke="url(#arcGrad)" stroke-width="2" stroke-linecap="round"/>
+                                <defs>
+                                    <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="var(--accent-primary)" stop-opacity="0"/>
+                                        <stop offset="50%" stop-color="var(--accent-primary)" stop-opacity="1"/>
+                                        <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="mock-globe-badge mock-globe-badge-a">
+                                <span class="tint tint-accent" style="width:22px;height:22px;border-radius:7px;">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['book'] !!}</svg>
+                                </span>
+                                <span class="c1" style="font-size:.68rem; font-weight:800;">142 {{ app()->getLocale() === 'en' ? 'articles linked' : (app()->getLocale() === 'tg' ? 'модда пайваст' : 'статьи связаны') }}</span>
+                            </div>
+                            <div class="mock-globe-badge mock-globe-badge-b">
+                                <span class="tint tint-success" style="width:22px;height:22px;border-radius:7px;">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['check'] !!}</svg>
+                                </span>
+                                <span class="c1" style="font-size:.68rem; font-weight:800;">5 {{ app()->getLocale() === 'en' ? 'codes of RT' : (app()->getLocale() === 'tg' ? 'кодекси ҶТ' : 'кодексов РТ') }}</span>
+                            </div>
+                            <div class="mock-globe-glow"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -2379,12 +3843,12 @@ footer {
             </div>
             <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
                 @foreach($L['tools']['items'] as $i => $tool)
-                    <div class="card-gradient card-hover feature-card p-6 flex flex-col reveal rd{{ ($i % 4) + 1 }}">
-                        <div class="icon-tile mb-4">
+                    <div class="card-gradient card-hover feature-card tool-card-3d tilt-card has-glare p-6 flex flex-col reveal reveal-3d rd{{ ($i % 4) + 1 }}" data-tilt-max="6">
+                        <div class="icon-tile icon-tile-pop mb-4">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons[$toolIcons[$i]] !!}</svg>
                         </div>
-                        <h3 class="text-[15px] font-bold mb-1.5">{{ $tool['t'] }}</h3>
-                        <p class="text-[13px] mb-4 c2">{{ $tool['d'] }}</p>
+                        <h3 class="text-[15px] font-bold mb-1.5 tool-card-layer">{{ $tool['t'] }}</h3>
+                        <p class="text-[13px] mb-4 c2 tool-card-layer">{{ $tool['d'] }}</p>
                         <ul class="space-y-2 mb-4 flex-1">
                             @foreach($tool['b'] as $b)
                                 <li class="bullet"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">{!! $icons['check'] !!}</svg><span>{{ $b }}</span></li>
@@ -2577,36 +4041,6 @@ footer {
                                 <div class="text-xs c3">{{ $t['r'] }}</div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    <!-- PRICING -->
-    <section class="py-20 px-4 sm:px-6 reveal">
-        <div class="max-w-6xl mx-auto">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-extrabold mb-4">{{ $L['pricing']['title'] }}</h2>
-                <p class="text-lg c2">{{ $L['pricing']['sub'] }}</p>
-            </div>
-            <div class="grid md:grid-cols-3 gap-6 items-stretch">
-                @foreach($L['pricing']['items'] as $i => $p)
-                    <div class="card-gradient pricing-card p-7 flex flex-col {{ $i === 1 ? 'popular' : '' }} reveal rd{{ $i + 1 }}">
-                        @if($i === 1)
-                            <span class="ribbon ribbon-accent" style="left:50%; transform:translateX(-50%); right:auto;">{{ $L['pricing']['popular'] }}</span>
-                        @endif
-                        <h3 class="text-lg font-bold mb-2">{{ $p['n'] }}</h3>
-                        <div class="mb-5">
-                            <span class="text-4xl font-extrabold c1">{{ $p['p'] }}</span>
-                            <span class="text-sm c3"> {{ $p['per'] }}</span>
-                        </div>
-                        <ul class="space-y-2.5 mb-7 flex-1">
-                            @foreach($p['f'] as $f)
-                                <li class="bullet"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">{!! $icons['check'] !!}</svg><span>{{ $f }}</span></li>
-                            @endforeach
-                        </ul>
-                        <a href="{{ route('register') }}" class="{{ $i === 1 ? 'btn-primary' : 'btn-white' }} w-full !py-2.5 text-sm">{{ $p['c'] }}</a>
                     </div>
                 @endforeach
             </div>
@@ -3093,6 +4527,35 @@ function initReveal() {
 }
 
 /* ================================================================
+   CARD GLOW — мягкий блик за курсором + лёгкий подъём (без наклона)
+   ================================================================ */
+function initTilt3D() {
+    if (REDUCED || !window.matchMedia('(pointer: fine)').matches) return;
+
+    document.querySelectorAll('.tilt-card').forEach(el => {
+        let raf = null;
+
+        el.addEventListener('mouseenter', () => el.classList.add('tilting'));
+
+        el.addEventListener('mousemove', (e) => {
+            const r = el.getBoundingClientRect();
+            const px = (e.clientX - r.left) / r.width;
+            const py = (e.clientY - r.top) / r.height;
+
+            if (raf) cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => {
+                el.style.setProperty('--mx', (px * 100).toFixed(1) + '%');
+                el.style.setProperty('--my', (py * 100).toFixed(1) + '%');
+            });
+        });
+
+        el.addEventListener('mouseleave', () => {
+            el.classList.remove('tilting');
+        });
+    });
+}
+
+/* ================================================================
    TOAST
    ================================================================ */
 function showToast(type, message) {
@@ -3524,6 +4987,7 @@ document.addEventListener('alpine:init', () => {
 document.addEventListener('DOMContentLoaded', () => {
     initReveal();
     initCounters();
+    initTilt3D();
 });
 </script>
 </body>

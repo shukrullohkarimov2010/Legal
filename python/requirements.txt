@@ -1,0 +1,19 @@
+# Зависимости сервиса python/app.py. Проверено на Python 3.9.
+
+Flask==3.0.0
+flask-cors
+requests
+python-docx
+pypdf
+numpy
+python-dotenv
+
+# Векторный слой RAG опционален и работает через Ollama, отдельных пакетов не
+# требует (см. python/RAG.md).
+
+# Перевод ru<->tg для чата. torch намеренно не ставится: CTranslate2 держит
+# NLLB-200 в int8 (~620 МБ вместо ~2.4 ГБ), а transformers нужен только ради
+# токенизатора — предупреждение «None of PyTorch... have been found» ожидаемо.
+ctranslate2>=4.0,<5
+transformers>=4.38,<4.47
+sentencepiece

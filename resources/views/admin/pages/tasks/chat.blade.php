@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LegalAI Assistant — Умный юридический бот</title>
+    <title>LegalAI11 Assistant — Умный юридический бот</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdn.jsdelivr.net/fontsource/fonts/inter:latin@400,500,600,700&display.css" rel="stylesheet">
@@ -959,6 +959,10 @@
     initTheme();
 
     const PYTHON_API = "{{ env('PYTHON_API_URL', 'http://127.0.0.1:5000') }}";
+    // Язык ответа сервер определяет по самому вопросу. Локаль страницы уходит
+    // только как значение по умолчанию: на «привет» или «салом» признаков языка
+    // не хватает, и тогда логично отвечать на языке интерфейса.
+    const PAGE_LOCALE = "{{ app()->getLocale() }}";
 
     // Application State
     const state = {
@@ -1002,7 +1006,10 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const status = await response.json();
             const suffix = status.ready ? ` + RAG ${status.chunks}` : ' + RAG off';
-            document.getElementById('modelStatus').textContent = `${state.currentModel} Ready${suffix}`;
+            // Переводчик показывается отдельно: без него таджикский вопрос
+            // получит русский ответ, и знать об этом надо до, а не после.
+            const langs = status.translation?.enabled ? ' + RU/TJ' : ' + RU';
+            document.getElementById('modelStatus').textContent = `${state.currentModel} Ready${suffix}${langs}`;
         } catch (error) {
             document.getElementById('modelStatus').textContent = `${state.currentModel} Ready + RAG ?`;
         }
@@ -1130,7 +1137,8 @@
                 message,
                 history: state.chatHistory.slice(-8),
                 personality,
-                temperature
+                temperature,
+                lang: PAGE_LOCALE
             }),
             signal: state.abortController.signal
         });
@@ -1157,6 +1165,9 @@
         const decoder = new TextDecoder();
         let buffer = '';
         let fullResponse = '';
+        // Таджикский ответ приходит переводом, а в историю должен лечь русский
+        // оригинал: промпт следующего хода собирается по-русски.
+        let sourceResponse = '';
 
         while (true) {
             const { done, value } = await reader.read();
@@ -1175,12 +1186,13 @@
                         streamTarget.innerHTML = marked.parse(fullResponse);
                         scrollToBottom();
                     }
+                    if (json.source_response) sourceResponse = json.source_response;
                     if (json.done) break;
                 } catch (e) { continue; }
             }
         }
 
-        state.chatHistory.push({ role: 'ai', content: fullResponse, timestamp: new Date().toISOString() });
+        state.chatHistory.push({ role: 'ai', content: sourceResponse || fullResponse, timestamp: new Date().toISOString() });
     }
 
     function sendQuickQuestion(question) {

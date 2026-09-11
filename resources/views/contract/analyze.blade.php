@@ -16,7 +16,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://unpkg.com/docx@8.2.3/build/index.umd.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -39,11 +39,30 @@
         .glass { background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); border: 1px solid rgba(226,232,240,0.6); }
         .dark .glass { background: rgba(30,41,59,0.75); border-color: rgba(51,65,85,0.6); }
 
-        .terminal { background: linear-gradient(180deg,#1e293b 0%,#0f172a 100%); font-family: 'JetBrains Mono',monospace; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+        .terminal { background: linear-gradient(180deg,#1e293b 0%,#0f172a 100%); font-family: 'JetBrains Mono',monospace; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); position: relative; overflow: hidden; }
+        .terminal::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.25), transparent);
+            animation: scanLine 7s linear infinite;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        @keyframes scanLine { 0% { top: 0; } 100% { top: 100%; } }
         .terminal-line { animation: slideIn 0.2s ease-out; }
         @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
 
-        .progress-animated { background: linear-gradient(90deg,#3b82f6 0%,#60a5fa 50%,#3b82f6 100%); background-size: 200% 100%; animation: shimmer 2s linear infinite; }
+        .progress-animated { background: linear-gradient(90deg,#3b82f6 0%,#60a5fa 50%,#3b82f6 100%); background-size: 200% 100%; animation: shimmer 2s linear infinite; position: relative; overflow: hidden; }
+        .progress-animated::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: progressShine 1.5s ease-in-out infinite;
+        }
+        @keyframes progressShine { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
         .drop-zone { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); border: 2px dashed #cbd5e1; }
@@ -76,24 +95,19 @@
 
         :focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
 
-        .sidebar-item { transition: all 0.2s ease; }
+        .sidebar-item { transition: all 0.2s ease; position: relative; }
         .sidebar-item:hover, .sidebar-item.active { background: rgba(59,130,246,0.15); color: #3b82f6; }
         .dark .sidebar-item:hover, .dark .sidebar-item.active { color: #60a5fa; }
-
-        .risk-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; }
-        .risk-low-badge { background: rgba(34,197,94,0.15); color: #16a34a; }
-        .dark .risk-low-badge { color: #22c55e; }
-        .risk-medium-badge { background: rgba(245,158,11,0.15); color: #d97706; }
-        .dark .risk-medium-badge { color: #f59e0b; }
-        .risk-high-badge { background: rgba(239,68,68,0.15); color: #dc2626; }
-        .dark .risk-high-badge { color: #ef4444; }
-
-        .risk-critical { background: rgba(239,68,68,0.12); color: #dc2626; }
-        .dark .risk-critical { background: rgba(239,68,68,0.2); color: #fca5a5; }
-        .risk-medium { background: rgba(245,158,11,0.12); color: #d97706; }
-        .dark .risk-medium { background: rgba(245,158,11,0.2); color: #fcd34d; }
-        .risk-low { background: rgba(34,197,94,0.12); color: #16a34a; }
-        .dark .risk-low { background: rgba(34,197,94,0.2); color: #86efac; }
+        .sidebar-item.active::after {
+            content: '';
+            position: absolute;
+            right: 0; top: 50%;
+            transform: translateY(-50%);
+            width: 3px; height: 60%;
+            border-radius: 3px 0 0 3px;
+            background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+            box-shadow: 0 0 12px rgba(59,130,246,0.5);
+        }
 
         .modal-overlay { opacity:0; visibility:hidden; transition: all 0.3s ease; }
         .modal-overlay.active { opacity:1; visibility:visible; }
@@ -121,7 +135,7 @@
         .issue-row.info { border-color: #3b82f6; background: rgba(59,130,246,0.06); }
         .dark .issue-row.info { background: rgba(59,130,246,0.12); }
 
-        .dl-btn { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; transition: all 0.2s ease; cursor: pointer; border: none; }
+        .dl-btn { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; transition: all 0.2s ease; cursor: pointer; border: none; position: relative; overflow: hidden; }
         .dl-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
         .dl-btn:active { transform: translateY(0); }
         .dl-pdf { background: #dc2626; color: white; }
@@ -139,8 +153,8 @@
             position: sticky; top: 0; z-index: 2;
         }
         .dark .doc-table thead th { background: #0f172a; color: #94a3b8; border-bottom-color: #1e293b; }
-        .doc-table tbody tr { transition: background 0.15s ease; cursor: pointer; }
-        .doc-table tbody tr:hover { background: #f1f5f9; }
+        .doc-table tbody tr { transition: background 0.15s ease, transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
+        .doc-table tbody tr:hover { background: #f1f5f9; transform: translateX(2px); box-shadow: inset 3px 0 0 0 #3b82f6; }
         .dark .doc-table tbody tr:hover { background: rgba(51,65,85,0.35); }
         .doc-table tbody td { padding: 16px 20px; font-size: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .dark .doc-table tbody td { border-bottom-color: #1e293b; }
@@ -166,7 +180,12 @@
         .risk-pill-dot { width: 6px; height: 6px; border-radius: 50%; }
         .risk-pill-low .risk-pill-dot { background: #22c55e; }
         .risk-pill-medium .risk-pill-dot { background: #f59e0b; }
-        .risk-pill-critical .risk-pill-dot { background: #ef4444; }
+        .risk-pill-critical .risk-pill-dot { background: #ef4444; animation: criticalPulse 2s infinite; }
+        @keyframes criticalPulse {
+            0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+            70% { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+            100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+        }
 
         .action-btn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.15s ease; background: transparent; color: #94a3b8; }
         .action-btn:hover { background: #f1f5f9; color: #475569; }
@@ -199,9 +218,281 @@
         .dark .activity-count { color: #f1f5f9; }
         .activity-count.is-zero { color: #94a3b8; font-weight: 500; }
         .dark .activity-count.is-zero { color: #475569; }
+
+        /* Animated background */
+        .animated-mesh-bg {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background:
+                radial-gradient(at 15% 25%, rgba(59,130,246,0.08) 0px, transparent 50%),
+                radial-gradient(at 85% 15%, rgba(139,92,246,0.08) 0px, transparent 50%),
+                radial-gradient(at 25% 85%, rgba(16,185,129,0.06) 0px, transparent 50%),
+                radial-gradient(at 85% 75%, rgba(244,63,94,0.05) 0px, transparent 50%);
+            animation: meshDrift 22s ease-in-out infinite alternate;
+        }
+        .dark .animated-mesh-bg {
+            background:
+                radial-gradient(at 15% 25%, rgba(59,130,246,0.15) 0px, transparent 50%),
+                radial-gradient(at 85% 15%, rgba(139,92,246,0.15) 0px, transparent 50%),
+                radial-gradient(at 25% 85%, rgba(16,185,129,0.1) 0px, transparent 50%),
+                radial-gradient(at 85% 75%, rgba(244,63,94,0.08) 0px, transparent 50%);
+        }
+        @keyframes meshDrift {
+            0% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(-15px,10px) scale(1.03); }
+            100% { transform: translate(10px,-15px) scale(1.01); }
+        }
+
+        .logo-gradient {
+            background: linear-gradient(120deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+            background-size: 300% 300%;
+            animation: logoShift 8s ease infinite;
+        }
+        @keyframes logoShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+        .btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+        .btn-shine::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.35) 50%, transparent 80%);
+            transform: skewX(-20deg);
+            transition: left 0.7s cubic-bezier(0.4,0,0.2,1);
+            z-index: 1;
+        }
+        .btn-shine:hover::before { left: 120%; }
+
+        .section-enter { animation: sectionFade 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes sectionFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* =========================================
+           PROFESSIONAL ANALYTICS DASHBOARD STYLES
+           ========================================= */
+
+        .exec-summary {
+            background: linear-gradient(135deg, rgba(59,130,246,0.04) 0%, rgba(139,92,246,0.04) 100%);
+            position: relative;
+        }
+        .exec-summary::before {
+            content: '';
+            position: absolute; inset: 0;
+            border-radius: inherit; padding: 1.5px;
+            background: linear-gradient(135deg, rgba(59,130,246,0.4), rgba(139,92,246,0.4), rgba(236,72,153,0.3));
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .metric-card {
+            position: relative;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+            overflow: hidden;
+        }
+        .dark .metric-card { background: rgba(30,41,59,0.6); border-color: rgba(51,65,85,0.6); }
+        .metric-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.15); }
+        .metric-card::after {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent-color, #3b82f6), transparent);
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .metric-card:hover::after { opacity: 1; }
+        .metric-card.metric-critical { --accent-color: #ef4444; }
+        .metric-card.metric-warning { --accent-color: #f59e0b; }
+        .metric-card.metric-success { --accent-color: #22c55e; }
+        .metric-card.metric-info { --accent-color: #3b82f6; }
+
+        .metric-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+            transition: transform 0.3s ease;
+        }
+        .metric-card:hover .metric-icon { transform: scale(1.1) rotate(-5deg); }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-trend {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.7rem; font-weight: 600;
+            padding: 4px 8px; border-radius: 6px; margin-top: 8px;
+        }
+
+        .action-card {
+            position: relative;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        .dark .action-card { background: rgba(30,41,59,0.6); border-color: rgba(51,65,85,0.6); }
+        .action-card:hover { transform: translateX(4px); box-shadow: 0 8px 20px -8px rgba(0,0,0,0.15); }
+        .action-card.priority-high { border-left: 4px solid #ef4444; }
+        .action-card.priority-medium { border-left: 4px solid #f59e0b; }
+        .action-card.priority-low { border-left: 4px solid #3b82f6; }
+
+        .priority-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 9999px;
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .priority-badge.high { background: rgba(239,68,68,0.1); color: #dc2626; }
+        .dark .priority-badge.high { background: rgba(239,68,68,0.2); color: #fca5a5; }
+        .priority-badge.medium { background: rgba(245,158,11,0.1); color: #d97706; }
+        .dark .priority-badge.medium { background: rgba(245,158,11,0.2); color: #fcd34d; }
+        .priority-badge.low { background: rgba(59,130,246,0.1); color: #2563eb; }
+        .dark .priority-badge.low { background: rgba(59,130,246,0.2); color: #60a5fa; }
+
+        .risk-breakdown {
+            display: flex; gap: 3px; height: 10px;
+            border-radius: 5px; overflow: hidden;
+            background: #e2e8f0;
+        }
+        .dark .risk-breakdown { background: #334155; }
+        .risk-segment { height: 100%; transition: width 1s cubic-bezier(0.22,1,0.36,1); border-radius: 3px; }
+        .risk-segment.critical { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .risk-segment.warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .risk-segment.info { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+
+        .category-tab {
+            padding: 10px 18px; border-radius: 10px;
+            font-size: 0.85rem; font-weight: 600;
+            transition: all 0.2s ease; cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .category-tab.active {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            box-shadow: 0 4px 12px -2px rgba(37,99,235,0.4);
+            transform: translateY(-1px);
+        }
+        .category-tab:not(.active) { background: #f1f5f9; color: #64748b; }
+        .dark .category-tab:not(.active) { background: rgba(51,65,85,0.5); color: #94a3b8; }
+        .category-tab:not(.active):hover { background: #e2e8f0; color: #475569; transform: translateY(-1px); }
+        .dark .category-tab:not(.active):hover { background: rgba(51,65,85,0.8); color: #cbd5e1; }
+
+        .pro-gauge { position: relative; width: 180px; height: 180px; flex-shrink: 0; }
+        .pro-gauge svg { transform: rotate(-90deg); filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1)); }
+        .pro-gauge-circle { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 1.5s cubic-bezier(0.22,1,0.36,1), stroke 0.5s ease; }
+        .pro-gauge-bg { fill: none; stroke-width: 14; stroke: #e2e8f0; }
+        .dark .pro-gauge-bg { stroke: #334155; }
+
+        .pro-gauge-value {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .pro-gauge-score { font-size: 3rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
+        .pro-gauge-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-top: 6px; }
+
+        .pro-reveal { opacity: 0; transform: translateY(24px); transition: all 0.6s cubic-bezier(0.22,1,0.36,1); }
+        .pro-reveal.revealed { opacity: 1; transform: translateY(0); }
+        .pro-reveal-delay-1 { transition-delay: 0.1s; }
+        .pro-reveal-delay-2 { transition-delay: 0.2s; }
+        .pro-reveal-delay-3 { transition-delay: 0.3s; }
+        .pro-reveal-delay-4 { transition-delay: 0.4s; }
+        .pro-reveal-delay-5 { transition-delay: 0.5s; }
+
+        .section-divider { display: flex; align-items: center; gap: 16px; margin: 32px 0; }
+        .section-divider::before, .section-divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+        }
+        .dark .section-divider::before, .dark .section-divider::after {
+            background: linear-gradient(90deg, transparent, #334155, transparent);
+        }
+        .section-divider-text {
+            font-size: 0.75rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8;
+            white-space: nowrap;
+        }
+
+        .compliance-indicator {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px 20px; border-radius: 12px;
+            background: white; border: 1px solid #e2e8f0;
+            transition: all 0.25s ease;
+        }
+        .dark .compliance-indicator { background: rgba(30,41,59,0.6); border-color: rgba(51,65,85,0.6); }
+        .compliance-indicator:hover { transform: translateX(4px); box-shadow: 0 6px 16px -6px rgba(0,0,0,0.12); }
+        .compliance-dot { width: 12px; height: 12px; border-radius: 50%; position: relative; flex-shrink: 0; }
+        .compliance-dot::after {
+            content: ''; position: absolute; inset: -4px;
+            border-radius: 50%; border: 2px solid currentColor;
+            opacity: 0.3; animation: compliancePulse 2s ease-in-out infinite;
+        }
+        @keyframes compliancePulse { 0%,100% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.3); opacity: 0; } }
+        .compliance-pass { color: #22c55e; }
+        .compliance-warn { color: #f59e0b; }
+        .compliance-fail { color: #ef4444; }
+
+        .finding-pro {
+            padding: 20px; border-radius: 12px;
+            border: 1px solid #e2e8f0; background: white;
+            margin-bottom: 12px; transition: all 0.3s ease;
+        }
+        .dark .finding-pro { background: rgba(30,41,59,0.6); border-color: rgba(51,65,85,0.6); }
+        .finding-pro:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -8px rgba(0,0,0,0.12); }
+        .finding-pro.severity-critical { border-left: 4px solid #ef4444; }
+        .finding-pro.severity-warning { border-left: 4px solid #f59e0b; }
+        .finding-pro.severity-info { border-left: 4px solid #3b82f6; }
+
+        .success-check { animation: checkmarkPop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.3s both; }
+        @keyframes checkmarkPop {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            60% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
+            transform: rotate(45deg) translateY(100%);
+            transition: transform 0.6s ease;
+            pointer-events: none;
+        }
+        .metric-card:hover::before { transform: rotate(45deg) translateY(-100%); }
+
+        .avatar-ring { position: relative; }
+        .avatar-ring::before {
+            content: ''; position: absolute; inset: -2px;
+            border-radius: 50%; padding: 2px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            opacity: 0.7;
+        }
+
+        .float-icon { animation: floatY 3s ease-in-out infinite; }
+        @keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased transition-colors duration-300">
+
+<div class="animated-mesh-bg"></div>
 
 @php
     $currentUser = auth()->user();
@@ -212,14 +503,14 @@
     $userInitials = $userInitials !== '' ? $userInitials : 'П';
 @endphp
 
-<div class="flex h-screen overflow-hidden">
+<div class="flex h-screen overflow-hidden relative z-10">
     <!-- Sidebar -->
-    <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 transition-colors duration-300">
+    <aside class="w-64 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0 transition-colors duration-300">
         <div class="p-6 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <div class="w-10 h-10 rounded-xl logo-gradient flex items-center justify-center shadow-lg shadow-blue-500/30">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             </div>
-            <span class="text-xl font-bold text-slate-900 dark:text-white">LegalAI Pro</span>
+            <span class="text-xl font-bold text-slate-900 dark:text-white">LegalAI <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Pro</span></span>
         </div>
         <nav class="flex-1 px-4 space-y-1">
             <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-3">Основное</div>
@@ -232,18 +523,21 @@
         </nav>
         <div class="p-4 border-t border-slate-200 dark:border-slate-800">
             <div class="flex items-center gap-3 px-3 py-2">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg">{{ $userInitials }}</div>
-                <div class="flex-1 min-w-0"><div class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $userName }}</div><div class="text-xs text-slate-500">Pro план</div></div>
+                <div class="avatar-ring w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg">{{ $userInitials }}</div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ $userName }}</div>
+                    <div class="text-xs text-slate-500 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Pro план</div>
+                </div>
             </div>
         </div>
     </aside>
 
     <!-- Main -->
     <div class="flex-1 flex flex-col overflow-hidden">
-        <header class="h-16 bg-white/60 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 backdrop-blur-xl flex-shrink-0 transition-colors">
+        <header class="h-16 bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 backdrop-blur-2xl flex-shrink-0 transition-colors">
             <div class="flex items-center gap-2">
                 <button onclick="showSection('dashboard')" class="px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 rounded-lg text-sm font-medium transition-colors">Дашборд</button>
-                <button onclick="showSection('analysis')" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">Анализ</button>
+                <button onclick="showSection('analysis')" class="px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-sm font-medium transition-all shadow-sm btn-shine">Анализ</button>
                 <button onclick="showSection('documents')" class="px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 rounded-lg text-sm font-medium transition-colors">Документы</button>
             </div>
             <div class="flex items-center gap-3">
@@ -251,48 +545,71 @@
                     <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-lg">{{ $userInitials }}</div>
+                <div class="avatar-ring w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-lg">{{ $userInitials }}</div>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950 transition-colors">
+        <main class="flex-1 overflow-y-auto p-6 bg-transparent transition-colors">
 
             <!-- ===== DASHBOARD ===== -->
-            <div id="dashboard-section" class="space-y-6">
+            <div id="dashboard-section" class="space-y-6 section-enter">
                 <div class="mb-8"><h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Дашборд</h1><p class="text-slate-500">Обзор юридических документов и аналитика рисков</p></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg transition-all"><div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center mb-4"><svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><div class="text-3xl font-bold text-slate-900 dark:text-white" id="stat-total">0</div><div class="text-sm text-slate-500">Всего документов</div></div>
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg transition-all"><div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center mb-4"><svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400" id="stat-low">0</div><div class="text-sm text-slate-500">Низкий риск</div></div>
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg transition-all"><div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center mb-4"><svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg></div><div class="text-3xl font-bold text-amber-600 dark:text-amber-400" id="stat-medium">0</div><div class="text-sm text-slate-500">Средний риск</div></div>
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-lg transition-all"><div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center mb-4"><svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div class="text-3xl font-bold text-red-600 dark:text-red-400" id="stat-critical">0</div><div class="text-sm text-slate-500">Высокий риск</div></div>
+                    <div class="metric-card metric-info"><div class="metric-icon bg-blue-100 dark:bg-blue-500/20"><svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><div class="metric-value text-slate-900 dark:text-white" id="stat-total">0</div><div class="metric-label">Всего документов</div></div>
+                    <div class="metric-card metric-success"><div class="metric-icon bg-emerald-100 dark:bg-emerald-500/20"><svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div class="metric-value text-emerald-600 dark:text-emerald-400" id="stat-low">0</div><div class="metric-label">Низкий риск</div></div>
+                    <div class="metric-card metric-warning"><div class="metric-icon bg-amber-100 dark:bg-amber-500/20"><svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg></div><div class="metric-value text-amber-600 dark:text-amber-400" id="stat-medium">0</div><div class="metric-label">Средний риск</div></div>
+                    <div class="metric-card metric-critical"><div class="metric-icon bg-red-100 dark:bg-red-500/20"><svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div class="metric-value text-red-600 dark:text-red-400" id="stat-critical">0</div><div class="metric-label">Высокий риск</div></div>
                 </div>
                 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-slate-200 dark:border-slate-800">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+                                <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center float-icon"><svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
                                 <div><h3 class="text-lg font-semibold text-slate-900 dark:text-white">Последние документы</h3><p id="dashTableCount" class="text-xs text-slate-500">0 документов</p></div>
                             </div>
-                            <button onclick="showSection('documents')" class="px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors">Смотреть все →</button>
+                            <button onclick="showSection('documents')" class="px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors group flex items-center gap-1">Смотреть все <span class="group-hover:translate-x-0.5 transition-transform">→</span></button>
                         </div>
                     </div>
                     <div id="dashTableWrap" class="overflow-x-auto">
                         <table class="doc-table"><thead><tr><th>Document</th><th>Status</th><th>Risk Level</th><th>Date</th><th style="text-align:right">Actions</th></tr></thead><tbody id="dashboardTableBody"></tbody></table>
                     </div>
-                    <div id="dashboardEmpty" class="hidden py-12 text-center"><div class="text-5xl mb-4">📄</div><p class="text-slate-500 mb-4">Нет проанализированных документов</p><button onclick="showSection('analysis')" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium">Начать анализ</button></div>
+                    <div id="dashboardEmpty" class="hidden py-12 text-center"><div class="text-5xl mb-4 float-icon inline-block">📄</div><p class="text-slate-500 mb-4">Нет проанализированных документов</p><button onclick="showSection('analysis')" class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-medium btn-shine shadow-lg shadow-blue-500/20">Начать анализ</button></div>
                 </div>
             </div>
 
             <!-- ===== ANALYSIS ===== -->
-            <div id="analysis-section" class="hidden max-w-5xl mx-auto">
-                <div class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><div class="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300"><span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>Legal review workspace</div><h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Анализ договора</h1><p class="mt-2 text-slate-500">Проверка по подключённой базе законодательства Республики Таджикистан</p></div><div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-900"><p class="text-xs font-medium uppercase tracking-wide text-slate-400">Режим анализа</p><p class="mt-1 font-semibold text-slate-800 dark:text-white">RAG · доказательный контроль</p></div></div>
+            <div id="analysis-section" class="hidden max-w-6xl mx-auto section-enter">
+                <div class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <div class="mb-2 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300"><span class="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></span>Legal review workspace</div>
+                        <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Анализ договора</h1>
+                        <p class="mt-2 text-slate-500">Проверка по подключённой базе законодательства Республики Таджикистан</p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                        <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Режим анализа</p>
+                        <p class="mt-1 font-semibold text-slate-800 dark:text-white">RAG · доказательный контроль</p>
+                    </div>
+                </div>
+
                 <div class="mb-6 rounded-2xl border border-blue-200/80 dark:border-blue-500/30 bg-gradient-to-r from-blue-50 via-white to-indigo-50 dark:from-blue-950/40 dark:via-slate-900 dark:to-indigo-950/30 p-5 shadow-sm">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div class="flex items-start gap-3"><div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-lg text-white shadow-lg shadow-blue-500/20">✓</div><div><p class="font-semibold text-slate-900 dark:text-white">Контроль доказательств включён</p><p class="mt-1 text-sm text-slate-600 dark:text-slate-300">В отчёт попадают только выводы с цитатой из договора и статьёй, найденной в RAG Республики Таджикистан.</p></div></div>
+                        <div class="flex items-start gap-3">
+                            <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-lg text-white shadow-lg shadow-blue-500/20">✓</div>
+                            <div>
+                                <p class="font-semibold text-slate-900 dark:text-white">Контроль доказательств включён</p>
+                                <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">В отчёт попадают только выводы с цитатой из договора и статьёй, найденной в RAG Республики Таджикистан.</p>
+                            </div>
+                        </div>
                         <span id="ragTrustStatus" class="inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"><span class="h-2 w-2 rounded-full bg-slate-400"></span>Проверка RAG перед запуском</span>
                     </div>
-                    <div class="mt-4 flex flex-wrap gap-2 text-xs font-medium"><span class="rounded-lg bg-white px-3 py-1.5 text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">Только нормы РТ</span><span class="rounded-lg bg-white px-3 py-1.5 text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">Точные цитаты договора</span><span class="rounded-lg bg-white px-3 py-1.5 text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">Без неподтверждённых выводов</span><span id="analysisCacheStatus" class="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-3 py-1.5 text-violet-700 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20"><span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span>Умный кэш готов</span></div>
+                    <div class="mt-4 flex flex-wrap gap-2 text-xs font-medium">
+                        <span class="rounded-lg bg-white px-3 py-1.5 text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">Только нормы РТ</span>
+                        <span class="rounded-lg bg-white px-3 py-1.5 text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">Точные цитаты договора</span>
+                        <span class="rounded-lg bg-white px-3 py-1.5 text-slate-600 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">Без неподтверждённых выводов</span>
+                        <span id="analysisCacheStatus" class="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-3 py-1.5 text-violet-700 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20"><span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span>Умный кэш готов</span>
+                    </div>
                 </div>
+
                 <div class="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-2xl shadow-xl overflow-hidden card-hover mb-6">
                     <div class="p-8">
                         <form id="uploadForm" class="space-y-6" novalidate>
@@ -302,9 +619,9 @@
                                 <div id="dropZone" class="drop-zone rounded-xl p-8 text-center cursor-pointer bg-slate-50 dark:bg-slate-800/30" role="button" tabindex="0">
                                     <input type="file" id="fileInput" class="sr-only" accept=".pdf,.doc,.docx,.txt" required>
                                     <div id="dropContent" class="space-y-4">
-                                        <div class="w-16 h-16 mx-auto bg-blue-100 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center"><svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg></div>
+                                        <div class="w-16 h-16 mx-auto bg-blue-100 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center float-icon"><svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg></div>
                                         <div><p class="text-slate-800 dark:text-white font-medium mb-1">Перетащите файл сюда</p><p class="text-slate-500 text-sm">или нажмите для выбора</p></div>
-                                        <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-lg shadow-blue-500/25">Выбрать файл</span>
+                                        <span class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-medium shadow-lg shadow-blue-500/25 btn-shine">Выбрать файл</span>
                                         <p class="text-xs text-slate-500 mt-3">PDF, DOC, DOCX, TXT — Макс. 50 МБ</p>
                                     </div>
                                     <div id="fileSelected" class="hidden space-y-4">
@@ -316,54 +633,245 @@
                                     </div>
                                 </div>
                             </div>
-                            <label class="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 cursor-pointer">
+                            <label class="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 cursor-pointer hover:border-blue-400 transition-colors">
                                 <input id="generateRevisedContract" type="checkbox" class="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300">
                                 <span><span class="block text-sm font-semibold text-slate-800 dark:text-white">Создать доработанную редакцию договора</span><span class="block text-xs text-slate-500 mt-1">По завершении анализа будет подготовлен отдельный проект в исходном формате. Требуется финальная проверка юристом.</span></span>
                             </label>
-                            <button type="submit" id="submitBtn" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 group disabled:opacity-60 disabled:cursor-not-allowed"><span class="text-xl group-hover:scale-110 transition-transform">🚀</span><span>Запустить анализ</span><svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></button>
+                            <button type="submit" id="submitBtn" class="w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 group disabled:opacity-60 disabled:cursor-not-allowed btn-shine"><span class="text-xl group-hover:scale-110 transition-transform">🚀</span><span>Запустить анализ</span><svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg></button>
                         </form>
                     </div>
                 </div>
 
                 <section id="analysisProgress" class="space-y-6 hidden">
-                    <div class="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0"><svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><div class="flex-1 min-w-0"><p class="text-xs text-slate-500 uppercase tracking-wide font-medium">Анализируется</p><p id="analysisFileName" class="font-semibold text-slate-900 dark:text-white truncate"></p><p id="analysisModeNote" class="mt-1 text-xs text-slate-500">Проверяем документ и готовим RAG-контекст</p></div><span id="analysisStatusBadge" class="px-3 py-1.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-full text-xs font-medium flex items-center gap-1.5"><span class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>В процессе</span></div>
-                    <div class="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-xl p-5"><div class="flex items-center justify-between mb-4"><span class="text-sm font-medium text-slate-700 dark:text-slate-300">Прогресс</span><span id="progressText" class="text-sm font-bold text-blue-600 dark:text-blue-400 tabular-nums">0%</span></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div id="progressBar" class="progress-animated h-full rounded-full transition-all duration-500" style="width:0%"></div></div><div class="flex justify-between mt-4 text-xs text-slate-500"><span class="flex items-center gap-1"><span id="stage-upload" class="w-2 h-2 rounded-full bg-blue-500"></span>Загрузка</span><span class="flex items-center gap-1"><span id="stage-process" class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>Обработка</span><span class="flex items-center gap-1"><span id="stage-analyze" class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>Анализ</span><span class="flex items-center gap-1"><span id="stage-done" class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>Готово</span></div></div>
-                    <div class="terminal rounded-xl shadow-lg overflow-hidden"><div class="flex items-center justify-between px-4 py-3 bg-slate-800/80 border-b border-slate-700/50"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-yellow-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div><span class="text-xs text-slate-400 font-mono">live logs</span><button id="clearLogs" class="text-xs text-slate-400 hover:text-slate-200">✕</button></div><div id="logContainer" class="p-4 h-64 overflow-y-auto font-mono text-sm text-slate-300" style="scroll-behavior:smooth;"></div></div>
+                    <div class="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0 float-icon"><svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs text-slate-500 uppercase tracking-wide font-medium">Анализируется</p>
+                            <p id="analysisFileName" class="font-semibold text-slate-900 dark:text-white truncate"></p>
+                            <p id="analysisModeNote" class="mt-1 text-xs text-slate-500">Проверяем документ и готовим RAG-контекст</p>
+                        </div>
+                        <span id="analysisStatusBadge" class="px-3 py-1.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-full text-xs font-medium flex items-center gap-1.5"><span class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>В процессе</span>
+                    </div>
 
-                    <article id="finalReport" class="hidden animate-fadeIn space-y-6">
-                        <div id="reportPrintArea" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden">
-                            <div id="reportHeaderBg" class="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-6 flex items-center gap-4">
-                                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div>
-                                <div><h3 class="text-white font-bold text-2xl">Анализ завершён</h3><p id="reportSubtitle" class="text-white/80 text-sm mt-1">Документ успешно обработан</p></div>
-                            </div>
-                            <div class="p-8">
-                                <div class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200"><span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">✓</span><span><strong>Режим точного анализа:</strong> при отсутствии подтверждения в RAG риск не публикуется в отчёте.</span></div>
-                                <div class="grid md:grid-cols-3 gap-8 mb-8">
-                                    <div class="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl">
-                                        <div class="risk-gauge mb-4">
-                                            <svg viewBox="0 0 130 130" class="w-full h-full"><circle cx="65" cy="65" r="52" class="bg-circle"/><circle id="riskGaugeCircle" cx="65" cy="65" r="52" stroke="#22c55e" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>
-                                            <div class="absolute inset-0 flex items-center justify-center flex-col"><span id="riskGaugeScore" class="text-4xl font-bold text-slate-900 dark:text-white">0</span><span class="text-xs text-slate-500 font-medium mt-1">Баллов риска</span></div>
-                                        </div>
-                                        <span id="riskLevelBadge" class="px-4 py-1.5 rounded-full text-sm font-bold bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400">Низкий риск</span>
+                    <div class="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-xl p-5">
+                        <div class="flex items-center justify-between mb-4"><span class="text-sm font-medium text-slate-700 dark:text-slate-300">Прогресс</span><span id="progressText" class="text-sm font-bold text-blue-600 dark:text-blue-400 tabular-nums">0%</span></div>
+                        <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div id="progressBar" class="progress-animated h-full rounded-full transition-all duration-500" style="width:0%"></div></div>
+                        <div class="flex justify-between mt-4 text-xs text-slate-500"><span class="flex items-center gap-1"><span id="stage-upload" class="w-2 h-2 rounded-full bg-blue-500"></span>Загрузка</span><span class="flex items-center gap-1"><span id="stage-process" class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>Обработка</span><span class="flex items-center gap-1"><span id="stage-analyze" class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>Анализ</span><span class="flex items-center gap-1"><span id="stage-done" class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"></span>Готово</span></div>
+                    </div>
+
+                    <div class="terminal rounded-xl shadow-lg overflow-hidden">
+                        <div class="flex items-center justify-between px-4 py-3 bg-slate-800/80 border-b border-slate-700/50">
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-yellow-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+                            <span class="text-xs text-slate-400 font-mono flex items-center gap-2"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>live logs</span>
+                            <button id="clearLogs" class="text-xs text-slate-400 hover:text-slate-200">✕</button>
+                        </div>
+                        <div id="logContainer" class="p-4 h-64 overflow-y-auto font-mono text-sm text-slate-300" style="scroll-behavior:smooth;"></div>
+                    </div>
+
+                    <!-- ✨ PROFESSIONAL ANALYTICS RESULT ✨ -->
+                    <article id="finalReport" class="hidden space-y-8">
+
+                        <!-- Executive Summary -->
+                        <div class="exec-summary rounded-2xl p-8 border border-transparent">
+                            <div class="flex flex-col md:flex-row items-start justify-between gap-4 mb-6">
+                                <div class="flex items-center gap-4">
+                                    <div id="reportHeaderBg" class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center flex-shrink-0 success-check shadow-lg">
+                                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                     </div>
-                                    <div class="md:col-span-2">
-                                        <h4 class="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>Ключевые выявленные проблемы</h4>
-                                        <div id="findingsTable" class="space-y-3 max-h-56 overflow-y-auto pr-2"></div>
+                                    <div>
+                                        <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 mb-1">Analysis Complete</div>
+                                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Анализ завершён</h2>
+                                        <p id="reportSubtitle" class="text-sm text-slate-600 dark:text-slate-400 mt-1">Документ успешно обработан</p>
                                     </div>
                                 </div>
-                                <div class="border-t border-slate-200 dark:border-slate-700 pt-6">
-                                    <h4 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Полный отчёт</h4>
-                                    <div id="reportContent" class="markdown-body text-slate-700 dark:text-slate-300 leading-relaxed"></div>
+                                <span id="analysisCompleteBadge" class="px-4 py-2 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-semibold flex items-center gap-2">
+                                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    Готов к просмотру
+                                </span>
+                            </div>
+
+                            <div class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
+                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">✓</span>
+                                <span><strong>Режим точного анализа:</strong> при отсутствии подтверждения в RAG риск не публикуется в отчёте.</span>
+                            </div>
+
+                            <!-- Key Metrics Grid -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                <div class="metric-card metric-critical pro-reveal">
+                                    <div class="metric-icon bg-red-100 dark:bg-red-500/20">
+                                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                                    </div>
+                                    <div class="metric-value text-red-600 dark:text-red-400" id="metricCritical">0</div>
+                                    <div class="metric-label">Критические</div>
+                                    <div class="metric-trend bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/></svg>
+                                        Высокий приоритет
+                                    </div>
+                                </div>
+
+                                <div class="metric-card metric-warning pro-reveal pro-reveal-delay-1">
+                                    <div class="metric-icon bg-amber-100 dark:bg-amber-500/20">
+                                        <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <div class="metric-value text-amber-600 dark:text-amber-400" id="metricWarning">0</div>
+                                    <div class="metric-label">Предупреждения</div>
+                                    <div class="metric-trend bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+                                        Требует внимания
+                                    </div>
+                                </div>
+
+                                <div class="metric-card metric-info pro-reveal pro-reveal-delay-2">
+                                    <div class="metric-icon bg-blue-100 dark:bg-blue-500/20">
+                                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <div class="metric-value text-blue-600 dark:text-blue-400" id="metricInfo">0</div>
+                                    <div class="metric-label">Информация</div>
+                                    <div class="metric-trend bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                                        Рекомендации
+                                    </div>
+                                </div>
+
+                                <div class="metric-card metric-success pro-reveal pro-reveal-delay-3">
+                                    <div class="metric-icon bg-emerald-100 dark:bg-emerald-500/20">
+                                        <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </div>
+                                    <div class="metric-value text-emerald-600 dark:text-emerald-400" id="metricTotal">0</div>
+                                    <div class="metric-label">Всего находок</div>
+                                    <div class="metric-trend bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                        Проверено AI
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Risk Score & Compliance -->
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="flex items-center gap-6 bg-white dark:bg-slate-900/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700/60 pro-reveal pro-reveal-delay-4">
+                                    <div class="pro-gauge">
+                                        <svg viewBox="0 0 130 130" class="w-full h-full">
+                                            <circle cx="65" cy="65" r="52" class="pro-gauge-bg"/>
+                                            <circle id="riskGaugeCircle" cx="65" cy="65" r="52" stroke="#22c55e" stroke-dasharray="326.7" stroke-dashoffset="326.7" class="pro-gauge-circle"/>
+                                        </svg>
+                                        <div class="pro-gauge-value">
+                                            <span id="riskGaugeScore" class="pro-gauge-score text-slate-900 dark:text-white">0</span>
+                                            <span class="pro-gauge-label">Баллов риска</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">Общий уровень риска</div>
+                                        <div id="riskLevelBadge" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 font-bold text-lg">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                                            Низкий риск
+                                        </div>
+                                        <div class="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                            Оценка на основе анализа содержания договора и норм законодательства РТ
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-3 pro-reveal pro-reveal-delay-5">
+                                    <div class="compliance-indicator compliance-pass">
+                                        <div class="compliance-dot bg-emerald-500"></div>
+                                        <div class="flex-1">
+                                            <div class="font-semibold text-slate-900 dark:text-white">Проверка по базе ГК РТ</div>
+                                            <div class="text-sm text-slate-600 dark:text-slate-400">RAG-база законодательства подключена</div>
+                                        </div>
+                                    </div>
+                                    <div class="compliance-indicator compliance-pass">
+                                        <div class="compliance-dot bg-emerald-500"></div>
+                                        <div class="flex-1">
+                                            <div class="font-semibold text-slate-900 dark:text-white">Цитирование подтверждено</div>
+                                            <div class="text-sm text-slate-600 dark:text-slate-400">Все выводы подкреплены статьями</div>
+                                        </div>
+                                    </div>
+                                    <div id="complianceStatusRow" class="compliance-indicator compliance-warn">
+                                        <div class="compliance-dot bg-amber-500"></div>
+                                        <div class="flex-1">
+                                            <div id="complianceStatusTitle" class="font-semibold text-slate-900 dark:text-white">Выявлены замечания</div>
+                                            <div id="complianceStatusText" class="text-sm text-slate-600 dark:text-slate-400">Требуется доработка документа</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
+
+                        <div class="section-divider">
+                            <span class="section-divider-text">📊 Детальная аналитика</span>
+                        </div>
+
+                        <!-- Risk Breakdown Visualization -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 pro-reveal">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                Распределение рисков
+                            </h3>
+                            <div class="risk-breakdown mb-4">
+                                <div class="risk-segment critical" id="riskSegCritical" style="width: 0%"></div>
+                                <div class="risk-segment warning" id="riskSegWarning" style="width: 0%"></div>
+                                <div class="risk-segment info" id="riskSegInfo" style="width: 0%"></div>
+                            </div>
+                            <div class="flex flex-wrap justify-between gap-3 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <span class="text-slate-600 dark:text-slate-400">Критические: <strong id="riskPctCritical" class="text-red-600 dark:text-red-400">0%</strong></span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                                    <span class="text-slate-600 dark:text-slate-400">Предупреждения: <strong id="riskPctWarning" class="text-amber-600 dark:text-amber-400">0%</strong></span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                                    <span class="text-slate-600 dark:text-slate-400">Информация: <strong id="riskPctInfo" class="text-blue-600 dark:text-blue-400">0%</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category Tabs -->
+                        <div class="flex gap-2 flex-wrap">
+                            <button class="category-tab active" data-category="all">Все находки</button>
+                            <button class="category-tab" data-category="critical">🔴 Критические</button>
+                            <button class="category-tab" data-category="warning">🟡 Предупреждения</button>
+                            <button class="category-tab" data-category="info">🔵 Информация</button>
+                        </div>
+
+                        <!-- Findings Container -->
+                        <div id="findingsContainer" class="space-y-3"></div>
+
+                        <div class="section-divider">
+                            <span class="section-divider-text">📋 Полный отчёт</span>
+                        </div>
+
+                        <!-- Full Report -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8">
+                            <div id="reportContent" class="markdown-body text-slate-700 dark:text-slate-300 leading-relaxed"></div>
+                        </div>
+
+                        <!-- Hidden element for compatibility -->
+                        <div id="findingsTable" class="hidden"></div>
+
+                        <div class="section-divider">
+                            <span class="section-divider-text">✅ Рекомендуемые действия</span>
+                        </div>
+
+                        <!-- Action Items -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                Приоритетные действия
+                            </h3>
+                            <div id="actionItems" class="space-y-3"></div>
+                        </div>
+
+                        <!-- Download Actions -->
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-lg">
                             <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wide">Скачать отчёт</h4>
                             <div class="flex flex-wrap gap-3">
-                                <button onclick="downloadPDF()" class="dl-btn dl-pdf"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Скачать PDF</button>
-                                <button onclick="downloadDOCX()" class="dl-btn dl-docx"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Скачать DOCX</button>
-                                <button onclick="downloadHTML()" class="dl-btn dl-html"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Скачать HTML</button>
-                                <a id="revisedContractDownload" class="dl-btn dl-docx hidden" href="#" download>Скачать доработанный договор</a>
+                                <button onclick="downloadPDF()" class="dl-btn dl-pdf btn-shine"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Скачать PDF</button>
+                                <button onclick="downloadDOCX()" class="dl-btn dl-docx btn-shine"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Скачать DOCX</button>
+                                <button onclick="downloadHTML()" class="dl-btn dl-html btn-shine"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Скачать HTML</button>
+                                <a id="revisedContractDownload" class="dl-btn dl-docx btn-shine hidden" href="#" download>Скачать доработанный договор</a>
                                 <button id="newAnalysisBtn" class="dl-btn bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 ml-auto">🔁 Новый анализ</button>
                             </div>
                         </div>
@@ -372,12 +880,12 @@
             </div>
 
             <!-- ===== DOCUMENTS ===== -->
-            <div id="documents-section" class="hidden">
+            <div id="documents-section" class="hidden section-enter">
                 <div class="mb-8"><h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Мои документы</h1><p class="text-slate-500">История всех проанализированных документов</p></div>
                 <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-slate-200 dark:border-slate-800">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div class="flex items-center gap-3"><div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center"><svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><h3 class="text-lg font-semibold text-slate-900 dark:text-white">История анализов</h3><p id="historyCount" class="text-xs text-slate-500">0 документов</p></div></div>
+                            <div class="flex items-center gap-3"><div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center float-icon"><svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><h3 class="text-lg font-semibold text-slate-900 dark:text-white">История анализов</h3><p id="historyCount" class="text-xs text-slate-500">0 документов</p></div></div>
                             <div class="flex items-center gap-2"><div class="relative"><svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input type="text" id="historySearch" placeholder="Поиск..." class="pl-9 pr-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"></div><button id="clearAllHistory" class="p-2 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors" title="Очистить всё"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div>
                         </div>
                         <div class="flex items-center gap-2 mt-4">
@@ -388,12 +896,12 @@
                         </div>
                     </div>
                     <div id="historyTableWrap" class="overflow-x-auto"><table class="doc-table"><thead><tr><th>Document</th><th>Status</th><th>Risk Level</th><th>Date</th><th style="text-align:right">Actions</th></tr></thead><tbody id="historyTableBody"></tbody></table></div>
-                    <div id="historyEmpty" class="hidden py-16 text-center"><div class="text-5xl mb-4">📂</div><h4 class="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">История пуста</h4><p class="text-sm text-slate-500 max-w-sm mx-auto">Загрузите первый договор для анализа</p><button onclick="showSection('analysis')" class="mt-4 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium">Начать анализ</button></div>
+                    <div id="historyEmpty" class="hidden py-16 text-center"><div class="text-5xl mb-4 float-icon inline-block">📂</div><h4 class="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">История пуста</h4><p class="text-sm text-slate-500 max-w-sm mx-auto">Загрузите первый договор для анализа</p><button onclick="showSection('analysis')" class="mt-4 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-medium btn-shine">Начать анализ</button></div>
                 </div>
             </div>
 
             <!-- ===== ANALYTICS ===== -->
-            <div id="analytics-section" class="hidden">
+            <div id="analytics-section" class="hidden section-enter">
                 <div class="mb-8"><h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Аналитика</h1><p class="text-slate-500">Статистика по вашим документам</p></div>
                 <div id="analyticsContent" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6"><h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Распределение рисков</h3><div id="riskDistributionChart" class="space-y-4"></div></div>
@@ -401,7 +909,7 @@
                     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6"><h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Типы файлов</h3><div id="fileTypesChart" class="space-y-3"></div></div>
                     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6"><h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Общая статистика</h3><div id="summaryStats" class="space-y-3"></div></div>
                 </div>
-                <div id="analyticsEmpty" class="hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-12 text-center"><div class="text-5xl mb-4">📊</div><h3 class="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">Недостаточно данных</h3><p class="text-slate-500">Проанализируйте документ</p><button onclick="showSection('analysis')" class="mt-4 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium">Начать</button></div>
+                <div id="analyticsEmpty" class="hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-12 text-center"><div class="text-5xl mb-4 float-icon inline-block">📊</div><h3 class="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">Недостаточно данных</h3><p class="text-slate-500">Проанализируйте документ</p><button onclick="showSection('analysis')" class="mt-4 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-medium btn-shine">Начать</button></div>
             </div>
         </main>
     </div>
@@ -438,15 +946,15 @@
     const HISTORY_KEY = 'legalai_history_v3';
     const CABINET_ACTIVITY_URL = '{{ route('cabinet.activity.store') }}';
     let eventSource=null,isAnalyzing=false,currentFilter='all',historyItems=[],currentModalReport=null,lastReportRisk='low',lastReportContent='',lastStatusLogKey='',lastServerMetrics=null,reportSaved=false;
+    let allProFindings=[], currentProCategory='all';
+
     function setRevisedContractDownload(contract){const link=document.getElementById('revisedContractDownload');if(!contract?.url){link.classList.add('hidden');link.removeAttribute('href');return;}link.href=`${PYTHON_API}${contract.url}`;link.download=contract.filename||'contract_revised';link.textContent=`Скачать доработанный договор (${String(contract.format||'файл').toUpperCase()})`;link.classList.remove('hidden');}
 
-    // ===== THEME =====
     function initTheme(){if(localStorage.theme==='dark'||(!('theme'in localStorage)&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}
     function toggleTheme(){document.documentElement.classList.toggle('dark');localStorage.theme=document.documentElement.classList.contains('dark')?'dark':'light';if(!document.getElementById('analytics-section').classList.contains('hidden'))updateAnalytics();}
     initTheme();
 
-    // ===== UTILS =====
-    function showToast(m,t='info',d=4000){const c=document.getElementById('toastContainer'),e=document.createElement('div');const s={info:'bg-slate-800 text-white',success:'bg-emerald-600 text-white',error:'bg-red-600 text-white',warning:'bg-amber-500 text-white'};const i={info:'ℹ️',success:'✅',error:'❌',warning:'⚠️'};e.className=`toast flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl ${s[t]} min-w-[280px] max-w-sm`;e.innerHTML=`<span class="text-lg">${i[t]}</span><span class="text-sm font-medium flex-1">${m}</span><button class="ml-2 opacity-70 hover:opacity-100">&times;</button>`;c.appendChild(e);requestAnimationFrame(()=>e.classList.add('show'));const to=setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300);},d);e.querySelector('button').onclick=()=>{clearTimeout(to);e.classList.remove('show');setTimeout(()=>e.remove(),300);};}
+    function showToast(m,t='info',d=4000){const c=document.getElementById('toastContainer'),e=document.createElement('div');const s={info:'bg-slate-800 text-white',success:'bg-emerald-600 text-white',error:'bg-red-600 text-white',warning:'bg-amber-500 text-white'};const i={info:'ℹ️',success:'✅',error:'❌',warning:'⚠️'};e.className=`toast flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl ${s[t]} min-w-[280px] max-w-sm backdrop-blur-xl`;e.innerHTML=`<span class="text-lg">${i[t]}</span><span class="text-sm font-medium flex-1">${m}</span><button class="ml-2 opacity-70 hover:opacity-100">&times;</button>`;c.appendChild(e);requestAnimationFrame(()=>e.classList.add('show'));const to=setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300);},d);e.querySelector('button').onclick=()=>{clearTimeout(to);e.classList.remove('show');setTimeout(()=>e.remove(),300);};}
     const formatSize=b=>{if(b===0)return'0 Б';const k=1024,s=['Б','КБ','МБ','ГБ'],i=Math.floor(Math.log(b)/Math.log(k));return parseFloat((b/Math.pow(k,i)).toFixed(2))+' '+s[i];};
     const escapeHtml=s=>{if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;};
     const getFileIcon=f=>{const e=(f||'').split('.').pop().toLowerCase();return{pdf:'📕',doc:'📘',docx:'📘',txt:'📄'}[e]||'📁';};
@@ -462,14 +970,12 @@
     const getTimeAgo=d=>{const n=new Date(),s=Math.floor((n-d)/1000);if(s<60)return'только что';if(s<3600)return`${Math.floor(s/60)} мин. назад`;if(s<86400)return`${Math.floor(s/3600)} ч. назад`;if(s<604800)return`${Math.floor(s/86400)} дн. назад`;return d.toLocaleDateString('ru-RU');};
     function log(m,t='info'){const lc=document.getElementById('logContainer');if(!lc)return;const c={info:{color:'#94a3b8',icon:'•'},status:{color:'#7dd3fc',icon:'📌'},success:{color:'#86efac',icon:'✅'},warning:{color:'#fcd34d',icon:'⚠️'},error:{color:'#f87171',icon:'❌'},chunk:{color:'#d8b4fe',icon:'📋'}};const{color,icon}=c[t]||c.info;const d=document.createElement('div');d.className='terminal-line py-1.5 px-2 rounded hover:bg-white/5';d.innerHTML=`<span class="text-slate-500">[${new Date().toLocaleTimeString('ru-RU')}]</span><span style="color:${color}" class="ml-2">${icon}</span><span style="color:${color}" class="ml-1.5">${m}</span>`;lc.appendChild(d);lc.scrollTop=lc.scrollHeight;}
 
-    // ===== RISK HELPERS =====
     function getRiskColor(r){return r==='critical'?'#ef4444':r==='medium'?'#f59e0b':'#22c55e';}
     function getRiskGradient(r){return r==='critical'?'from-red-500 to-rose-600':r==='medium'?'from-amber-500 to-orange-600':'from-green-500 to-emerald-600';}
     function getRiskLabel(r){return r==='critical'?'Высокий риск':r==='medium'?'Средний риск':'Низкий риск';}
     function getRiskBadgeFull(r){return r==='critical'?'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400':r==='medium'?'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400':'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400';}
     function scoreToLevel(s){return s>=65?'critical':s>=25?'medium':'low';}
 
-    // Получить балл из записи истории (реальный, не фейковый)
     function getItemScore(item){
         const storedScore = typeof item?.riskScore==='number' ? item.riskScore : null;
         if(storedScore !== null && storedScore !== 96) return storedScore;
@@ -489,222 +995,84 @@
         return `<svg viewBox="0 0 ${size} ${size}" class="w-full h-full" style="transform:rotate(-90deg)"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${document.documentElement.classList.contains('dark')?'#334155':'#e2e8f0'}" stroke-width="${strokeW}" stroke-linecap="round"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${strokeW}" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round" style="transition:stroke-dashoffset 1s ease,stroke 0.5s ease"/></svg>`;
     }
 
-    // =================================================================
-    //  REAL RISK ANALYSIS ENGINE — анализирует реальный контент отчёта
-    // =================================================================
-
     function extractExplicitRiskScore(content) {
         const lines = content.split(/\r?\n/);
         for (const line of lines) {
             const lowerLine = line.toLowerCase();
-            const isScoreLine = (
-                (lowerLine.includes('балл') && lowerLine.includes('риск')) ||
-                lowerLine.includes('risk_score') ||
-                lowerLine.includes('risk score')
-            );
+            const isScoreLine = ((lowerLine.includes('балл') && lowerLine.includes('риск'))||lowerLine.includes('risk_score')||lowerLine.includes('risk score'));
             if (!isScoreLine) continue;
-
             const cleaned = line.replace(/\([^)]*\)/g, ' ');
             const fraction = cleaned.match(/(?<!\d)(\d{1,3})(?:[.,]\d+)?\s*\/\s*100(?!\d)/i);
-            if (fraction) {
-                const score = Math.round(parseFloat(fraction[1].replace(',', '.')));
-                if (score >= 0 && score <= 100) return score;
-            }
-
-            const numbers = [...cleaned.matchAll(/(?<!\d)(\d{1,3})(?:[.,]\d+)?(?!\d)/g)]
-                .map(match => parseFloat(match[0].replace(',', '.')))
-                .filter(value => Number.isFinite(value) && value >= 10 && value <= 100);
-
-            if (numbers.length > 0) {
-                return Math.round(numbers[0]);
-            }
+            if (fraction) { const score = Math.round(parseFloat(fraction[1].replace(',', '.'))); if (score >= 0 && score <= 100) return score; }
+            const numbers = [...cleaned.matchAll(/(?<!\d)(\d{1,3})(?:[.,]\d+)?(?!\d)/g)].map(m=>parseFloat(m[0].replace(',','.'))).filter(v=>Number.isFinite(v)&&v>=10&&v<=100);
+            if (numbers.length > 0) return Math.round(numbers[0]);
         }
-
-        const globalPatterns = [
-            /["']?risk_score["']?\s*[:=]\s*(\d{1,3})(?:[.,]\d+)?/i,
-            /итоговый\s+балл\s+риска[^\d]{0,30}(\d{1,3})(?:[.,]\d+)?/i,
-            /балл\s+риска[^\n\r\d]{0,40}(\d{1,3})(?:[.,]\d+)?\s*(?:\/|из)?\s*100?/i,
-            /risk\s*score[^\n\r\d]{0,40}(\d{1,3})(?:[.,]\d+)?\s*(?:\/|of)?\s*100?/i,
-        ];
-
-        for (const pattern of globalPatterns) {
-            const match = content.match(pattern);
-            if (!match) continue;
-            const score = Math.round(parseFloat(match[1].replace(',', '.')));
-            if (score >= 0 && score <= 100) return score;
-        }
-
+        const globalPatterns = [/"']?risk_score["']?\s*[:=]\s*(\d{1,3})(?:[.,]\d+)?/i,/итоговый\s+балл\s+риска[^\d]{0,30}(\d{1,3})(?:[.,]\d+)?/i,/балл\s+риска[^\n\r\d]{0,40}(\d{1,3})(?:[.,]\d+)?\s*(?:\/|из)?\s*100?/i,/risk\s*score[^\n\r\d]{0,40}(\d{1,3})(?:[.,]\d+)?\s*(?:\/|of)?\s*100?/i];
+        for (const pattern of globalPatterns) { const match = content.match(pattern); if (!match) continue; const score = Math.round(parseFloat(match[1].replace(',', '.'))); if (score >= 0 && score <= 100) return score; }
         return null;
     }
 
-    function extractMetricCount(content, label){
-        const pattern = new RegExp(`${label}[^\\n\\r\\d]{0,40}(\\d{1,2})`, 'i');
-        const match = content.match(pattern);
-        return match ? Math.max(0, parseInt(match[1], 10)) : null;
-    }
+    function extractMetricCount(content, label){ const pattern = new RegExp(`${label}[^\\n\\r\\d]{0,40}(\\d{1,2})`, 'i'); const match = content.match(pattern); return match ? Math.max(0, parseInt(match[1], 10)) : null; }
 
     function estimateLegacyReportScore(content){
         if(!content || !content.includes('96/100')) return null;
         let high = extractMetricCount(content, 'Количество\\s+высоких\\s+рисков');
         let medium = extractMetricCount(content, 'Количество\\s+средних\\s+рисков');
         let low = extractMetricCount(content, 'Количество\\s+низких\\s+рисков');
-        if(high===null || medium===null || low===null){
-            const f=countFindings(content);
-            high=f.critical;
-            medium=f.warning;
-            low=f.info;
-        }
-
+        if(high===null || medium===null || low===null){ const f=countFindings(content); high=f.critical; medium=f.warning; low=f.info; }
         const highWeights=[24,14,8,5,3], mediumWeights=[8,6,4,2,1], lowWeights=[1,1,1];
         let score=0;
         for(let i=0;i<high;i++) score+=highWeights[Math.min(i,highWeights.length-1)];
         for(let i=0;i<medium;i++) score+=mediumWeights[Math.min(i,mediumWeights.length-1)];
         for(let i=0;i<low;i++) score+=lowWeights[Math.min(i,lowWeights.length-1)];
         if(high||medium||low) score+=Math.min(6,2+high+Math.floor(Math.max(0,medium-1)/2));
-
         let cap=24;
-        if(high===0){
-            cap=medium?54:24;
-            if(medium) score=Math.max(score,18+Math.min(medium,4)*4);
-        }else if(high===1){
-            cap=64;
-            score=Math.max(score,38);
-        }else if(high===2){
-            cap=78;
-            score=Math.max(score,52);
-        }else if(high===3){
-            cap=84;
-            score=Math.max(score,62);
-        }else{
-            cap=88;
-            score=Math.max(score,68);
-        }
-
+        if(high===0){ cap=medium?54:24; if(medium) score=Math.max(score,18+Math.min(medium,4)*4); }
+        else if(high===1){ cap=64; score=Math.max(score,38); }
+        else if(high===2){ cap=78; score=Math.max(score,52); }
+        else if(high===3){ cap=84; score=Math.max(score,62); }
+        else{ cap=88; score=Math.max(score,68); }
         return Math.max(0,Math.min(cap,Math.round(score)));
     }
 
     function analyzeReportRisk(content) {
         if (!content || !content.trim()) return { score: 0, level: 'low', findings: { critical: 0, warning: 0, info: 0 } };
-
         const lower = content.toLowerCase();
-
         const explicitRiskScore = extractExplicitRiskScore(content);
-        if (explicitRiskScore !== null) {
-            log(`📊 Найден итоговый балл риска в отчёте: ${explicitRiskScore}/100`, 'status');
-            return { score: explicitRiskScore, level: scoreToLevel(explicitRiskScore), findings: countFindings(content) };
-        }
-
-        // ===== 1. EXPLICIT NUMERIC SCORE (самый точный источник) =====
-        const scorePatterns = [
-            /(?:общий\s+)?(?:балл|оценка|индекс|показатель|уровень)\s*(?:риска|опасности)?[\s:‑–=]*?(\d{1,3})(?:\s*[\/из]\s*100)?/i,
-            /(?:итого|итог|всего)[\s:‑–=]*?(\d{1,3})(?:\s*[\/из]\s*100)?\s*(?:балл|очк|point)/i,
-            /risk\s*(?:score|level|rating)[\s:‑–=]*?(\d{1,3})/i,
-            /(\d{1,3})\s*\/\s*100/i,
-            /(\d{1,3})\s*из\s*100/i,
-            /(?:риск|risk)[\s:‑–=]*?(\d{1,3})(?:\s*%|\s*процент)/i,
-            /(?:оценка|score)[\s:‑–=]*?(\d{1,3})/i,
-        ];
-        for (const p of scorePatterns) {
-            const m = lower.match(p);
-            if (m) {
-                const s = parseInt(m[1]);
-                if (s >= 1 && s <= 100) {
-                    log(`📊 Найден явный балл: ${s}/100`, 'status');
-                    return { score: s, level: scoreToLevel(s), findings: countFindings(content) };
-                }
-            }
-        }
-
-        // ===== 2. EXPLICIT LEVEL LABEL =====
-        const levelMap = [
-            { patterns: [/(?:уровень|степень|категория)\s*(?:риска|опасности|угрозы)?[\s:‑–=]*\s*(критическ|высок)/i, /(?:общая\s+)?оценка[\s:‑–=]*\s*(критическ|высок)/i, /risk\s*level[\s:‑–=]*\s*(critical|high)/i, /overall\s*risk[\s:‑–=]*\s*(critical|high)/i], level: 'critical', baseScore: 78 },
-            { patterns: [/(?:уровень|степень|категория)\s*(?:риска|опасности|угрозы)?[\s:‑–=]*\s*средн/i, /(?:общая\s+)?оценка[\s:‑–=]*\s*средн/i, /risk\s*level[\s:‑–=]*\s*medium/i, /overall\s*risk[\s:‑–=]*\s*medium/i], level: 'medium', baseScore: 48 },
-            { patterns: [/(?:уровень|степень|категория)\s*(?:риска|опасности|угрозы)?[\s:‑–=]*\s*низк/i, /(?:общая\s+)?оценка[\s:‑–=]*\s*низк/i, /risk\s*level[\s:‑–=]*\s*low/i, /overall\s*risk[\s:‑–=]*\s*low/i], level: 'low', baseScore: 12 },
-        ];
-        for (const lm of levelMap) {
-            for (const p of lm.patterns) {
-                if (lower.match(p)) {
-                    const findings = countFindings(content);
-                    // Корректируем балл на основе количества проблем
-                    const adj = Math.min(20, findings.critical * 4 + findings.warning * 2);
-                    const score = Math.min(100, lm.baseScore + adj);
-                    log(`📊 Найден явный уровень: ${lm.level}, расчётный балл: ${score}`, 'status');
-                    return { score, level: lm.level, findings };
-                }
-            }
-        }
-
-        // ===== 3. COUNT ISSUES BY SEVERITY =====
+        if (explicitRiskScore !== null) { log(`📊 Найден итоговый балл риска в отчёте: ${explicitRiskScore}/100`, 'status'); return { score: explicitRiskScore, level: scoreToLevel(explicitRiskScore), findings: countFindings(content) }; }
+        const scorePatterns = [/(?:общий\s+)?(?:балл|оценка|индекс|показатель|уровень)\s*(?:риска|опасности)?[\s:‑–=]*?(\d{1,3})(?:\s*[\/из]\s*100)?/i,/(?:итого|итог|всего)[\s:‑–=]*?(\d{1,3})(?:\s*[\/из]\s*100)?\s*(?:балл|очк|point)/i,/risk\s*(?:score|level|rating)[\s:‑–=]*?(\d{1,3})/i,/(\d{1,3})\s*\/\s*100/i,/(\d{1,3})\s*из\s*100/i,/(?:риск|risk)[\s:‑–=]*?(\d{1,3})(?:\s*%|\s*процент)/i,/(?:оценка|score)[\s:‑–=]*?(\d{1,3})/i];
+        for (const p of scorePatterns) { const m = lower.match(p); if (m) { const s = parseInt(m[1]); if (s >= 1 && s <= 100) { log(`📊 Найден явный балл: ${s}/100`, 'status'); return { score: s, level: scoreToLevel(s), findings: countFindings(content) }; } } }
+        const levelMap = [{ patterns: [/(?:уровень|степень|категория)\s*(?:риска|опасности|угрозы)?[\s:‑–=]*\s*(критическ|высок)/i, /(?:общая\s+)?оценка[\s:‑–=]*\s*(критическ|высок)/i, /risk\s*level[\s:‑–=]*\s*(critical|high)/i, /overall\s*risk[\s:‑–=]*\s*(critical|high)/i], level: 'critical', baseScore: 78 }, { patterns: [/(?:уровень|степень|категория)\s*(?:риска|опасности|угрозы)?[\s:‑–=]*\s*средн/i, /(?:общая\s+)?оценка[\s:‑–=]*\s*средн/i, /risk\s*level[\s:‑–=]*\s*medium/i, /overall\s*risk[\s:‑–=]*\s*medium/i], level: 'medium', baseScore: 48 }, { patterns: [/(?:уровень|степень|категория)\s*(?:риска|опасности|угрозы)?[\s:‑–=]*\s*низк/i, /(?:общая\s+)?оценка[\s:‑–=]*\s*низк/i, /risk\s*level[\s:‑–=]*\s*low/i, /overall\s*risk[\s:‑–=]*\s*low/i], level: 'low', baseScore: 12 }];
+        for (const lm of levelMap) { for (const p of lm.patterns) { if (lower.match(p)) { const findings = countFindings(content); const adj = Math.min(20, findings.critical * 4 + findings.warning * 2); const score = Math.min(100, lm.baseScore + adj); log(`📊 Найден явный уровень: ${lm.level}, расчётный балл: ${score}`, 'status'); return { score, level: lm.level, findings }; } } }
         const findings = countFindings(content);
-
-        // ===== 4. KEYWORD FREQUENCY ANALYSIS =====
-        const criticalKw = [
-            'существенн','критич','груб','серьёзн','серьезн',
-            'незакон','противоречи','нарушен','угроз','опасн',
-            'ущерб','ответственност','штраф','пен','убытк',
-            'расторжен','недействительн','ничтожн','оспорим',
-            'принудительн','кабальн','мошенническ','взыска',
-            'подложн','фальсифиц','обман','злоупотреблен',
-        ];
-        const warningKw = [
-            'рекоменду','желательн','целесообразн','недостаточн',
-            'неопределённ','неопределенн','неясн','размыт','неточн',
-            'рискованн','сомнительн','двусмысленн','противоречив',
-            'отсутстви','пропущен','не указан','не предусмотрен',
-            'дискриминацион','ущемля','ограничива','неравноправн',
-            'не регламент','не закреплён','не закреплен','не определён','не определен',
-            'может повлечь','может привести','может стать','может вызвать',
-            'пробел','упущен','не отражён','не отражен',
-        ];
-        const safeKw = [
-            'соответстви','надёжн','надежн','защищён','защищен','гарантир',
-            'безопасн','стандартн','типов','корректн',
-            'законн','правомерн','допустим','оптимальн',
-        ];
-
+        const criticalKw = ['существенн','критич','груб','серьёзн','серьезн','незакон','противоречи','нарушен','угроз','опасн','ущерб','ответственност','штраф','пен','убытк','расторжен','недействительн','ничтожн','оспорим','принудительн','кабальн','мошенническ','взыска','подложн','фальсифиц','обман','злоупотреблен'];
+        const warningKw = ['рекоменду','желательн','целесообразн','недостаточн','неопределённ','неопределенн','неясн','размыт','неточн','рискованн','сомнительн','двусмысленн','противоречив','отсутстви','пропущен','не указан','не предусмотрен','дискриминацион','ущемля','ограничива','неравноправн','не регламент','не закреплён','не закреплен','не определён','не определен','может повлечь','может привести','может стать','может вызвать','пробел','упущен','не отражён','не отражен'];
+        const safeKw = ['соответстви','надёжн','надежн','защищён','защищен','гарантир','безопасн','стандартн','типов','корректн','законн','правомерн','допустим','оптимальн'];
         let critKwCount = 0, warnKwCount = 0, safeKwCount = 0;
         for (const kw of criticalKw) { const m = lower.match(new RegExp(kw, 'g')); critKwCount += m ? m.length : 0; }
         for (const kw of warningKw) { const m = lower.match(new RegExp(kw, 'g')); warnKwCount += m ? m.length : 0; }
         for (const kw of safeKw) { const m = lower.match(new RegExp(kw, 'g')); safeKwCount += m ? m.length : 0; }
-
-        // ===== 5. WEIGHTED SCORE CALCULATION =====
         let score = 0;
-
-        // Проблемы из списков (основной вес)
         score += Math.min(40, findings.critical * 12);
         score += Math.min(25, findings.warning * 5);
         score += Math.min(8, findings.info * 1.5);
-
-        // Ключевые слова (дополнительный вес)
         score += Math.min(18, critKwCount * 2.5);
         score += Math.min(12, warnKwCount * 1.2);
-
-        // Безопасные ключевые слова снижают балл
         score -= Math.min(10, safeKwCount * 1.5);
-
-        // Округляем и ограничиваем
         score = Math.max(0, Math.min(100, Math.round(score)));
-
         const level = scoreToLevel(score);
-
         log(`📊 Расчётный балл: ${score}/100 (${level}) | критич: ${findings.critical}, предост: ${findings.warning}, инфо: ${findings.info} | KW: крит=${critKwCount}, пред=${warnKwCount}, безоп=${safeKwCount}`, 'status');
-
         return { score, level, findings };
     }
 
     function countFindings(content) {
         let critical = 0, warning = 0, info = 0;
         const lines = content.split('\n');
-
         for (const line of lines) {
             const trimmed = line.trim();
-            // Анализируем только элементы списков
             const isListItem = trimmed.match(/^[-*•]\s/) || trimmed.match(/^\d+[.)]\s/);
             if (!isListItem) continue;
-
             const t = trimmed.toLowerCase();
-
-            // ---- CRITICAL ----
             if (t.match(/🔴/)) { critical++; continue; }
             if (t.match(/❗|‼️/)) { critical++; continue; }
             if (t.match(/критическ(?:ий|ая|ое|ие|им|их|ую|ого)/)) { critical++; continue; }
@@ -721,8 +1089,6 @@
             if (t.match(/(?:прямо\s+)?нарушен(?:ие|ия|ию|ием)\s+(?:закона|прав|гк|кодекс|норматив)/)) { critical++; continue; }
             if (t.match(/полностью?\s+(?:отсутству|исключ|устранен|игнорир)/)) { critical++; continue; }
             if (t.match(/никакой?\s+(?:ответственност|гаранти|защит|компенсац)/)) { critical++; continue; }
-
-            // ---- WARNING ----
             if (t.match(/🟡/)) { warning++; continue; }
             if (t.match(/⚠️/)) { warning++; continue; }
             if (t.match(/средн(?:ий|яя|ее|ие|им|их|ая)\s*(?:риск|степен|уровен|тяжесть|категор)/)) { warning++; continue; }
@@ -736,8 +1102,6 @@
             if (t.match(/пробел|упущен|не\s+достаточн|не\s+полност/)) { warning++; continue; }
             if (t.match(/желательн\s+(?:включ|добав|уточн|измен|предусмотр)/)) { warning++; continue; }
             if (t.match(/(?:не\s+)?достаточн(?:о|ый|ая|ое|ые)/)) { if (!t.match(/недостаточн/)) { warning++; continue; } }
-
-            // ---- INFO ----
             if (t.match(/🔵/)) { info++; continue; }
             if (t.match(/🟢|✅|✔️|☑️/)) { info++; continue; }
             if (t.match(/рекоменду/i)) { info++; continue; }
@@ -745,7 +1109,6 @@
             if (t.match(/соответству\w+\s*(?:закону|стандарт|требовани|норматив|гк|кодекс)/)) { info++; continue; }
             if (t.match(/допустим|приемлем|корректн|правомерн/)) { info++; continue; }
         }
-
         return { critical, warning, info };
     }
 
@@ -755,17 +1118,14 @@
         const isDetailLine=line=>line.match(/^\s*[-*•]\s*(?:пункт\s+договора|фрагмент\s+договора|норма\s+рт|почему\s+риск|что\s+исправить|применение\s+к\s+договору)\s*:/i);
         const isRiskLine=line=>line.match(/^\s*\d+[.)]\s+/)||line.match(/^\s*[-*•]\s*\[(?:высок|сред|низ)/i);
         const cleanLine=line=>line.replace(/^\s*[-*•]?\s*/,'').replace(/^\d+[.)]\s*/,'').replace(/\*\*/g,'').trim();
-
         for(const line of lines){
             const trimmed=line.trim();
             if(!trimmed) continue;
-
             if(findings.length && isDetailLine(trimmed)){
                 const detail=cleanLine(trimmed);
                 findings[findings.length-1].text += ` ${detail}`;
                 continue;
             }
-
             if(isRiskLine(trimmed)){
                 const text=cleanLine(trimmed);
                 const tl=text.toLowerCase();
@@ -779,7 +1139,6 @@
                 continue;
             }
         }
-
         return findings.slice(0,8);
     }
 
@@ -788,7 +1147,6 @@
         return findings.map(f=>`<div class="issue-row ${f.type}"><div class="flex items-start gap-3"><span class="flex-shrink-0 text-lg">${f.icon}</span><p class="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">${escapeHtml(f.text)}</p></div></div>`).join('');
     }
 
-    // ===== SHARED TABLE ROW BUILDER =====
     function buildTableRow(item){
         const date=new Date(item.createdAt);
         const ext=getFileExtension(item.filename);
@@ -815,7 +1173,6 @@
         </tr>`;
     }
 
-    // ===== HISTORY =====
     const HM={
         load(){try{historyItems=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');}catch{historyItems=[];}},
         save(){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(historyItems));}catch{}},
@@ -826,96 +1183,28 @@
         getFiltered(){let f=[...historyItems];const s=(document.getElementById('historySearch')?.value||'').toLowerCase().trim();if(s)f=f.filter(i=>i.filename.toLowerCase().includes(s));if(currentFilter!=='all')f=f.filter(i=>i.riskLevel===currentFilter);return f;}
     };
 
-    // ===== NAVIGATION =====
     const sections=['dashboard','analysis','documents','analytics'];
-    function showSection(sec){sections.forEach(s=>document.getElementById(s+'-section')?.classList.add('hidden'));document.getElementById(sec+'-section')?.classList.remove('hidden');document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));document.getElementById('nav-'+sec)?.classList.add('active');if(sec==='dashboard')updateDashboardStats();if(sec==='documents')renderHistory();if(sec==='analytics')updateAnalytics();}
+    function showSection(sec){sections.forEach(s=>document.getElementById(s+'-section')?.classList.add('hidden'));const target=document.getElementById(sec+'-section');target?.classList.remove('hidden');if(target){target.classList.remove('section-enter');void target.offsetWidth;target.classList.add('section-enter');}document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));document.getElementById('nav-'+sec)?.classList.add('active');if(sec==='dashboard')updateDashboardStats();if(sec==='documents')renderHistory();if(sec==='analytics')updateAnalytics();}
 
-    // ===== DASHBOARD =====
-    function updateDashboardStats(){
-        const t=historyItems.length,cr=historyItems.filter(i=>i.riskLevel==='critical').length,m=historyItems.filter(i=>i.riskLevel==='medium').length,lw=historyItems.filter(i=>i.riskLevel==='low').length;
-        document.getElementById('stat-total').textContent=t;document.getElementById('stat-low').textContent=lw;document.getElementById('stat-medium').textContent=m;document.getElementById('stat-critical').textContent=cr;
-        renderDashboardTable();
-    }
-    function renderDashboardTable(){
-        const tbody=document.getElementById('dashboardTableBody'),countEl=document.getElementById('dashTableCount'),emptyEl=document.getElementById('dashboardEmpty'),wrapEl=document.getElementById('dashTableWrap');
-        const t=historyItems.length;
-        countEl.textContent=`${t} документ${t===1?'':t<5?'а':'ов'}`;
-        if(!t){emptyEl.classList.remove('hidden');wrapEl.classList.add('hidden');return;}
-        emptyEl.classList.add('hidden');wrapEl.classList.remove('hidden');
-        tbody.innerHTML=historyItems.slice(0,6).map(i=>buildTableRow(i)).join('');
-    }
+    function updateDashboardStats(){const t=historyItems.length,cr=historyItems.filter(i=>i.riskLevel==='critical').length,m=historyItems.filter(i=>i.riskLevel==='medium').length,lw=historyItems.filter(i=>i.riskLevel==='low').length;document.getElementById('stat-total').textContent=t;document.getElementById('stat-low').textContent=lw;document.getElementById('stat-medium').textContent=m;document.getElementById('stat-critical').textContent=cr;renderDashboardTable();}
+    function renderDashboardTable(){const tbody=document.getElementById('dashboardTableBody'),countEl=document.getElementById('dashTableCount'),emptyEl=document.getElementById('dashboardEmpty'),wrapEl=document.getElementById('dashTableWrap');const t=historyItems.length;countEl.textContent=`${t} документ${t===1?'':t<5?'а':'ов'}`;if(!t){emptyEl.classList.remove('hidden');wrapEl.classList.add('hidden');return;}emptyEl.classList.add('hidden');wrapEl.classList.remove('hidden');tbody.innerHTML=historyItems.slice(0,6).map(i=>buildTableRow(i)).join('');}
 
-    // ===== DOCUMENTS =====
-    function renderHistory(){
-        const f=HM.getFiltered(),t=historyItems.length;
-        document.getElementById('historyCount').textContent=`${t} документ${t===1?'':t<5?'а':'ов'}`;
-        if(!t){document.getElementById('historyEmpty').classList.remove('hidden');document.getElementById('historyTableWrap').classList.add('hidden');return;}
-        document.getElementById('historyEmpty').classList.add('hidden');document.getElementById('historyTableWrap').classList.remove('hidden');
-        if(!f.length){document.getElementById('historyTableBody').innerHTML=`<tr><td colspan="5" class="py-12 text-center text-slate-500">Ничего не найдено</td></tr>`;return;}
-        document.getElementById('historyTableBody').innerHTML=f.map(i=>buildTableRow(i)).join('');
-    }
+    function renderHistory(){const f=HM.getFiltered(),t=historyItems.length;document.getElementById('historyCount').textContent=`${t} документ${t===1?'':t<5?'а':'ов'}`;if(!t){document.getElementById('historyEmpty').classList.remove('hidden');document.getElementById('historyTableWrap').classList.add('hidden');return;}document.getElementById('historyEmpty').classList.add('hidden');document.getElementById('historyTableWrap').classList.remove('hidden');if(!f.length){document.getElementById('historyTableBody').innerHTML=`<tr><td colspan="5" class="py-12 text-center text-slate-500">Ничего не найдено</td></tr>`;return;}document.getElementById('historyTableBody').innerHTML=f.map(i=>buildTableRow(i)).join('');}
 
-    // ===== ANALYTICS =====
-    function updateAnalytics(){
-        const content=document.getElementById('analyticsContent'),empty=document.getElementById('analyticsEmpty');
-        if(!historyItems.length){content.classList.add('hidden');empty.classList.remove('hidden');return;}
-        content.classList.remove('hidden');empty.classList.add('hidden');
-        const total=historyItems.length,cr=historyItems.filter(i=>i.riskLevel==='critical').length,md=historyItems.filter(i=>i.riskLevel==='medium').length,lw=historyItems.filter(i=>i.riskLevel==='low').length;
-        const pct=v=>total>0?Math.round(v/total*100):0;
-        document.getElementById('riskDistributionChart').innerHTML=`<div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🟢 Низкий</span><span class="text-slate-500">${lw} (${pct(lw)}%)</span></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width:${pct(lw)}%"></div></div></div><div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🟡 Средний</span><span class="text-slate-500">${md} (${pct(md)}%)</span></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width:${pct(md)}%"></div></div></div><div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🔴 Высокий</span><span class="text-slate-500">${cr} (${pct(cr)}%)</span></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-red-500 rounded-full transition-all duration-500" style="width:${pct(cr)}%"></div></div></div>`;
+    function updateAnalytics(){const content=document.getElementById('analyticsContent'),empty=document.getElementById('analyticsEmpty');if(!historyItems.length){content.classList.add('hidden');empty.classList.remove('hidden');return;}content.classList.remove('hidden');empty.classList.add('hidden');const total=historyItems.length,cr=historyItems.filter(i=>i.riskLevel==='critical').length,md=historyItems.filter(i=>i.riskLevel==='medium').length,lw=historyItems.filter(i=>i.riskLevel==='low').length;const pct=v=>total>0?Math.round(v/total*100):0;document.getElementById('riskDistributionChart').innerHTML=`<div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🟢 Низкий</span><span class="text-slate-500">${lw} (${pct(lw)}%)</span></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width:${pct(lw)}%"></div></div></div><div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🟡 Средний</span><span class="text-slate-500">${md} (${pct(md)}%)</span></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width:${pct(md)}%"></div></div></div><div><div class="flex justify-between text-sm mb-1"><span class="font-medium">🔴 Высокий</span><span class="text-slate-500">${cr} (${pct(cr)}%)</span></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-red-500 rounded-full transition-all duration-500" style="width:${pct(cr)}%"></div></div></div>`;const days=[];const now=new Date();for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d.toISOString().split('T')[0]);}const actData=days.map(d=>({date:d,count:historyItems.filter(i=>i.createdAt.startsWith(d)).length}));const maxAct=Math.max(...actData.map(d=>d.count),1);const avgCount=actData.reduce((a,b)=>a+b.count,0)/actData.length;const todayStr=now.toISOString().split('T')[0];document.getElementById('activityChart').innerHTML=`<div class="flex items-end gap-3" style="height:200px;position:relative;">${actData.map((d,idx)=>{const h=d.count>0?Math.max((d.count/maxAct)*100,8):5;const dayName=new Date(d.date+'T12:00:00').toLocaleDateString('ru-RU',{weekday:'short'});const isToday=d.date===todayStr;const isZero=d.count===0;const prevCount=idx>0?actData[idx-1].count:0;const diff=d.count-prevCount;let trendHtml='';if(idx>0){if(diff>0)trendHtml=`<span class="activity-trend trend-up">▲${diff}</span>`;else if(diff<0)trendHtml=`<span class="activity-trend trend-down">▼${Math.abs(diff)}</span>`;else trendHtml=`<span class="activity-trend trend-neutral">—</span>`;}else trendHtml=`<span class="activity-trend trend-neutral">—</span>`;return `<div class="activity-bar-wrap"><div class="flex items-center gap-1"><span class="activity-count ${isZero?'is-zero':''}">${d.count}</span>${trendHtml}</div><div class="activity-bar-track"><div class="activity-bar ${isZero?'is-zero':''}" style="height:${h}%"><div class="activity-bar-inner"></div></div></div><span class="activity-day ${isToday?'is-today':''}">${dayName}</span></div>`;}).join('')}</div><div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between"><div class="flex items-center gap-4 text-xs text-slate-500"><span class="flex items-center gap-1.5"><span class="activity-trend trend-up">▲</span> Рост</span><span class="flex items-center gap-1.5"><span class="activity-trend trend-down">▼</span> Падение</span><span class="flex items-center gap-1.5"><span class="activity-trend trend-neutral">—</span> Без изменений</span></div><span class="text-xs text-slate-500">Среднее: <strong class="text-slate-700 dark:text-slate-300">${avgCount.toFixed(1)}</strong>/день</span></div>`;const types={};historyItems.forEach(i=>{const ext=(i.filename||'').split('.').pop().toUpperCase();types[ext]=(types[ext]||0)+1;});document.getElementById('fileTypesChart').innerHTML=Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([ext,cnt])=>{const p=Math.round(cnt/total*100);return`<div><div class="flex justify-between text-sm mb-1"><span class="font-medium">${getFileIcon(ext.toLowerCase())} .${ext}</span><span class="text-slate-500">${cnt} (${p}%)</span></div><div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-blue-500 rounded-full transition-all" style="width:${p}%"></div></div></div>`;}).join('');const avgScore = historyItems.length > 0 ? Math.round(historyItems.reduce((a,b) => a + getItemScore(b), 0) / historyItems.length) : 0;const avgTime=historyItems.filter(i=>i.elapsed).reduce((a,b,i,arr)=>a+b.elapsed/arr.length,0);document.getElementById('summaryStats').innerHTML=`<div class="flex justify-between py-2 border-b border-slate-200 dark:border-slate-700"><span class="text-slate-600 dark:text-slate-400">Всего</span><span class="font-semibold">${total}</span></div><div class="flex justify-between py-2 border-b border-slate-200 dark:border-slate-700"><span class="text-slate-600 dark:text-slate-400">Средний балл риска</span><span class="font-semibold ${avgScore>66?'text-red-600 dark:text-red-400':avgScore>33?'text-amber-600 dark:text-amber-400':'text-emerald-600 dark:text-emerald-400'}">${avgScore}/100</span></div><div class="flex justify-between py-2 border-b border-slate-200 dark:border-slate-700"><span class="text-slate-600 dark:text-slate-400">Среднее время</span><span class="font-semibold">${avgTime?avgTime.toFixed(1)+'с':'—'}</span></div><div class="flex justify-between py-2"><span class="text-slate-600 dark:text-slate-400">С проблемами</span><span class="font-semibold text-amber-600 dark:text-amber-400">${cr+md}</span></div>`;}
 
-        const days=[];const now=new Date();for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d.toISOString().split('T')[0]);}
-        const actData=days.map(d=>({date:d,count:historyItems.filter(i=>i.createdAt.startsWith(d)).length}));
-        const maxAct=Math.max(...actData.map(d=>d.count),1);
-        const avgCount=actData.reduce((a,b)=>a+b.count,0)/actData.length;
-        const todayStr=now.toISOString().split('T')[0];
-        document.getElementById('activityChart').innerHTML=`<div class="flex items-end gap-3" style="height:200px;position:relative;">${actData.map((d,idx)=>{
-            const h=d.count>0?Math.max((d.count/maxAct)*100,8):5;
-            const dayName=new Date(d.date+'T12:00:00').toLocaleDateString('ru-RU',{weekday:'short'});
-            const isToday=d.date===todayStr;const isZero=d.count===0;
-            const prevCount=idx>0?actData[idx-1].count:0;const diff=d.count-prevCount;
-            let trendHtml='';
-            if(idx>0){if(diff>0)trendHtml=`<span class="activity-trend trend-up">▲${diff}</span>`;else if(diff<0)trendHtml=`<span class="activity-trend trend-down">▼${Math.abs(diff)}</span>`;else trendHtml=`<span class="activity-trend trend-neutral">—</span>`;}
-            else trendHtml=`<span class="activity-trend trend-neutral">—</span>`;
-            return `<div class="activity-bar-wrap"><div class="flex items-center gap-1"><span class="activity-count ${isZero?'is-zero':''}">${d.count}</span>${trendHtml}</div><div class="activity-bar-track"><div class="activity-bar ${isZero?'is-zero':''}" style="height:${h}%"><div class="activity-bar-inner"></div></div></div><span class="activity-day ${isToday?'is-today':''}">${dayName}</span></div>`;
-        }).join('')}</div><div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between"><div class="flex items-center gap-4 text-xs text-slate-500"><span class="flex items-center gap-1.5"><span class="activity-trend trend-up">▲</span> Рост</span><span class="flex items-center gap-1.5"><span class="activity-trend trend-down">▼</span> Падение</span><span class="flex items-center gap-1.5"><span class="activity-trend trend-neutral">—</span> Без изменений</span></div><span class="text-xs text-slate-500">Среднее: <strong class="text-slate-700 dark:text-slate-300">${avgCount.toFixed(1)}</strong>/день</span></div>`;
-
-        const types={};historyItems.forEach(i=>{const ext=(i.filename||'').split('.').pop().toUpperCase();types[ext]=(types[ext]||0)+1;});
-        document.getElementById('fileTypesChart').innerHTML=Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([ext,cnt])=>{const p=Math.round(cnt/total*100);return`<div><div class="flex justify-between text-sm mb-1"><span class="font-medium">${getFileIcon(ext.toLowerCase())} .${ext}</span><span class="text-slate-500">${cnt} (${p}%)</span></div><div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden"><div class="h-full bg-blue-500 rounded-full transition-all" style="width:${p}%"></div></div></div>`;}).join('');
-
-        // Средний балл риска по всем документам
-        const avgScore = historyItems.length > 0 ? Math.round(historyItems.reduce((a,b) => a + getItemScore(b), 0) / historyItems.length) : 0;
-        const avgTime=historyItems.filter(i=>i.elapsed).reduce((a,b,i,arr)=>a+b.elapsed/arr.length,0);
-        document.getElementById('summaryStats').innerHTML=`<div class="flex justify-between py-2 border-b border-slate-200 dark:border-slate-700"><span class="text-slate-600 dark:text-slate-400">Всего</span><span class="font-semibold">${total}</span></div><div class="flex justify-between py-2 border-b border-slate-200 dark:border-slate-700"><span class="text-slate-600 dark:text-slate-400">Средний балл риска</span><span class="font-semibold ${avgScore>66?'text-red-600 dark:text-red-400':avgScore>33?'text-amber-600 dark:text-amber-400':'text-emerald-600 dark:text-emerald-400'}">${avgScore}/100</span></div><div class="flex justify-between py-2 border-b border-slate-200 dark:border-slate-700"><span class="text-slate-600 dark:text-slate-400">Среднее время</span><span class="font-semibold">${avgTime?avgTime.toFixed(1)+'с':'—'}</span></div><div class="flex justify-between py-2"><span class="text-slate-600 dark:text-slate-400">С проблемами</span><span class="font-semibold text-amber-600 dark:text-amber-400">${cr+md}</span></div>`;
-    }
-
-    // ===== MODALS =====
-    function openReportModal(id){
-        const i=HM.get(id);if(!i)return;currentModalReport=i;
-        const score=getItemScore(i);
-        document.getElementById('modal-title').textContent=i.filename;
-        document.getElementById('modal-meta').textContent=`${new Date(i.createdAt).toLocaleString('ru-RU')} · ${getRiskLabel(i.riskLevel)} · ${score}/100`;
-        const findings=parseFindings(i.report||'');
-        document.getElementById('modalReportContent').innerHTML=`<div class="flex flex-col md:flex-row gap-6 mb-6"><div class="flex-shrink-0 flex flex-col items-center p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl"><div class="relative w-28 h-28 mb-3">${buildGaugeSVG(score,112,9)}<div class="absolute inset-0 flex items-center justify-center flex-col"><span class="text-3xl font-bold text-slate-900 dark:text-white">${score}</span><span class="text-[10px] text-slate-500">баллов риска</span></div></div><span class="px-3 py-1 rounded-full text-xs font-bold ${getRiskBadgeFull(i.riskLevel)}">${getRiskLabel(i.riskLevel)}</span></div><div class="flex-1"><h4 class="font-semibold text-slate-900 dark:text-white mb-3">Ключевые проблемы</h4><div class="space-y-2">${buildFindingsHTML(findings)}</div></div></div><div class="border-t border-slate-200 dark:border-slate-700 pt-4"><h4 class="font-semibold text-slate-900 dark:text-white mb-3">Полный отчёт</h4><div class="markdown-body text-slate-700 dark:text-slate-300">${typeof marked!=='undefined'?marked.parse(i.report||''):`<pre>${escapeHtml(i.report||'')}</pre>`}</div></div>`;
-        const m=document.getElementById('reportModal');m.classList.add('active');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
-    }
+    function openReportModal(id){const i=HM.get(id);if(!i)return;currentModalReport=i;const score=getItemScore(i);document.getElementById('modal-title').textContent=i.filename;document.getElementById('modal-meta').textContent=`${new Date(i.createdAt).toLocaleString('ru-RU')} · ${getRiskLabel(i.riskLevel)} · ${score}/100`;const findings=parseFindings(i.report||'');document.getElementById('modalReportContent').innerHTML=`<div class="flex flex-col md:flex-row gap-6 mb-6"><div class="flex-shrink-0 flex flex-col items-center p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl"><div class="relative w-28 h-28 mb-3">${buildGaugeSVG(score,112,9)}<div class="absolute inset-0 flex items-center justify-center flex-col"><span class="text-3xl font-bold text-slate-900 dark:text-white">${score}</span><span class="text-[10px] text-slate-500">баллов риска</span></div></div><span class="px-3 py-1 rounded-full text-xs font-bold ${getRiskBadgeFull(i.riskLevel)}">${getRiskLabel(i.riskLevel)}</span></div><div class="flex-1"><h4 class="font-semibold text-slate-900 dark:text-white mb-3">Ключевые проблемы</h4><div class="space-y-2">${buildFindingsHTML(findings)}</div></div></div><div class="border-t border-slate-200 dark:border-slate-700 pt-4"><h4 class="font-semibold text-slate-900 dark:text-white mb-3">Полный отчёт</h4><div class="markdown-body text-slate-700 dark:text-slate-300">${typeof marked!=='undefined'?marked.parse(i.report||''):`<pre>${escapeHtml(i.report||'')}</pre>`}</div></div>`;const m=document.getElementById('reportModal');m.classList.add('active');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
     function closeReportModal(){document.getElementById('reportModal').classList.remove('active');document.getElementById('reportModal').setAttribute('aria-hidden','true');document.body.style.overflow='';currentModalReport=null;}
     function confirmDeleteItem(id){const i=HM.get(id);if(!i)return;document.getElementById('confirmTitle').textContent='Удалить?';document.getElementById('confirmMessage').textContent=`"${i.filename}" будет удалено.`;document.getElementById('confirmOk').onclick=()=>{HM.remove(id);closeConfirmModal();showToast('Удалено','info');};document.getElementById('confirmModal').classList.add('active');}
     function confirmClearAll(){if(!historyItems.length)return;document.getElementById('confirmTitle').textContent='Очистить?';document.getElementById('confirmMessage').textContent=`${historyItems.length} записей будет удалено.`;document.getElementById('confirmOk').onclick=()=>{HM.clearAll();closeConfirmModal();showToast('Очищено','info');};document.getElementById('confirmModal').classList.add('active');}
     function closeConfirmModal(){document.getElementById('confirmModal').classList.remove('active');}
 
-    // ===== DOWNLOADS =====
-        function generateReportHTML(item){
+    function generateReportHTML(item){
         const score=getItemScore(item),findings=parseFindings(item.report||''),date=new Date(item.createdAt);
         return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Отчёт LegalAI — ${escapeHtml(item.filename)}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',system-ui,sans-serif;color:#1e293b;line-height:1.6;padding:40px;max-width:800px;margin:0 auto}.header{background:linear-gradient(135deg,${item.riskLevel==='critical'?'#ef4444,#dc2626':item.riskLevel==='medium'?'#f59e0b,#d97706':'#22c55e,#16a34a'});color:white;padding:32px;border-radius:16px;margin-bottom:24px;display:flex;align-items:center;gap:20px}.header h1{font-size:24px;font-weight:700}.header p{opacity:0.85;font-size:14px}.score-box{background:rgba(255,255,255,0.2);border-radius:12px;padding:16px;text-align:center;min-width:100px}.score-box .num{font-size:36px;font-weight:800}.score-box .label{font-size:11px;opacity:0.9}.section{margin-bottom:24px}.section h2{font-size:18px;font-weight:700;color:#1e40af;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #dbeafe}.finding{padding:12px 16px;margin-bottom:8px;border-radius:8px;border-left:4px solid #3b82f6;background:#f8fafc}.finding.critical{border-color:#ef4444;background:#fef2f2}.finding.warning{border-color:#f59e0b;background:#fffbeb}.finding p{font-size:14px}.report-body{font-size:14px;line-height:1.8}.report-body h2{color:#1e40af;font-size:16px;margin-top:20px;margin-bottom:8px}.report-body ul{padding-left:20px;margin:8px 0}.report-body li{margin:4px 0}.footer{margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center}</style></head><body><div class="header"><div class="score-box"><div class="num">${score}</div><div class="label">БАЛЛОВ РИСКА</div></div><div><h1>Анализ завершён</h1><p>${escapeHtml(item.filename)} · ${date.toLocaleDateString('ru-RU')} · ${getRiskLabel(item.riskLevel)}</p></div></div><div class="section"><h2>Ключевые выявленные проблемы</h2>${findings.map(f=>`<div class="finding ${f.type}"><p>${f.icon} ${escapeHtml(f.text)}</p></div>`).join('')}</div><div class="section"><h2>Полный отчёт</h2><div class="report-body">${typeof marked!=='undefined'?marked.parse(item.report||''):`<p>${escapeHtml(item.report||'')}</p>`}</div></div><div class="footer">Сгенерировано LegalAI Pro · ${new Date().toLocaleString('ru-RU')} · Не заменяет юридическую консультацию</div></body></html>`;
     }
 
-    async function downloadPDF(itemOrId){
-        const item=itemOrId&&typeof itemOrId==='object'?itemOrId:(itemOrId?HM.get(itemOrId):null)||currentModalReport;if(!item){showToast('Нет данных','error');return;}
-        showToast('Генерация PDF...','info',2000);const html=generateReportHTML(item);const container=document.createElement('div');container.innerHTML=html;document.body.appendChild(container);
-        try{await html2pdf().set({margin:[10,10,10,10],filename:`LegalAI-${item.filename.replace(/\.[^.]+$/,'')}-${Date.now()}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(container).save();showToast('PDF скачан','success');}catch(e){showToast('Ошибка генерации PDF','error');console.error(e);}
-        document.body.removeChild(container);
-    }
+    async function downloadPDF(itemOrId){const item=itemOrId&&typeof itemOrId==='object'?itemOrId:(itemOrId?HM.get(itemOrId):null)||currentModalReport;if(!item){showToast('Нет данных','error');return;}showToast('Генерация PDF...','info',2000);const html=generateReportHTML(item);const container=document.createElement('div');container.innerHTML=html;document.body.appendChild(container);try{await html2pdf().set({margin:[10,10,10,10],filename:`LegalAI-${item.filename.replace(/\.[^.]+$/,'')}-${Date.now()}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(container).save();showToast('PDF скачан','success');}catch(e){showToast('Ошибка генерации PDF','error');console.error(e);}document.body.removeChild(container);}
     function downloadItemPDF(id){downloadPDF(id);}
 
     async function downloadDOCX(itemOrId){
@@ -924,36 +1213,24 @@
         showToast('Генерация DOCX...','info',2000);
         try{
             const{Document,Paragraph,TextRun,HeadingLevel,AlignmentType}=docx;
-            const score=getItemScore(item);
-            const findings=parseFindings(item.report||'');
-            const date=new Date(item.createdAt);
-            const children=[];
-
+            const score=getItemScore(item);const findings=parseFindings(item.report||'');const date=new Date(item.createdAt);const children=[];
             children.push(new Paragraph({children:[new TextRun({text:'LEGALAI PRO — ОТЧЁТ ОБ АНАЛИЗЕ',bold:true,size:32,color:'1E40AF'})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
             children.push(new Paragraph({children:[new TextRun({text:escapeHtml(item.filename),size:24,bold:true})],alignment:AlignmentType.CENTER,spacing:{after:100}}));
             children.push(new Paragraph({children:[new TextRun({text:`Дата: ${date.toLocaleString('ru-RU')} | Риск: ${getRiskLabel(item.riskLevel)} | Балл: ${score}/100`,size:20,color:'64748B'})],alignment:AlignmentType.CENTER,spacing:{after:400}}));
-
-    children.push(new Paragraph({children:[new TextRun({text:'КЛЮЧЕВЫЕ ВЫЯВЛЕННЫЕ ПРОБЛЕМЫ',bold:true,size:26,color:'1E40AF'})],heading:HeadingLevel.HEADING_2,spacing:{before:300,after:200}}));
-    findings.forEach((f,i)=>{const color=f.type==='critical'?'DC2626':f.type==='warning'?'D97706':'2563EB';children.push(new Paragraph({children:[new TextRun({text:`${i+1}. ${f.icon} ${f.text}`,size:20,color})],spacing:{after:120},indent:{left:200}}));});
-
-    children.push(new Paragraph({children:[new TextRun({text:'ПОЛНЫЙ ОТЧЁТ',bold:true,size:26,color:'1E40AF'})],heading:HeadingLevel.HEADING_2,spacing:{before:400,after:200}}));
-    const lines=(item.report||'').split('\n');lines.forEach(line=>{const trimmed=line.trim();if(!trimmed)return;if(trimmed.startsWith('# ')){children.push(new Paragraph({children:[new TextRun({text:trimmed.replace(/^#+\s*/,''),bold:true,size:24,color:'1E40AF'})],heading:HeadingLevel.HEADING_2,spacing:{before:300,after:100}}));}else if(trimmed.startsWith('## ')){children.push(new Paragraph({children:[new TextRun({text:trimmed.replace(/^#+\s*/,''),bold:true,size:22,color:'1E40AF'})],heading:HeadingLevel.HEADING_3,spacing:{before:200,after:100}}));}else if(trimmed.startsWith('- ')||trimmed.startsWith('* ')){children.push(new Paragraph({children:[new TextRun({text:trimmed.replace(/^[-*]\s*/,''),size:20})],spacing:{after:60},indent:{left:400}}));}else{children.push(new Paragraph({children:[new TextRun({text:trimmed,size:20})],spacing:{after:80}}));}});
-
-    children.push(new Paragraph({children:[new TextRun({text:'— — —',size:16,color:'94A3B8'})],alignment:AlignmentType.CENTER,spacing:{before:400}}));
-    children.push(new Paragraph({children:[new TextRun({text:`Сгенерировано LegalAI Pro · ${new Date().toLocaleString('ru-RU')} · Не заменяет юридическую консультацию`,size:16,color:'94A3B8',italics:true})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
-
-    const doc=new Document({sections:[{properties:{},children}]});const blob=await docx.Packer.toBlob(doc);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`LegalAI-${item.filename.replace(/\.[^.]+$/,'')}-${Date.now()}.docx`;a.click();URL.revokeObjectURL(url);showToast('DOCX скачан','success');
-    }catch(e){showToast('Ошибка генерации DOCX','error');console.error(e);}
-}
+            children.push(new Paragraph({children:[new TextRun({text:'КЛЮЧЕВЫЕ ВЫЯВЛЕННЫЕ ПРОБЛЕМЫ',bold:true,size:26,color:'1E40AF'})],heading:HeadingLevel.HEADING_2,spacing:{before:300,after:200}}));
+            findings.forEach((f,i)=>{const color=f.type==='critical'?'DC2626':f.type==='warning'?'D97706':'2563EB';children.push(new Paragraph({children:[new TextRun({text:`${i+1}. ${f.icon} ${f.text}`,size:20,color})],spacing:{after:120},indent:{left:200}}));});
+            children.push(new Paragraph({children:[new TextRun({text:'ПОЛНЫЙ ОТЧЁТ',bold:true,size:26,color:'1E40AF'})],heading:HeadingLevel.HEADING_2,spacing:{before:400,after:200}}));
+            const lines=(item.report||'').split('\n');lines.forEach(line=>{const trimmed=line.trim();if(!trimmed)return;if(trimmed.startsWith('# ')){children.push(new Paragraph({children:[new TextRun({text:trimmed.replace(/^#+\s*/,''),bold:true,size:24,color:'1E40AF'})],heading:HeadingLevel.HEADING_2,spacing:{before:300,after:100}}));}else if(trimmed.startsWith('## ')){children.push(new Paragraph({children:[new TextRun({text:trimmed.replace(/^#+\s*/,''),bold:true,size:22,color:'1E40AF'})],heading:HeadingLevel.HEADING_3,spacing:{before:200,after:100}}));}else if(trimmed.startsWith('- ')||trimmed.startsWith('* ')){children.push(new Paragraph({children:[new TextRun({text:trimmed.replace(/^[-*]\s*/,''),size:20})],spacing:{after:60},indent:{left:400}}));}else{children.push(new Paragraph({children:[new TextRun({text:trimmed,size:20})],spacing:{after:80}}));}});
+            children.push(new Paragraph({children:[new TextRun({text:'— — —',size:16,color:'94A3B8'})],alignment:AlignmentType.CENTER,spacing:{before:400}}));
+            children.push(new Paragraph({children:[new TextRun({text:`Сгенерировано LegalAI Pro · ${new Date().toLocaleString('ru-RU')} · Не заменяет юридическую консультацию`,size:16,color:'94A3B8',italics:true})],alignment:AlignmentType.CENTER,spacing:{after:200}}));
+            const doc=new Document({sections:[{properties:{},children}]});const blob=await docx.Packer.toBlob(doc);const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`LegalAI-${item.filename.replace(/\.[^.]+$/,'')}-${Date.now()}.docx`;a.click();URL.revokeObjectURL(url);showToast('DOCX скачан','success');
+        }catch(e){showToast('Ошибка генерации DOCX','error');console.error(e);}
+    }
     function downloadItemDOCX(id){downloadDOCX(id);}
 
-    function downloadHTML(itemOrId){
-        const item=itemOrId&&typeof itemOrId==='object'?itemOrId:(itemOrId?HM.get(itemOrId):null)||currentModalReport;if(!item){showToast('Нет данных','error');return;}
-        const html=generateReportHTML(item);const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`LegalAI-${item.filename.replace(/\.[^.]+$/,'')}-${Date.now()}.html`;a.click();URL.revokeObjectURL(url);showToast('HTML скачан','success');
-    }
+    function downloadHTML(itemOrId){const item=itemOrId&&typeof itemOrId==='object'?itemOrId:(itemOrId?HM.get(itemOrId):null)||currentModalReport;if(!item){showToast('Нет данных','error');return;}const html=generateReportHTML(item);const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`LegalAI-${item.filename.replace(/\.[^.]+$/,'')}-${Date.now()}.html`;a.click();URL.revokeObjectURL(url);showToast('HTML скачан','success');}
     async function copyReportText(id){const i=id?HM.get(id):currentModalReport;if(!i)return;try{await navigator.clipboard.writeText(i.report||'');showToast('Скопировано','success',2500);}catch{showToast('Ошибка','error');}}
 
-    // ===== FILE & UPLOAD =====
     let cName='',cSize='';
 
     function handleFile(file){if(!file)return;if(!ALLOWED_TYPES.includes(file.type)&&!file.name.match(/\.(pdf|doc|docx|txt)$/i)){showToast('Неподдерживаемый формат','error');return;}if(file.size>MAX_FILE_SIZE){showToast('Слишком большой файл','error');return;}document.getElementById('selectedFileName').textContent=file.name;document.getElementById('selectedFileSize').textContent=formatSize(file.size);document.getElementById('dropContent').classList.add('hidden');document.getElementById('fileSelected').classList.remove('hidden');log(`📎 Выбран: ${file.name}`,'info');}
@@ -961,88 +1238,35 @@
     async function uploadFile(file,generateRevisedContract=false){const fd=new FormData();fd.append('file',file);fd.append('generate_revised',generateRevisedContract?'1':'0');const c=new AbortController(),t=setTimeout(()=>c.abort(),1500000);try{const r=await fetch(`${PYTHON_API}/api/analyze`,{method:'POST',body:fd,signal:c.signal});clearTimeout(t);if(!r.ok)throw new Error(`HTTP ${r.status}`);return(await r.json()).request_id;}catch(e){clearTimeout(t);throw e;}}
 
     function connectSSE(rid,fname,fsize){
-        cName=fname;
-        cSize=fsize;
-        lastStatusLogKey='';
-        lastServerMetrics=null;
-        reportSaved=false;
+        cName=fname;cSize=fsize;lastStatusLogKey='';lastServerMetrics=null;reportSaved=false;
         eventSource=new EventSource(`${PYTHON_API}/api/stream/${rid}`);
         eventSource.onmessage=(e)=>{
             try{
                 const v=JSON.parse(e.data);
                 switch(v.type){
-                    case'status':{
-                        if(typeof v.progress_percent==='number')updateProgress(v.progress_percent);
-                        if(v.step==='cache_hit')setAnalysisCacheState('hit');
-                        const message=v.message||v.step||'Обработка...';
-                        const key=v.step==='analyzing'?`${v.step}:${v.processed}/${v.total}`:`${v.step}:${message}`;
-                        if(key!==lastStatusLogKey){
-                            log(message,'status');
-                            lastStatusLogKey=key;
-                        }
-                        break;
-                    }
-                    case'progress':
-                        if(typeof v.progress_percent==='number')updateProgress(v.progress_percent);
-                        break;
-                    case'chunk_result':
-                        // Draft responses are intentionally never shown.
-                        // Only summary_complete contains the final report.
-                        break;
-                    case'summary_complete':
-                        lastServerMetrics=v.metrics||null;
-                        setAnalysisCacheState(v.cache_hit?'hit':'fresh');
-                        processSummary(v.content, v.metrics || null, v.revised_contract || null);
-                        break;
-                    case'complete':
-                        log('🎉 Завершено!','success');
-                        finalizeReport();
-                        break;
-                    case'error':
-                        log(`❌ ${v.message||v.error||'Ошибка'}`,'error');
-                        showToast(v.message||v.error||'Ошибка','error');
-                        eventSource.close();
-                        resetSubmitBtn();
-                        break;
+                    case'status':{if(typeof v.progress_percent==='number')updateProgress(v.progress_percent);if(v.step==='cache_hit')setAnalysisCacheState('hit');const message=v.message||v.step||'Обработка...';const key=v.step==='analyzing'?`${v.step}:${v.processed}/${v.total}`:`${v.step}:${message}`;if(key!==lastStatusLogKey){log(message,'status');lastStatusLogKey=key;}break;}
+                    case'progress':if(typeof v.progress_percent==='number')updateProgress(v.progress_percent);break;
+                    case'chunk_result':break;
+                    case'summary_complete':lastServerMetrics=v.metrics||null;setAnalysisCacheState(v.cache_hit?'hit':'fresh');processSummary(v.content, v.metrics || null, v.revised_contract || null);break;
+                    case'complete':log('🎉 Завершено!','success');finalizeReport();break;
+                    case'error':log(`❌ ${v.message||v.error||'Ошибка'}`,'error');showToast(v.message||v.error||'Ошибка','error');eventSource.close();resetSubmitBtn();break;
                 }
-            }catch(err){
-                console.error(err);
-            }
+            }catch(err){console.error(err);}
         };
-        eventSource.onerror=()=>{
-            log('🔴 Ошибка соединения','error');
-            showToast('Потеряно соединение','error');
-            eventSource.close();
-            resetSubmitBtn();
-        };
+        eventSource.onerror=()=>{log('🔴 Ошибка соединения','error');showToast('Потеряно соединение','error');eventSource.close();resetSubmitBtn();};
     }
 
-    function normalizeServerRiskLevel(level){
-        const value=String(level||'').toLowerCase();
-        if(value.includes('высок')||value.includes('critical')||value.includes('high')) return 'critical';
-        if(value.includes('сред')||value.includes('medium')) return 'medium';
-        return 'low';
-    }
+    function normalizeServerRiskLevel(level){const value=String(level||'').toLowerCase();if(value.includes('высок')||value.includes('critical')||value.includes('high')) return 'critical';if(value.includes('сред')||value.includes('medium')) return 'medium';return 'low';}
 
     function processSummary(content, serverMetrics=null, revisedContract=null){
         lastReportContent=content;
         setRevisedContractDownload(revisedContract);
         document.getElementById('reportContent').innerHTML=typeof marked!=='undefined'?marked.parse(content):`<pre>${escapeHtml(content)}</pre>`;
 
-        const serverScore = serverMetrics && Number.isFinite(Number(serverMetrics.score))
-            ? Math.max(0, Math.min(100, Math.round(Number(serverMetrics.score))))
-            : null;
+        const serverScore = serverMetrics && Number.isFinite(Number(serverMetrics.score)) ? Math.max(0, Math.min(100, Math.round(Number(serverMetrics.score)))) : null;
         const fallbackResult = serverScore === null ? analyzeReportRisk(content) : null;
         const analysisResult = serverScore !== null
-            ? {
-                score: serverScore,
-                level: normalizeServerRiskLevel(serverMetrics.level),
-                findings: {
-                    critical: Number(serverMetrics.high || 0),
-                    warning: Number(serverMetrics.medium || 0),
-                    info: Number(serverMetrics.low || 0)
-                }
-            }
+            ? { score: serverScore, level: normalizeServerRiskLevel(serverMetrics.level), findings: { critical: Number(serverMetrics.high || 0), warning: Number(serverMetrics.medium || 0), info: Number(serverMetrics.low || 0) } }
             : fallbackResult;
         const riskLevel = analysisResult.level;
         const riskScore = analysisResult.score;
@@ -1051,77 +1275,263 @@
         log(`🎯 Итог: ${riskScore}/100 (${getRiskLabel(riskLevel)}) | Критич: ${findingsCount.critical}, Предост: ${findingsCount.warning}, Инфо: ${findingsCount.info}`, 'success');
 
         const gaugeCircle=document.getElementById('riskGaugeCircle');
-        const circ=2*Math.PI*52;
-        const pct=riskScore/100;
-        const offset=circ-(pct*circ);
+        const circ=2*Math.PI*52;const pct=riskScore/100;const offset=circ-(pct*circ);
         gaugeCircle.setAttribute('stroke-dashoffset',offset);
         gaugeCircle.setAttribute('stroke',getRiskColor(riskLevel));
 
         document.getElementById('riskGaugeScore').textContent=riskScore;
 
         const badge=document.getElementById('riskLevelBadge');
-        badge.textContent=`${getRiskLabel(riskLevel)} — ${riskScore}/100`;
-        badge.className=`px-4 py-1.5 rounded-full text-sm font-bold ${getRiskBadgeFull(riskLevel)}`;
+        const dotColor = riskLevel==='critical'?'bg-red-500':riskLevel==='medium'?'bg-amber-500':'bg-green-500';
+        badge.innerHTML=`<span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span>${getRiskLabel(riskLevel)} — ${riskScore}/100`;
+        badge.className=`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-lg ${getRiskBadgeFull(riskLevel)}`;
 
-        document.getElementById('reportHeaderBg').className=`bg-gradient-to-r ${getRiskGradient(riskLevel)} px-8 py-6 flex items-center gap-4`;
+        document.getElementById('reportHeaderBg').className=`w-14 h-14 bg-gradient-to-br ${getRiskGradient(riskLevel)} rounded-2xl flex items-center justify-center flex-shrink-0 success-check shadow-lg`;
 
         const findings=parseFindings(content);
         document.getElementById('findingsTable').innerHTML=buildFindingsHTML(findings);
         document.getElementById('reportSubtitle').textContent=`${cName} — ${getRiskLabel(riskLevel)} — ${riskScore}/100`;
 
+        // Update compliance status row
+        const complianceRow=document.getElementById('complianceStatusRow');
+        const complianceTitle=document.getElementById('complianceStatusTitle');
+        const complianceText=document.getElementById('complianceStatusText');
+        if(riskLevel==='critical'){
+            complianceRow.className='compliance-indicator compliance-fail';
+            complianceRow.querySelector('.compliance-dot').className='compliance-dot bg-red-500';
+            complianceTitle.textContent='Обнаружены критические риски';
+            complianceText.textContent='Требуется срочная доработка договора';
+        }else if(riskLevel==='medium'){
+            complianceRow.className='compliance-indicator compliance-warn';
+            complianceRow.querySelector('.compliance-dot').className='compliance-dot bg-amber-500';
+            complianceTitle.textContent='Выявлены замечания';
+            complianceText.textContent='Рекомендуется исправить до подписания';
+        }else{
+            complianceRow.className='compliance-indicator compliance-pass';
+            complianceRow.querySelector('.compliance-dot').className='compliance-dot bg-emerald-500';
+            complianceTitle.textContent='Документ в порядке';
+            complianceText.textContent='Существенных рисков не выявлено';
+        }
+
+        // Setup professional analytics
+        setupProfessionalAnalytics(findings, findingsCount);
+
         if(!reportSaved){
             reportSaved=true;
             HM.add({
-                filename:cName,
-                fileSize:cSize,
-                riskLevel: riskLevel,
-                riskScore: riskScore,
-                criticalCount: findingsCount.critical,
-                warningCount: findingsCount.warning,
-                infoCount: findingsCount.info,
-                report:content,
-                elapsed:null,
-                status:'completed'
+                filename:cName, fileSize:cSize, riskLevel: riskLevel, riskScore: riskScore,
+                criticalCount: findingsCount.critical, warningCount: findingsCount.warning, infoCount: findingsCount.info,
+                report:content, elapsed:null, status:'completed'
             });
             recordCabinetActivity({
-                type:'analysis',
-                title:'Анализ документа',
+                type:'analysis', title:'Анализ документа',
                 details:`${cName || 'Документ'} — риск ${getRiskLabel(riskLevel)} (${riskScore}/100)`,
                 file_name:cName || '',
                 summary:`Риск ${getRiskLabel(riskLevel)} (${riskScore}/100). Критические: ${findingsCount.critical}, предупреждения: ${findingsCount.warning}, информационные: ${findingsCount.info}.`,
-                result:content,
-                status:'completed',
+                result:content, status:'completed',
                 metadata:{riskLevel,riskScore,criticalCount:findingsCount.critical,warningCount:findingsCount.warning,infoCount:findingsCount.info}
             });
             showToast('Сохранено в историю','success',2500);
         }
     }
 
+    /* ============================================
+       ✨ PROFESSIONAL ANALYTICS FUNCTIONS ✨
+       ============================================ */
+
+    function animateProCounter(el, target, duration=1400){
+        if(!el) return;
+        const start=0, startTime=performance.now();
+        function tick(now){
+            const elapsed=now-startTime;
+            const progress=Math.min(elapsed/duration,1);
+            const eased=1-Math.pow(1-progress,3);
+            el.textContent=Math.round(start+(target-start)*eased);
+            if(progress<1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
+    function setupProfessionalAnalytics(findings, counts){
+        allProFindings = findings;
+        currentProCategory = 'all';
+
+        // Reset category tabs
+        document.querySelectorAll('.category-tab').forEach(t=>{
+            t.classList.remove('active');
+            if(t.dataset.category==='all') t.classList.add('active');
+        });
+
+        // Animate metric counters
+        setTimeout(()=>{
+            animateProCounter(document.getElementById('metricCritical'), counts.critical);
+            animateProCounter(document.getElementById('metricWarning'), counts.warning);
+            animateProCounter(document.getElementById('metricInfo'), counts.info);
+            animateProCounter(document.getElementById('metricTotal'), counts.critical + counts.warning + counts.info);
+        }, 400);
+
+        // Animate risk breakdown bar
+        const total = counts.critical + counts.warning + counts.info || 1;
+        const critPct = Math.round(counts.critical/total*100);
+        const warnPct = Math.round(counts.warning/total*100);
+        const infoPct = 100 - critPct - warnPct;
+
+        setTimeout(()=>{
+            const sc=document.getElementById('riskSegCritical');
+            const sw=document.getElementById('riskSegWarning');
+            const si=document.getElementById('riskSegInfo');
+            if(sc) sc.style.width=critPct+'%';
+            if(sw) sw.style.width=warnPct+'%';
+            if(si) si.style.width=infoPct+'%';
+            document.getElementById('riskPctCritical').textContent=critPct+'%';
+            document.getElementById('riskPctWarning').textContent=warnPct+'%';
+            document.getElementById('riskPctInfo').textContent=infoPct+'%';
+        }, 700);
+
+        renderProFindings();
+        renderProActions(findings);
+
+        // Trigger reveal animations
+        setTimeout(()=>{
+            document.querySelectorAll('.pro-reveal').forEach(el=>el.classList.add('revealed'));
+        }, 200);
+    }
+
+    function renderProFindings(){
+        const container=document.getElementById('findingsContainer');
+        if(!container) return;
+
+        let filtered=allProFindings;
+        if(currentProCategory!=='all') filtered=allProFindings.filter(f=>f.type===currentProCategory);
+
+        if(!filtered.length){
+            container.innerHTML='<div class="text-center py-12 text-slate-500 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">✨ В этой категории находок нет</div>';
+            return;
+        }
+
+        container.innerHTML=filtered.map((f,idx)=>{
+            const sev=f.type==='critical'?'severity-critical':f.type==='warning'?'severity-warning':'severity-info';
+            const pr=f.type==='critical'?'high':f.type==='warning'?'medium':'low';
+            const prLabel=f.type==='critical'?'Высокий приоритет':f.type==='warning'?'Средний приоритет':'Низкий приоритет';
+            return `
+                <div class="finding-pro ${sev} pro-reveal" style="transition-delay:${idx*0.06}s">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 text-2xl">${f.icon}</div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="priority-badge ${pr}">${prLabel}</span>
+                            </div>
+                            <p class="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">${escapeHtml(f.text)}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        setTimeout(()=>{
+            container.querySelectorAll('.pro-reveal').forEach(el=>el.classList.add('revealed'));
+        }, 50);
+    }
+
+    function renderProActions(findings){
+        const container=document.getElementById('actionItems');
+        if(!container) return;
+
+        const critical=findings.filter(f=>f.type==='critical').slice(0,3);
+        const warning=findings.filter(f=>f.type==='warning').slice(0,2);
+
+        if(!critical.length && !warning.length){
+            container.innerHTML='<div class="text-center py-10 text-slate-500 flex flex-col items-center gap-2"><svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Документ не требует доработки — можно подписывать</div>';
+            return;
+        }
+
+        let html='', idx=1;
+
+        critical.forEach(a=>{
+            html+=`
+                <div class="action-card priority-high pro-reveal" style="transition-delay:${idx*0.08}s">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-500/20 rounded-lg flex items-center justify-center text-lg">🔴</div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2 flex-wrap">
+                                <span class="priority-badge high">Срочно</span>
+                                <span class="text-xs text-slate-500">Действие ${idx}</span>
+                            </div>
+                            <p class="text-sm text-slate-800 dark:text-slate-200 mb-1.5">${escapeHtml(a.text)}</p>
+                            <div class="text-xs text-red-600 dark:text-red-400 font-medium">⚡ Требуется немедленное исправление</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            idx++;
+        });
+
+        warning.forEach(a=>{
+            html+=`
+                <div class="action-card priority-medium pro-reveal" style="transition-delay:${idx*0.08}s">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-amber-100 dark:bg-amber-500/20 rounded-lg flex items-center justify-center text-lg">🟡</div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2 flex-wrap">
+                                <span class="priority-badge medium">Важно</span>
+                                <span class="text-xs text-slate-500">Действие ${idx}</span>
+                            </div>
+                            <p class="text-sm text-slate-800 dark:text-slate-200 mb-1.5">${escapeHtml(a.text)}</p>
+                            <div class="text-xs text-amber-600 dark:text-amber-400 font-medium">📌 Рекомендуется исправить</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            idx++;
+        });
+
+        container.innerHTML=html;
+
+        setTimeout(()=>{
+            container.querySelectorAll('.pro-reveal').forEach(el=>el.classList.add('revealed'));
+        }, 300);
+    }
+
     function finalizeReport() {
-        // 1. Показываем блок с готовым отчетом
         document.getElementById('finalReport').classList.remove('hidden');
 
-        // 2. Переводим статус-badge в красивое состояние Pro-SaaS (стиль Stripe/Linear)
-        const b = document.getElementById('analysisStatusBadge');
-        b.innerHTML = '<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> Анализ завершён';
-        b.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-900/40 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-800 rounded-xl text-xs font-medium transition-all duration-200 shadow-sm';
+        // Scroll to result
+        setTimeout(()=>{
+            document.getElementById('finalReport').scrollIntoView({behavior:'smooth',block:'start'});
+        }, 200);
 
-        // 3. Доводим прогресс-бар до финала и закрываем поток данных
+        const b = document.getElementById('analysisStatusBadge');
+        b.innerHTML = '<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Анализ завершён';
+        b.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-medium transition-all duration-200 shadow-sm';
         updateProgress(100);
         if (typeof eventSource !== 'undefined' && eventSource) {
             eventSource.close();
         }
-
-        // 4. Показываем финальное уведомление
         showToast('Анализ документа успешно завершён', 'success', 3000);
     }
+
     function updateProgress(p){const b=document.getElementById('progressBar'),t=document.getElementById('progressText'),st={u:document.getElementById('stage-upload'),p:document.getElementById('stage-process'),a:document.getElementById('stage-analyze'),d:document.getElementById('stage-done')};b.style.width=`${p}%`;t.textContent=`${p}%`;if(p>=100){Object.values(st).forEach(e=>{e.className='w-2 h-2 rounded-full bg-green-500'});b.classList.remove('progress-animated');b.style.background='#22c55e';}else if(p>=75){st.a.className='w-2 h-2 rounded-full bg-blue-500';}else if(p>=40){st.p.className='w-2 h-2 rounded-full bg-blue-500';}}
 
     function resetSubmitBtn(){const b=document.getElementById('submitBtn');b.disabled=false;b.setAttribute('aria-busy','false');b.innerHTML='<span class="text-xl group-hover:scale-110 transition-transform">🚀</span><span>Запустить анализ</span><svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>';isAnalyzing=false;}
 
-    function resetAnalysisUI(){document.getElementById('analysisProgress').classList.add('hidden');document.getElementById('finalReport').classList.add('hidden');setRevisedContractDownload(null);document.getElementById('fileInput').value='';document.getElementById('dropContent').classList.remove('hidden');document.getElementById('fileSelected').classList.add('hidden');document.getElementById('progressBar').style.width='0%';document.getElementById('progressBar').style.background='';document.getElementById('progressBar').classList.add('progress-animated');document.getElementById('progressText').textContent='0%';['stage-upload','stage-process','stage-analyze','stage-done'].forEach((id,i)=>{document.getElementById(id).className=`w-2 h-2 rounded-full ${i===0?'bg-blue-500':'bg-slate-300 dark:bg-slate-600'}`;});isAnalyzing=false;resetSubmitBtn();}
+    function resetAnalysisUI(){
+        document.getElementById('analysisProgress').classList.add('hidden');
+        const fr=document.getElementById('finalReport');
+        fr.classList.add('hidden');
+        document.querySelectorAll('.pro-reveal').forEach(el=>el.classList.remove('revealed'));
+        setRevisedContractDownload(null);
+        document.getElementById('fileInput').value='';
+        document.getElementById('dropContent').classList.remove('hidden');
+        document.getElementById('fileSelected').classList.add('hidden');
+        document.getElementById('progressBar').style.width='0%';
+        document.getElementById('progressBar').style.background='';
+        document.getElementById('progressBar').classList.add('progress-animated');
+        document.getElementById('progressText').textContent='0%';
+        ['stage-upload','stage-process','stage-analyze','stage-done'].forEach((id,i)=>{document.getElementById(id).className=`w-2 h-2 rounded-full ${i===0?'bg-blue-500':'bg-slate-300 dark:bg-slate-600'}`;});
+        isAnalyzing=false;
+        resetSubmitBtn();
+    }
 
-    // ===== INIT =====
     document.addEventListener('DOMContentLoaded',()=>{
         const dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput'),cf=document.getElementById('changeFile'),uf=document.getElementById('uploadForm'),cl=document.getElementById('clearLogs'),na=document.getElementById('newAnalysisBtn'),cah=document.getElementById('clearAllHistory'),hs=document.getElementById('historySearch'),mc=document.getElementById('modalClose'),cc=document.getElementById('confirmCancel'),mcb=document.getElementById('modalCopyBtn'),mpdf=document.getElementById('modalPdfBtn'),mdocx=document.getElementById('modalDocxBtn'),tt=document.getElementById('themeToggle');
 
@@ -1133,7 +1543,7 @@
 
         uf.addEventListener('submit',async e=>{
             e.preventDefault();if(isAnalyzing)return;const file=fi.files[0];if(!file){showToast('Выберите файл','warning');return;}
-            document.getElementById('analysisProgress').classList.remove('hidden');document.getElementById('finalReport').classList.add('hidden');document.getElementById('analysisFileName').textContent=file.name;document.getElementById('logContainer').innerHTML='';setAnalysisCacheState('checking');updateProgress(0);log(`🔗 Подключаю RAG: ${CONTRACT_RAG_SOURCE}...`,'status');
+            document.getElementById('analysisProgress').classList.remove('hidden');document.getElementById('finalReport').classList.add('hidden');document.querySelectorAll('.pro-reveal').forEach(el=>el.classList.remove('revealed'));document.getElementById('analysisFileName').textContent=file.name;document.getElementById('logContainer').innerHTML='';setAnalysisCacheState('checking');updateProgress(0);log(`🔗 Подключаю RAG: ${CONTRACT_RAG_SOURCE}...`,'status');
             isAnalyzing=true;const btn=document.getElementById('submitBtn');btn.disabled=true;btn.innerHTML='<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Подготовка RAG...</span>';
             try{if(!await prepareContractRag())throw new Error(`RAG ${CONTRACT_RAG_SOURCE} не готов`);const generateRevisedContract=document.getElementById('generateRevisedContract').checked;btn.querySelector('span:last-child').textContent='Загрузка...';log(`⬆️ ${file.name}`,'info');const id=await uploadFile(file,generateRevisedContract);log(generateRevisedContract?'✅ Файл принят. Модель готовит отчёт и доработанный проект…':'✅ Файл принят. Модель готовит итоговый отчёт…','success');connectSSE(id,file.name,formatSize(file.size));}catch(err){log(`❌ ${err.message}`,'error');showToast('Анализ не начат: RAG недоступен','error');resetSubmitBtn();}
         });
@@ -1142,7 +1552,18 @@
         na.addEventListener('click',()=>{resetAnalysisUI();showToast('Готов к анализу','info');});
         cah.addEventListener('click',confirmClearAll);
         let st;hs.addEventListener('input',()=>{clearTimeout(st);st=setTimeout(()=>renderHistory(),300);});
-         document.querySelectorAll('.filter-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.filter-btn').forEach(x=>{x.classList.remove('active');x.classList.add('bg-slate-100','dark:bg-slate-800','text-slate-600','dark:text-slate-400');});b.classList.add('active');b.classList.remove('bg-slate-100','dark:bg-slate-800','text-slate-600','dark:text-slate-400');currentFilter=b.dataset.filter;renderHistory();}));
+        document.querySelectorAll('.filter-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.filter-btn').forEach(x=>{x.classList.remove('active');x.classList.add('bg-slate-100','dark:bg-slate-800','text-slate-600','dark:text-slate-400');});b.classList.add('active');b.classList.remove('bg-slate-100','dark:bg-slate-800','text-slate-600','dark:text-slate-400');currentFilter=b.dataset.filter;renderHistory();}));
+
+        // Professional category tabs
+        document.querySelectorAll('.category-tab').forEach(tab=>{
+            tab.addEventListener('click',()=>{
+                document.querySelectorAll('.category-tab').forEach(t=>t.classList.remove('active'));
+                tab.classList.add('active');
+                currentProCategory=tab.dataset.category;
+                renderProFindings();
+            });
+        });
+
         mc.addEventListener('click',closeReportModal);document.getElementById('reportModal').addEventListener('click',e=>{if(e.target.id==='reportModal')closeReportModal();});
         cc.addEventListener('click',closeConfirmModal);document.getElementById('confirmModal').addEventListener('click',e=>{if(e.target.id==='confirmModal')closeConfirmModal();});
         mcb.addEventListener('click',()=>copyReportText());mpdf.addEventListener('click',()=>downloadPDF());mdocx.addEventListener('click',()=>downloadDOCX());

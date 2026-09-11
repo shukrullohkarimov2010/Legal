@@ -48,9 +48,7 @@ class ContractController extends Controller
             'pythonApiUrl' => $this->pythonApi,
         ]);
     }
-     public function form()
-    {
-        return view('contract.form'); 
-    }
-
+    // Метод form() удалён: он возвращал view('contract.form'), а такого файла в
+    // resources/views/contract/ нет. Маршрута на него тоже не было — /contract/form
+    // ведёт на showForm(), — так что вызов сразу упал бы на «View not found».
 }

@@ -908,9 +908,10 @@
         .bento-card-md { grid-column: span 4; }
         .bento-card-sm { grid-column: span 4; }
         .bento-card-wide { grid-column: span 6; }
+        .bento-card-full { grid-column: span 12; }
 
         @media (max-width: 1024px) {
-            .bento-card-lg, .bento-card-md, .bento-card-sm, .bento-card-wide {
+            .bento-card-lg, .bento-card-md, .bento-card-sm, .bento-card-wide, .bento-card-full {
                 grid-column: span 12;
             }
         }
@@ -2214,24 +2215,39 @@
                     </div>
                 </div>
 
-                <!-- SM CARD: Calculator -->
-                <div class="bento-card bento-card-sm reveal stagger-5" onclick="openModal('calculator')">
-                    <div class="feature-badge cyan mb-3"><span class="dot"></span><span>{{ __('dashboard.calc_badge') }}</span></div>
-                    <div class="feature-icon-box cyan">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                <!-- FULL CARD: Criminal Code RT qualification -->
+                <div class="bento-card bento-card-full reveal stagger-5" onclick="openModal('crime-qualify')">
+                    <div class="feature-badge red mb-3"><span class="dot"></span><span>{{ __('dashboard.crime_badge') }}</span></div>
+                    <div class="feature-icon-box red">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M4 7l8-4 8 4M7 7l-3 7a3 3 0 006 0L7 7zm10 0l-3 7a3 3 0 006 0l-3-7zM8 21h8"/></svg>
                     </div>
-                    <h3 class="feature-title">{{ __('dashboard.calc_title') }}</h3>
-                    <p class="feature-desc">{{ __('dashboard.calc_text') }}</p>
+                    <h3 class="feature-title">{{ __('dashboard.crime_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.crime_text') }}</p>
+
+                    <ul class="feature-list">
+                        <li>
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="color: #dc2626;"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            <span>{{ __('dashboard.crime_feat1') }}</span>
+                        </li>
+                        <li>
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="color: #dc2626;"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            <span>{{ __('dashboard.crime_feat2') }}</span>
+                        </li>
+                        <li>
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" style="color: #dc2626;"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>
+                            <span>{{ __('dashboard.crime_feat3') }}</span>
+                        </li>
+                    </ul>
 
                     <div class="d-flex align-items-center justify-content-between mt-auto">
-                        <a href="{{ route('tasks.calc') }}" class="feature-link" style="color: #0891b2;" onclick="event.stopPropagation();">
-                            <span>{{ __('dashboard.try_now') }}</span>
+                        <a href="{{ route('contract.ugalov-kodex') }}" class="feature-link" style="color: #dc2626;" onclick="event.stopPropagation();">
+                            <span>{{ __('dashboard.crime_btn') }}</span>
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </a>
                         <div class="d-flex align-items-center gap-2">
-                            <span style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--ink-tertiary);">85%</span>
+                            <span style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--ink-tertiary);">90%</span>
                             <div class="progress-premium">
-                                <div class="progress-premium-fill" style="width: 85%; background: linear-gradient(135deg, #06b6d4, #3b82f6);"></div>
+                                <div class="progress-premium-fill" style="width: 90%; background: linear-gradient(135deg, #dc2626, #f59e0b);"></div>
                             </div>
                         </div>
                     </div>
@@ -2278,6 +2294,29 @@
                             <span style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--ink-tertiary);">95%</span>
                             <div class="progress-premium">
                                 <div class="progress-premium-fill" style="width: 95%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SM CARD: Calculator -->
+                <div class="bento-card bento-card-sm reveal stagger-6" onclick="openModal('calculator')">
+                    <div class="feature-badge cyan mb-3"><span class="dot"></span><span>{{ __('dashboard.calc_badge') }}</span></div>
+                    <div class="feature-icon-box cyan">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    </div>
+                    <h3 class="feature-title">{{ __('dashboard.calc_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.calc_text') }}</p>
+
+                    <div class="d-flex align-items-center justify-content-between mt-auto">
+                        <a href="{{ route('tasks.calc') }}" class="feature-link" style="color: #0891b2;" onclick="event.stopPropagation();">
+                            <span>{{ __('dashboard.try_now') }}</span>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        </a>
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--ink-tertiary);">85%</span>
+                            <div class="progress-premium">
+                                <div class="progress-premium-fill" style="width: 85%; background: linear-gradient(135deg, #06b6d4, #3b82f6);"></div>
                             </div>
                         </div>
                     </div>
@@ -2795,6 +2834,5 @@
         if (bEnd) bEnd.value = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     });
 </script>
-
 </body> 
 </html>

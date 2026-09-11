@@ -85,6 +85,13 @@ return [
     'compare_title' => 'Contract comparison',
     'compare_text' => 'Detailed analysis of differences and legal inconsistencies.',
     'compare_btn' => 'Compare',
+    'crime_badge' => 'Criminal Code RT',
+    'crime_title' => 'Offence qualification under the Criminal Code of Tajikistan',
+    'crime_text' => 'Describe the circumstances of the incident — the AI matches articles of the Criminal Code of the Republic of Tajikistan, breaks down the elements of the offence and states the sentencing range.',
+    'crime_feat1' => 'Matching Criminal Code articles with quotes from the source text',
+    'crime_feat2' => 'Elements of the offence: object, actus reus and mens rea',
+    'crime_feat3' => 'Sanctions, aggravating and mitigating circumstances',
+    'crime_btn' => 'Qualify',
 
     'process_eyebrow' => 'Process',
     'process_title' => 'How it',

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'checking_ollama' => 'Проверка Ollama...',
+    'checking_ollama' => 'Проверка AI-сервиса...',
     'cache_short' => 'Кэш',
     'theme_toggle' => 'Сменить тему',
     'history_btn' => '📚 История',
@@ -18,8 +18,8 @@ return [
     'drop_file' => 'Перетащите файл',
     'or_click' => 'или нажмите для выбора',
 
-    'ai_via_ollama' => 'AI-анализ через Ollama',
-    'ai_subtitle' => 'Streaming · Полный промпт · Кэш',
+    'ai_via_ollama' => 'AI-анализ LegalAI',
+    'ai_subtitle' => 'Полный промпт · Кэш',
     'ollama_url_placeholder' => 'URL Ollama',
     'model_faster' => '⚡ llama3.2:3b (быстрее)',
     'model_fastest' => '🚀 phi3:mini (самая быстрая)',
@@ -98,22 +98,22 @@ return [
         'confirm_clear_cache' => 'Очистить весь кэш? Это действие нельзя отменить.',
         'cache_cleared' => 'Кэш очищен',
 
-        'checking_ollama' => 'Проверка Ollama...',
+        'checking_ollama' => 'Проверка AI-сервиса...',
         'no_models' => 'Нет моделей',
-        'ollama_no_models_html' => '<strong>⚠️ Ollama запущена, но нет моделей.</strong><br>',
-        'ollama_connected' => 'Ollama подключена.',
+        'ollama_no_models_html' => '<strong>⚠️ Сервис запущен, но нет моделей.</strong><br>',
+        'ollama_connected' => 'AI-сервис подключён.',
         'ollama_models_available' => ':count моделей доступно.',
-        'ollama_connected_toast' => 'Ollama подключена · :count моделей',
-        'ollama_unavailable' => 'Ollama недоступна',
-        'ollama_connect_failed' => '<strong>❌ Не удалось подключиться.</strong><br>',
+        'ollama_connected_toast' => 'AI-сервис подключён',
+        'ollama_unavailable' => 'AI-сервис недоступен',
+        'ollama_connect_failed' => '<strong>❌ Не удалось подключиться к AI-сервису.</strong><br>Проверьте, что запущен python/app.py.',
 
-        'connecting_to' => '⏳ Подключение к :model...',
+        'connecting_to' => '⏳ Отправка запроса (:model)...',
         'streaming_unsupported' => 'Streaming не поддерживается',
-        'connected_receiving' => '✅ Подключено. Получаю токены...',
+        'connected_receiving' => '✅ Ожидание ответа модели...',
         'done_tokens' => '✅ Готово! :tokens токенов за :seconds с (:speed ток/с)',
         'empty_response' => 'Пустой ответ',
         'cancelled_by_user' => 'Анализ отменен пользователем',
-        'ollama_unavailable_hint' => 'Ollama недоступна. Запустите: OLLAMA_ORIGINS="*" ollama serve',
+        'ollama_unavailable_hint' => 'AI-сервис недоступен. Убедитесь, что запущен python/app.py.',
         'analysis_cancelled' => 'Анализ отменен',
         'cancelled_keyword' => 'отменен',
 

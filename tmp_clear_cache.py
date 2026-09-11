@@ -18,3 +18,4 @@ if ollama_cache.exists():
 print('removed:', len(removed))
 for r in removed[:50]:
     print(r)
+ 
