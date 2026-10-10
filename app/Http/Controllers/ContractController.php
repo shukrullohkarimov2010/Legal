@@ -36,7 +36,9 @@ class ContractController extends Controller
 
     public function codex()
     {
-        return view('contract.codex');
+        return view('contract.codex', [
+            'pythonApiUrl' => $this->pythonApi,
+        ]);
     }
     public function compare()
     {

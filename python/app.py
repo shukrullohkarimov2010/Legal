@@ -11,6 +11,7 @@ import queue
 import threading
 import traceback
 import re
+import difflib
 import math
 import shutil
 import subprocess
@@ -33,6 +34,11 @@ for _stream in (sys.stdout, sys.stderr):
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import legal_rag  # noqa: E402  — движок поиска по кодексам РТ
 import lang_service  # noqa: E402  — определение языка вопроса и перевод ru<->tg
+import chat_modes  # noqa: E402  — роли (юрист/адвокат), глубина ответа, документы в чате
+import contract_topics  # noqa: E402  — темы условий договора -> нужные статьи кодексов
+import doc_lang  # noqa: E402  — язык документа: перевод договора и отчёта (таджикский <-> русский)
+import codex_catalog  # noqa: E402  — кодексы из RAG-индекса для страницы /contract/codex
+import doc_dialog  # noqa: E402  — вопросы перед составлением документа: какой договор и с кем
 
 # Сервис раньше запускался только с переменными окружения, заданными вручную
 # в шелле: .env в корне проекта Laravel никогда не читался, и его значения
@@ -63,24 +69,25 @@ LLM_PROVIDER = (os.environ.get("LLM_PROVIDER") or "ollama").strip().lower()
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = (os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
 OPENAI_MODEL = os.environ.get("GPT_MODEL") or os.environ.get("OPENAI_MODEL") or "gpt-5-nano"
+# Анализ договора, генератор договора и квалификация по УК РТ идут на
+# gpt-6-luna независимо от общей GPT_MODEL (её используют чат и сравнение).
+# Действует только при LLM_PROVIDER=openai; на Ollama остаются локальные модели.
+ANALYSIS_GPT_MODEL = os.environ.get("ANALYSIS_GPT_MODEL") or "gpt-6-luna"
+DRAFT_GPT_MODEL = os.environ.get("DRAFT_GPT_MODEL") or "gpt-6-luna"
+CRIME_GPT_MODEL = os.environ.get("CRIME_GPT_MODEL") or "gpt-6-luna"
 CHUNK_SIZE = 8000
 CHUNK_OVERLAP = 500
 MAX_WORKERS = 1
-CACHE_FILE = ".ollama_cache.json"
 ANALYSIS_VERSION = "analysis-v16-improved-lawyer"
 TEMP_DIR = "tmp_uploads"
 RESULTS_DIR = "analysis_results"
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-ANALYSIS_CACHE_DIR = os.path.join(PROJECT_ROOT, "analysis_cache")
-ANALYSIS_CACHE_TTL_SECONDS = int(os.environ.get("ANALYSIS_CACHE_TTL_SECONDS", str(14 * 24 * 60 * 60)))
-ANALYSIS_CACHE_MAX_ENTRIES = int(os.environ.get("ANALYSIS_CACHE_MAX_ENTRIES", "200"))
-OLLAMA_CACHE_MAX_ENTRIES = int(os.environ.get("OLLAMA_CACHE_MAX_ENTRIES", "1200"))
 CONTRACT_RAG_SOURCE_NAME = "1918_ru_1.docx"
 CONTRACT_RAG_MIN_CHUNKS = 600
 RAG_TOP_K = int(os.environ.get("RAG_TOP_K", "12"))
 RAG_SNIPPET_MAX = 700
-CHAT_RAG_TOP_K = int(os.environ.get("CHAT_RAG_TOP_K", "5"))
-CHAT_RAG_MAX_CHARS = int(os.environ.get("CHAT_RAG_MAX_CHARS", "6500"))
+CHAT_RAG_TOP_K = int(os.environ.get("CHAT_RAG_TOP_K", "6"))
+CHAT_RAG_MAX_CHARS = int(os.environ.get("CHAT_RAG_MAX_CHARS", "9000"))
 CHAT_MAX_TOKENS = int(os.environ.get("CHAT_MAX_TOKENS", "850"))
 CHAT_KEEP_ALIVE = os.environ.get("CHAT_KEEP_ALIVE", "30m")
 # Отдельно от MODEL_NAME: тот держит legal-strong (num_ctx 16384) ради анализа
@@ -134,6 +141,16 @@ CHAT_RAG_SOURCE_NAMES = [
     "Жилишный Кодекс.docx",
     "Кодекс здравохранение.docx",
     "Лесной кодекс.docx",
+    # Лежали в storage/app/rag, но в список не были внесены: чат их не видел,
+    # а вопросы про административные процедуры и споры в экономических судах
+    # уходили в Гражданский и Налоговый кодексы.
+    "КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРОЦЕДУРАХ.docx",
+    "ЭКОНОМИЧЕСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
+    "ГРАЖДАНСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
+    "УГОЛОВНО - ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
+    # Процессуальный кодекс: порядок производства по делам, без размеров
+    # штрафов. Материальной части (санкций КоАП) в базе по-прежнему нет.
+    "ПРОЦЕССУАЛЬНЫЙ КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРАВОНАРУШЕНИЯХ.docx",
 ]
 RAG_CODE_LABELS = {
     CONTRACT_RAG_SOURCE_NAME: "Гражданский кодекс Республики Таджикистан",
@@ -148,6 +165,30 @@ RAG_CODE_LABELS = {
     "Жилишный Кодекс.docx": "Жилищный кодекс Республики Таджикистан",
     "Кодекс здравохранение.docx": "Кодекс Республики Таджикистан о здравоохранении",
     "Лесной кодекс.docx": "Лесной кодекс Республики Таджикистан",
+    "КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРОЦЕДУРАХ.docx": "Кодекс об административных процедурах Республики Таджикистан",
+    "ЭКОНОМИЧЕСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": "Экономический процессуальный кодекс Республики Таджикистан",
+    "ГРАЖДАНСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": "Гражданский процессуальный кодекс Республики Таджикистан",
+    "УГОЛОВНО - ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": "Уголовно-процессуальный кодекс Республики Таджикистан",
+    "ПРОЦЕССУАЛЬНЫЙ КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРАВОНАРУШЕНИЯХ.docx": "Процессуальный кодекс Республики Таджикистан об административных правонарушениях",
+}
+
+# Файлы-дубликаты: тот же кодекс лежит в папке под другим именем. Индексировать
+# оба нельзя (результаты задвоятся), а в статусе такой файл не должен числиться
+# «непроиндексированным».
+RAG_IGNORED_FILES = {
+    "Кодекс об административных правонарушениях.docx",  # = ПРОЦЕССУАЛЬНЫЙ КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРАВОНАРУШЕНИЯХ.docx
+}
+
+# Процессуальные кодексы описывают порядок производства, а не ответственность,
+# поэтому в блок «смежные нормы» страницы УК (нормы об ответственности и
+# возмещении вреда) они не попадают.
+RELATED_EXCLUDED_SOURCES = {
+    "574_ru.doc",
+    "КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРОЦЕДУРАХ.docx",
+    "ЭКОНОМИЧЕСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
+    "ГРАЖДАНСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
+    "УГОЛОВНО - ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
+    "ПРОЦЕССУАЛЬНЫЙ КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРАВОНАРУШЕНИЯХ.docx",
 }
 CHAT_RAG_INDEX_FILE = os.path.join(PROJECT_ROOT, "storage", "app", "rag", "laws-rt-chat.index.json")
 
@@ -169,6 +210,11 @@ CRIME_RAG_MIN_SCORE = float(os.environ.get("CRIME_RAG_MIN_SCORE", "8.0"))
 # а ссылалась модель всё равно на одну-две. Поиску выдача не режется.
 CRIME_QUALIFY_TOP_K = int(os.environ.get("CRIME_QUALIFY_TOP_K", "3"))
 CRIME_MAX_TOKENS = int(os.environ.get("CRIME_MAX_TOKENS", "700"))
+# Краткая квалификация: статья, наказание и пара предложений — вчетверо короче полной.
+CRIME_MAX_TOKENS_SHORT = int(os.environ.get("CRIME_MAX_TOKENS_SHORT", "650"))
+# Полная квалификация: «что делать» плюс шесть разделов разбора. В 700 токенов
+# такой ответ не помещается, поэтому у режима свой, больший бюджет.
+CRIME_MAX_TOKENS_FULL = int(os.environ.get("CRIME_MAX_TOKENS_FULL", "1500"))
 # Контекст под промпт разбора, а не объявленные моделью 16k: на CPU лишний
 # контекст оплачивается памятью и скоростью разбора запроса.
 CRIME_NUM_CTX = int(os.environ.get("CRIME_NUM_CTX", "6144"))
@@ -196,7 +242,6 @@ HALLUCINATION_PENALTY = 25
 
 os.makedirs(TEMP_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
-os.makedirs(ANALYSIS_CACHE_DIR, exist_ok=True)
 os.makedirs(os.path.dirname(RAG_INDEX_FILE), exist_ok=True)
 os.makedirs(LEARNING_DATA_DIR, exist_ok=True)
 
@@ -205,6 +250,7 @@ sessions_lock = threading.Lock()
 rag_index = None
 chat_rag_index = None
 crime_rag_index = None
+related_rag_indexes = {}
 rag_lock = threading.Lock()
 rag_articles_cache = None
 rag_citations_cache = None
@@ -212,41 +258,6 @@ multi_rag_citations_cache = {}
 rag_embeddings = None
 chat_rag_embeddings = None
 embedding_provider = legal_rag.EmbeddingProvider()
-ollama_cache = None
-ollama_cache_lock = threading.Lock()
-
-# ================= КЭШИРОВАНИЕ =================
-def load_cache():
-    """Load model responses once per process instead of once per LLM request."""
-    global ollama_cache
-    with ollama_cache_lock:
-        if ollama_cache is not None:
-            return ollama_cache
-        if os.path.exists(CACHE_FILE):
-            try:
-                with open(CACHE_FILE, "r", encoding="utf-8") as f:
-                    ollama_cache = json.load(f)
-                    if isinstance(ollama_cache, dict):
-                        return ollama_cache
-            except Exception as e:
-                print(f"⚠️ Ошибка загрузки кэша: {e}")
-        ollama_cache = {}
-        return ollama_cache
-
-def save_cache(cache):
-    """Atomically persist the in-memory cache so parallel requests cannot corrupt it."""
-    tmp_path = f"{CACHE_FILE}.{uuid.uuid4().hex}.tmp"
-    try:
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(cache, f, ensure_ascii=False, separators=(",", ":"))
-        os.replace(tmp_path, CACHE_FILE)
-    except Exception as e:
-        print(f"⚠️ Ошибка сохранения кэша: {e}")
-        if os.path.exists(tmp_path):
-            try:
-                os.remove(tmp_path)
-            except OSError:
-                pass
 
 def _active_model_tag(requested_model=None):
     """Effective model id for the active provider.
@@ -260,80 +271,13 @@ def _active_model_tag(requested_model=None):
         return "openai:" + OPENAI_MODEL
     return requested_model or MODEL_NAME
 
-def get_cache_key(text):
-    return hashlib.sha256((ANALYSIS_VERSION + _active_model_tag() + text).encode("utf-8")).hexdigest()
-
-def get_analysis_cache_key(contract_text, rag_index_data):
-    """Tie a full-report cache entry to content, model and the exact RAG revision."""
-    payload = {
-        "version": ANALYSIS_VERSION,
-        "model": _active_model_tag(),
-        "contract": hashlib.sha256((contract_text or "").encode("utf-8")).hexdigest(),
-        "rag_source": rag_index_data.get("source_name"),
-        "rag_mtime": rag_index_data.get("source_mtime"),
-        "rag_chunk_size": rag_index_data.get("chunk_size"),
-        "rag_chunk_overlap": rag_index_data.get("chunk_overlap"),
-        "top_k": RAG_TOP_K,
-    }
-    encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-def load_analysis_cache(cache_key):
-    path = os.path.join(ANALYSIS_CACHE_DIR, f"{cache_key}.json")
-    try:
-        if not os.path.isfile(path):
-            return None
-        if time.time() - os.path.getmtime(path) > ANALYSIS_CACHE_TTL_SECONDS:
-            os.remove(path)
-            return None
-        with open(path, "r", encoding="utf-8") as f:
-            cached = json.load(f)
-        if not isinstance(cached, dict) or not cached.get("content") or not isinstance(cached.get("metrics"), dict):
-            return None
-        return cached
-    except Exception as e:
-        print(f"⚠️ Ошибка чтения кэша анализа: {e}")
-        return None
-
-def save_analysis_cache(cache_key, payload):
-    path = os.path.join(ANALYSIS_CACHE_DIR, f"{cache_key}.json")
-    tmp_path = f"{path}.{uuid.uuid4().hex}.tmp"
-    try:
-        data = {**payload, "cached_at": time.time(), "analysis_version": ANALYSIS_VERSION}
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
-        os.replace(tmp_path, path)
-        prune_analysis_cache()
-    except Exception as e:
-        print(f"⚠️ Ошибка сохранения кэша анализа: {e}")
-        if os.path.exists(tmp_path):
-            try:
-                os.remove(tmp_path)
-            except OSError:
-                pass
-
-def prune_analysis_cache():
-    """Keep report cache bounded and remove expired entries opportunistically."""
-    try:
-        now = time.time()
-        entries = []
-        for name in os.listdir(ANALYSIS_CACHE_DIR):
-            if not name.endswith(".json"):
-                continue
-            path = os.path.join(ANALYSIS_CACHE_DIR, name)
-            mtime = os.path.getmtime(path)
-            if now - mtime > ANALYSIS_CACHE_TTL_SECONDS:
-                os.remove(path)
-            else:
-                entries.append((mtime, path))
-        overflow = max(0, len(entries) - max(ANALYSIS_CACHE_MAX_ENTRIES, 1))
-        for _, path in sorted(entries)[:overflow]:
-            os.remove(path)
-    except Exception as e:
-        print(f"⚠️ Ошибка очистки кэша анализа: {e}")
-
 # ================= КЛАССИФИКАТОР ТИПА ДОГОВОРА =================
 CONTRACT_TYPE_KEYWORDS = {
+    "трудовой договор": [
+        "трудовой договор", "работодатель", "работник", "трудовую функцию", "трудовая функция",
+        "испытательный срок", "рабочее время", "ежегодный оплачиваемый отпуск", "заработная плата",
+        "должность",
+    ],
     "купля-продажа": [
         "купли-продажи", "продавец", "покупатель", "товар", "передаёт в собственность",
         "price", "товара", "количество", "ассортимент", "качество товара",
@@ -487,7 +431,7 @@ def detect_wrong_jurisdiction(text):
         (r"\bФЗ\s*№", "ФЗ"),
         (r"\bАрбитражн\w+\s+суд", "Арбитражный суд"),
         (r"\bМКАС\b", "МКАС"),
-        (r"\bМосква\b", "Москва"),
+        (r"\bМоскв\w+", "Москва"),
         (r"\bСанкт-Петербург\b", "Санкт-Петербург"),
         (r"\bВерховн\w+\s+Суд\s+РФ", "Верховный Суд РФ"),
         (r"\bКонституционн\w+\s+Суд\s+РФ", "Конституционный Суд РФ"),
@@ -540,7 +484,9 @@ def check_wrong_jurisdiction_in_contract(contract_text):
             "разрешения споров практически неисполнимыми для сторон в Республике Таджикистан."
         ),
         "fix": "Заменить ссылки на право и суды другой страны на законодательство и суды Республики Таджикистан.",
-        "_heuristic": True,
+        # Находка проверена регулярным выражением по тексту договора: она считается полноценным риском
+        # (в балле и в списке рисков), а не пунктом информационного чек-листа.
+        "_deterministic": True,
     }
 
 # ================= ПРОВЕРКА ОБОСНОВАННОСТИ ВЫВОДОВ =================
@@ -1140,22 +1086,163 @@ def load_crime_rag_index(force=False):
         return crime_rag_index
 
 
+CRIME_QUERY_REWRITE = os.environ.get("CRIME_QUERY_REWRITE", "1").strip().lower() not in {"0", "false", "no", "off"}
+CRIME_REWRITE_MIN_WORDS = 5
+_crime_rewrite_cache = {}
+
+
+def _crime_rewrite_prompt(description):
+    return (
+        "Ты юрист-криминалист Республики Таджикистан. Перед тобой описание события бытовым языком.\n"
+        "Назови составы преступлений, которые оно может образовывать, ТАК, КАК ОНИ НАЗВАНЫ В УК РТ: "
+        "названия статей и слова из диспозиций (например: «Кража», «тайное хищение чужого имущества», "
+        "«незаконное проникновение в жилище», «нарушение правил безопасности движения и эксплуатации "
+        "транспорта», «причинение смерти по неосторожности»). Включи основной состав и квалифицирующие признаки.\n"
+        "Формат ответа: одна строка, 3-8 формулировок через запятую, без номеров статей, без пояснений. "
+        "Если в событии нет ничего похожего на преступление — ответь одним словом: НЕТ.\n\n"
+        "СОБЫТИЕ: " + description + "\nОТВЕТ:"
+    )
+
+
+def _crime_rewrite_query(description):
+    """Переводит бытовое описание в язык диспозиций УК РТ.
+
+    BM25 не знает, что «похитил ноутбук» и «проник через окно» — это «кража» и
+    «проникновение в жилище»: рассказ с нейтральными словами («гражданин»,
+    «сосед», «сомони») поднимал статьи о паспортах и тайне усыновления, а
+    ст. 244 «Кража» не попадала в выдачу. Ручной список синонимов эту задачу не
+    закрывает — событий больше, чем записей в нём. Сбой модели не блокирует
+    поиск: возвращается пустая строка, и работает прежний запрос.
+    """
+    if not CRIME_QUERY_REWRITE or len((description or "").split()) < CRIME_REWRITE_MIN_WORDS:
+        return ""
+    key = description.strip().lower()
+    if key in _crime_rewrite_cache:
+        return _crime_rewrite_cache[key]
+    try:
+        raw = llm_once(CRIME_MODEL, _crime_rewrite_prompt(description[:1500]), 220,
+                       temperature=0.0, keep_alive=CRIME_KEEP_ALIVE, timeout=45,
+                       openai_model=CRIME_GPT_MODEL)
+    except Exception as error:  # noqa: BLE001
+        print("  [CRIME] переформулировка запроса не удалась (%s)" % type(error).__name__)
+        return ""
+    rewritten = re.sub(r"\s+", " ", re.sub(r"[«»\"\n]", " ", raw or "")).strip()[:400]
+    if len(rewritten.split()) <= 6 and re.search(r"(?<!\w)(?:нет|отсутству\w*|не\s+усматрив\w*)(?!\w)", rewritten, flags=re.IGNORECASE):
+        rewritten = ""
+    # Номера статей из ответа модели в поиск не берём: они могут быть выдуманы.
+    rewritten = re.sub(r"\b(?:ст\.?|статья|статьи)\s*\d+[\d.,\s-]*", " ", rewritten, flags=re.IGNORECASE)
+    if len(_crime_rewrite_cache) > 256:
+        _crime_rewrite_cache.clear()
+    _crime_rewrite_cache[key] = rewritten
+    return rewritten
+
+
 def retrieve_crime_rag(query, top_k=None):
     """Статьи УК РТ по описанию события. Запрос расширяется синонимами:
     человек пишет «вырвал сумку», кодекс — «открытое хищение чужого
-    имущества», и без расширения BM25 не находит ни одной статьи."""
+    имущества», и без расширения BM25 не находит ни одной статьи.
+
+    Для развёрнутого описания сначала запрашивается формулировка на языке
+    кодекса; поиск идёт по ней, а исходный запрос остаётся запасным."""
     index = load_crime_rag_index()
     if not index.get("ready"):
         return [], index
     store = index.get("embeddings")
-    results = legal_rag.search(
-        index,
-        legal_rag.expand_query(query),
-        top_k=top_k or CRIME_RAG_TOP_K,
-        store=store,
-        provider=embedding_provider if store else None,
-    )
-    return results, index
+    limit = top_k or CRIME_RAG_TOP_K
+
+    def run(text):
+        return legal_rag.search(
+            index, legal_rag.expand_query(text), top_k=limit,
+            store=store, provider=embedding_provider if store else None,
+        )
+
+    rewritten = _crime_rewrite_query(query)
+    if rewritten:
+        results = run(rewritten)
+        if grounded_crime_results(results):
+            return results, index
+    return run(query), index
+
+
+# Смежные нормы: справочный блок страницы УК. Квалификация остаётся строго по
+# УК РТ (общий индекс когда-то вытеснял уголовную норму статьями Гражданского и
+# Налогового кодексов), а рядом показываются нормы других кодексов, но только
+# из тех областей, которые названы в описании.
+RELATED_MAX_TOTAL = int(os.environ.get("CRIME_RELATED_MAX", "5"))
+RELATED_PER_CODE = int(os.environ.get("CRIME_RELATED_PER_CODE", "2"))
+RELATED_MIN_SCORE = float(os.environ.get("CRIME_RELATED_MIN_SCORE", "12.0"))
+RELATED_QUERY_SUFFIX = " ответственность за нарушение возмещение вреда"
+
+
+def load_related_rag_index(source, force=False):
+    """Подындекс одного кодекса (не УК) со своей статистикой BM25.
+
+    Общий индекс всех кодексов здесь не годится: слова «ответственность» и
+    «возмещение вреда» есть в каждом из них и почти ничего не весят, а внутри
+    одного кодекса именно они поднимают нужную статью (ст. 187 ТК о материальной
+    ответственности работодателя, ст. 93 ВдК о возмещении вреда водным объектам).
+    """
+    chat_index = load_chat_rag_index(force=force)
+    if not chat_index.get("ready"):
+        return {"ready": False, "chunks": []}
+
+    with rag_lock:
+        built_at = chat_index.get("built_at")
+        cached = related_rag_indexes.get(source)
+        if not force and cached and cached.get("built_from") == built_at:
+            return cached
+        chunks = [c for c in chat_index.get("chunks", []) if c.get("source") == source]
+        if not chunks:
+            related_rag_indexes[source] = {"ready": False, "chunks": [], "built_from": built_at}
+            return related_rag_indexes[source]
+        related_rag_indexes[source] = hydrate_rag_index({
+            "source_name": RAG_CODE_LABELS.get(source, source),
+            "source": source,
+            "built_from": built_at,
+            "index_version": chat_index.get("index_version"),
+            "chunks": chunks,
+        })
+        return related_rag_indexes[source]
+
+
+def retrieve_related_norms(description):
+    """Нормы других кодексов РТ по областям, названным в описании.
+
+    Голый BM25 по чужим кодексам шумит (на «вырвал сумку» приходили статьи ГК
+    о «чужом интересе», на «погоду» — Градостроительный кодекс), а порог по
+    баллу шум от смысла не отделяет. Поэтому сначала отбираются кодексы, чьи
+    маркерные слова встретились в описании, и только в каждом из них берутся
+    лучшие статьи. Нет названной области — блока нет.
+    """
+    domains = {
+        source: hits for source, hits in legal_rag.matched_codes(description, min_hits=1).items()
+        if source not in RELATED_EXCLUDED_SOURCES
+    }
+    picked = []
+    # Кодексы идут по числу совпадений маркеров: чем полнее названа область,
+    # тем раньше её нормы.
+    for source in domains:
+        index = load_related_rag_index(source)
+        if not index.get("ready"):
+            continue
+        # Что нужно рядом с квалификацией по УК: нормы об ответственности и
+        # возмещении вреда в названной области. Без этих слов BM25 подбирал по
+        # разговорному описанию случайное (льготы врачам-психиатрам на врачебную
+        # ошибку, совместное управление лесами на незаконную рубку).
+        results = legal_rag.search(index, description + RELATED_QUERY_SUFFIX, top_k=RELATED_PER_CODE * 4)
+        seen, taken = set(), 0
+        for item in results:
+            article = item.get("article")
+            if article in seen or float(item.get("lexical_score") or 0) < RELATED_MIN_SCORE:
+                continue
+            seen.add(article)
+            picked.append(crime_article_payload(item))
+            taken += 1
+            if taken >= RELATED_PER_CODE or len(picked) >= RELATED_MAX_TOTAL:
+                break
+        if len(picked) >= RELATED_MAX_TOTAL:
+            break
+    return picked
 
 
 def grounded_crime_results(results):
@@ -1213,7 +1300,25 @@ def rag_status_payload():
     rag_dir = os.path.dirname(RAG_SOURCE_PATH)
     chat_sources = [name for name in CHAT_RAG_SOURCE_NAMES if os.path.isfile(os.path.join(rag_dir, name))]
     chunks = index.get("chunks", [])
+    # «chunks» выше — только Гражданский кодекс (индекс анализа договоров), и
+    # шапка чата показывала «RAG 1368», будто это вся база. Чат ищет по общему
+    # индексу, поэтому считаем его отдельно, а файлы кодексов, лежащие в папке,
+    # но не внесённые в список, выводим явно: именно так два кодекса месяц
+    # оставались непроиндексированными.
+    chat_index = load_chat_rag_index(force=False)
+    indexed_sources = {chunk.get("source") for chunk in chat_index.get("chunks", [])}
+    unindexed = sorted(
+        name for name in os.listdir(rag_dir)
+        if name.lower().endswith((".doc", ".docx")) and name not in indexed_sources
+        and name not in RAG_IGNORED_FILES
+    ) if os.path.isdir(rag_dir) else []
     return {
+        "chat_index": {
+            "ready": bool(chat_index.get("ready")),
+            "codes": len(indexed_sources),
+            "chunks": len(chat_index.get("chunks", [])),
+            "unindexed_files": unindexed,
+        },
         "ready": bool(index.get("ready")),
         "source": index.get("source_name"),
         "source_path": index.get("source_path") or index.get("expected_path"),
@@ -1686,10 +1791,22 @@ def _openai_headers():
     return {"Authorization": "Bearer " + OPENAI_API_KEY, "Content-Type": "application/json"}
 
 
+_REASONING_MODEL_RE = re.compile(r"^(?:gpt-(?:[5-9]|\d{2,})|o[134])")
+
+
 def _openai_is_reasoning_model(model):
-    # GPT-5/o-серия принимают только max_completion_tokens и температуру по
-    # умолчанию (1) — свои значения temperature/max_tokens они отклоняют.
-    return model.startswith(("gpt-5", "o1", "o3", "o4"))
+    # GPT-5 и новее (gpt-6-luna и т. д.) и o-серия принимают только
+    # max_completion_tokens и температуру по умолчанию (1) — свои значения
+    # temperature/max_tokens они отклоняют с HTTP 400.
+    return bool(_REASONING_MODEL_RE.match(model or ""))
+
+
+def _openai_effort_for_model(model, effort):
+    # gpt-6 и новее не знают уровня "minimal" (HTTP 400: допустимы none, low,
+    # medium, high, xhigh). "none" — ближайший по смыслу: без размышлений.
+    if effort == "minimal" and re.match(r"^gpt-(?:[6-9]|\d{2,})", model or ""):
+        return "none"
+    return effort
 
 
 # По умолчанию модели GPT-5 тратят весь бюджет max_completion_tokens на
@@ -1719,12 +1836,14 @@ def _openai_reasoning_budget(num_predict):
     return max(num_predict + 1600, int(num_predict * 1.8))
 
 
-def _openai_payload(model, prompt, temperature, num_predict, stream, json_mode=False):
+def _openai_payload(model, prompt, temperature, num_predict, stream, json_mode=False,
+                    reasoning_effort=None):
     payload = {"model": model, "messages": [{"role": "user", "content": prompt}], "stream": stream}
     if _openai_is_reasoning_model(model):
         payload["max_completion_tokens"] = _openai_reasoning_budget(num_predict)
-        if OPENAI_REASONING_EFFORT:
-            payload["reasoning_effort"] = OPENAI_REASONING_EFFORT
+        effort = _openai_effort_for_model(model, reasoning_effort or OPENAI_REASONING_EFFORT)
+        if effort:
+            payload["reasoning_effort"] = effort
     else:
         payload["temperature"] = temperature
         payload["max_tokens"] = num_predict
@@ -1745,47 +1864,64 @@ def _openai_error_detail(error):
 
 
 def llm_stream(model, prompt, *, temperature=0.5, num_predict=2048, top_p=0.9,
-                think=None, keep_alive=None, num_ctx=None, timeout=600):
+                think=None, keep_alive=None, num_ctx=None, timeout=600,
+                openai_model=None, reasoning_effort=None):
     """Потоковая генерация независимо от бэкенда.
 
     Отдаёт объекты в форме ответа Ollama — {"response": кусок текста} на
     каждый токен — чтобы вызывающий код (уже написанный под Ollama) остался
     без изменений. Соединение и HTTP-ошибки заворачиваются в LLMBackendError
     с готовым текстом для пользователя.
+
+    openai_model и reasoning_effort действуют только на бэкенде OpenAI: так
+    режим «глубина» в чате может взять более сильную модель и подумать
+    дольше, не трогая остальные вызовы.
     """
     if LLM_PROVIDER == "openai":
-        model = OPENAI_MODEL
-        try:
-            with requests.post(
-                OPENAI_BASE_URL + "/chat/completions",
-                headers=_openai_headers(),
-                json=_openai_payload(model, prompt, temperature, num_predict, stream=True),
-                stream=True,
-                timeout=timeout,
-            ) as r:
-                r.raise_for_status()
-                for line in r.iter_lines(chunk_size=1):
-                    if not line:
-                        continue
-                    raw = line.decode("utf-8", errors="replace")
-                    if not raw.startswith("data:"):
-                        continue
-                    raw = raw[len("data:"):].strip()
-                    if raw == "[DONE]":
-                        break
-                    try:
-                        obj = json.loads(raw)
-                    except json.JSONDecodeError:
-                        continue
-                    choices = obj.get("choices") or []
-                    delta = (choices[0].get("delta") if choices else {}) or {}
-                    content = delta.get("content")
-                    if content:
-                        yield {"response": content}
-        except requests.exceptions.ConnectionError:
-            raise LLMBackendError(_llm_unavailable_message())
-        except requests.exceptions.HTTPError as error:
-            raise LLMBackendError("⚠️ Ошибка OpenAI API: " + (_openai_error_detail(error) or str(error)))
+        model = openai_model or OPENAI_MODEL
+        # Соединение с API иногда рвётся, не успев отдать ни слова («Удалённый
+        # хост принудительно разорвал соединение»). Пока ничего не выдано,
+        # запрос безопасно повторить один раз: пользователь получает ответ, а не
+        # системное сообщение. После первого токена повтор дал бы дубль текста.
+        produced = False
+        for attempt in (1, 2):
+            try:
+                with requests.post(
+                    OPENAI_BASE_URL + "/chat/completions",
+                    headers=_openai_headers(),
+                    json=_openai_payload(model, prompt, temperature, num_predict, stream=True,
+                                         reasoning_effort=reasoning_effort),
+                    stream=True,
+                    timeout=timeout,
+                ) as r:
+                    r.raise_for_status()
+                    for line in r.iter_lines(chunk_size=1):
+                        if not line:
+                            continue
+                        raw = line.decode("utf-8", errors="replace")
+                        if not raw.startswith("data:"):
+                            continue
+                        raw = raw[len("data:"):].strip()
+                        if raw == "[DONE]":
+                            break
+                        try:
+                            obj = json.loads(raw)
+                        except json.JSONDecodeError:
+                            continue
+                        choices = obj.get("choices") or []
+                        delta = (choices[0].get("delta") if choices else {}) or {}
+                        content = delta.get("content")
+                        if content:
+                            produced = True
+                            yield {"response": content}
+                break
+            except (requests.exceptions.ConnectionError, requests.exceptions.ChunkedEncodingError):
+                if produced or attempt == 2:
+                    raise LLMBackendError(_llm_unavailable_message())
+                print("  [LLM] соединение оборвано до первого токена, повторяю запрос")
+                time.sleep(1.0)
+            except requests.exceptions.HTTPError as error:
+                raise LLMBackendError("⚠️ Ошибка OpenAI API: " + (_openai_error_detail(error) or str(error)))
         yield {"done": True}
         return
 
@@ -1823,15 +1959,22 @@ def llm_stream(model, prompt, *, temperature=0.5, num_predict=2048, top_p=0.9,
         raise LLMBackendError(_llm_unavailable_message())
 
 
-def llm_once(model, prompt, num_predict, temperature=0.1, keep_alive=None, timeout=600, json_mode=False):
-    """Один короткий неструктурированный запрос без стрима. Возвращает текст."""
+def llm_once(model, prompt, num_predict, temperature=0.1, keep_alive=None, timeout=600, json_mode=False,
+             openai_model=None, reasoning_effort=None):
+    """Один короткий неструктурированный запрос без стрима. Возвращает текст.
+
+    openai_model и reasoning_effort действуют только на бэкенде OpenAI: режим
+    «Размышление» берёт для служебных шагов ту же сильную модель, что и для
+    ответа, потому что от них зависит, какие статьи вообще найдутся.
+    """
     if LLM_PROVIDER == "openai":
-        model = OPENAI_MODEL
+        model = openai_model or OPENAI_MODEL
         try:
             r = requests.post(
                 OPENAI_BASE_URL + "/chat/completions",
                 headers=_openai_headers(),
-                json=_openai_payload(model, prompt, temperature, num_predict, stream=False, json_mode=json_mode),
+                json=_openai_payload(model, prompt, temperature, num_predict, stream=False, json_mode=json_mode,
+                                     reasoning_effort=reasoning_effort),
                 timeout=timeout,
             )
             r.raise_for_status()
@@ -1867,35 +2010,16 @@ def llm_once(model, prompt, num_predict, temperature=0.1, keep_alive=None, timeo
 
 
 def send_to_ollama(prompt, stream_callback=None, num_predict=2048, temperature=0.5):
-    cache = load_cache()
-    key = get_cache_key(prompt)
-
-    with ollama_cache_lock:
-        cached = cache.get(key)
-    if cached:
-        if stream_callback:
-            # Cached data is already complete: forwarding it in one call avoids
-            # an artificial per-character delay on repeat analyses.
-            stream_callback(cached)
-        return cached
-
     response_text = ""
     try:
         for obj in llm_stream(_active_model_tag(MODEL_NAME), prompt,
                                temperature=temperature, num_predict=num_predict, top_p=0.9,
-                               timeout=1500):
+                               timeout=1500, openai_model=ANALYSIS_GPT_MODEL):
             chunk = obj.get("response", "")
             if chunk:
                 response_text += chunk
                 if stream_callback:
                     stream_callback(chunk)
-
-        if response_text:
-            with ollama_cache_lock:
-                cache[key] = response_text
-                while len(cache) > max(OLLAMA_CACHE_MAX_ENTRIES, 1):
-                    cache.pop(next(iter(cache)))
-                save_cache(cache)
 
     except LLMBackendError as e:
         error_msg = str(e)
@@ -1913,6 +2037,15 @@ def send_to_ollama(prompt, stream_callback=None, num_predict=2048, temperature=0
 def _build_contract_type_guidance(contract_type):
     """Return a string of key points to check for a specific contract type."""
     guidance = {
+        "трудовой договор": (
+            "Трудовой договор: сверяй каждое условие с ТК РТ. Условия, ухудшающие положение работника по "
+            "сравнению с кодексом, недопустимы и считаются высоким риском. Проверь: трудовую функцию и место "
+            "работы; срок договора; испытание (предельный срок, основания расторжения в период испытания); "
+            "продолжительность рабочего времени и сверхурочные; время отдыха; размер оплаты труда (не ниже "
+            "минимального) и сроки выплаты; ежегодный оплачиваемый отпуск (не короче минимального); удержания "
+            "из заработной платы; материальную ответственность; основания и порядок расторжения "
+            "(по инициативе работника и работодателя, срок предупреждения); порядок рассмотрения трудовых споров."
+        ),
         "купля-продажа": (
             "Купля-продажа: проверь предмет (товар, количество, ассортимент), цену и порядок расчётов, "
             "момент перехода права собственности и риска случайной гибели, качество товара и гарантию, "
@@ -2011,19 +2144,68 @@ def _build_contract_type_guidance(contract_type):
     return guidance.get(contract_type, "")
 
 # ================= АНАЛИЗ ЧАНКА =================
-def analyze_chunk(args):
+def _contract_code_filter(labor):
+    """Какие кодексы допустимы как основание условий договора: уголовные и административные — нет;
+    трудовой — только для трудового договора."""
+    excluded = ("УК", "УПК", "КоАП")
+
+    def allowed(item):
+        code = str(item.get("code_short") or "")
+        if code.startswith(excluded):
+            return False
+        if code.startswith("ТК") and not labor:
+            return False
+        return True
+    return allowed
+
+
+CONTRACT_RAG_MAX_CHARS = int(os.environ.get("CONTRACT_RAG_MAX_CHARS", "16000"))
+
+
+def contract_legal_context(chunk, contract_type_info, full_text=""):
+    """Нормы для проверки фрагмента договора: сначала статьи по темам условий, затем поиск по тексту.
+
+    Возвращает (текст контекста, названия найденных тем).
+    """
+    index = load_chat_rag_index(force=False)
+    if not index.get("ready"):
+        return rag_context_for_query(chunk, top_k=RAG_TOP_K), []
+    search = lambda query, top_k: retrieve_rag(query, top_k=top_k, index=index)  # noqa: E731
+    labor = contract_topics.is_labor_text(full_text or chunk)
+    allowed = _contract_code_filter(labor)
+    topical = contract_topics.topic_results(chunk, search, (contract_type_info or {}).get("type"), labor=labor)
+    merged, seen = [], set()
+    for item in topical + [r for r in search(chunk, RAG_TOP_K) if allowed(r)]:
+        key = (item.get("code_short"), item.get("article"), item.get("title"))
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(item)
+    topics = list(dict.fromkeys(item["_topic"] for item in topical if item.get("_topic")))
+    return format_rag_context(merged, max_chars=CONTRACT_RAG_MAX_CHARS), topics
+
+
+def _analyze_chunk_variant(args, variant=0):
+    """Один проход модели по фрагменту: variant=0 — общий разбор, variant=1 — попунктная проверка."""
     i, total, chunk, full_text, contract_type_info = args
     result = []
 
     def collect(text):
         result.append(text)
 
-    legal_context = rag_context_for_query(chunk, top_k=RAG_TOP_K)
+    legal_context, topic_names = contract_legal_context(chunk, contract_type_info, full_text)
     legal_context_block = (
         f"\n\nРелевантные фрагменты кодексов Республики Таджикистан (RAG):\n{legal_context}\n"
         if legal_context else
         "\n\nRAG-контекст по кодексам Республики Таджикистан не найден или база еще не подключена.\n"
     )
+    if topic_names:
+        legal_context_block = (
+            "\n\nПервые нормы списка подобраны под условия этого фрагмента (" + ", ".join(topic_names) + "). "
+            "Сверь каждое такое условие с этими нормами: условие, которое хуже нормы для стороны, противоречит "
+            "императивной норме или лишает право без защиты, — риск; ссылайся именно на эту норму."
+            + legal_context_block
+        )
 
     # Тип договора и его специфические проверки
     contract_type = contract_type_info.get("type", "неопределённый")
@@ -2054,7 +2236,12 @@ def analyze_chunk(args):
 4. Полнота процедурных условий — сроки, порядок исполнения, оплаты, уведомлений, ответственности, расторжения.
 5. Двусмысленность и неопределённость формулировок, которые могут привести к спору.
 
-Проанализируй этот фрагмент и НАЙДИ ВСЕ юридически значимые риски. 
+Проанализируй этот фрагмент и найди риски, которые реально способны причинить стороне
+ущерб, потерю денег или потерю права. НЕ составляй список из каждой мелкой формальной
+недосказанности — большинство пробелов в детализации не являются риском, если основное
+условие в тексте есть. Пример НЕ риска: товар описан как «цемент М-400, 200 тонн» — этого
+достаточно для определения ассортимента и количества, отсутствие более подробной
+спецификации риском не является.
 Для КАЖДОГО риска ОБЯЗАТЕЛЬНО укажи КОНКРЕТНУЮ СТАТЬЮ из RAG-контекста.
 
 ВАЖНО: Пиши КАЖДЫЙ риск отдельным пунктом со ВСЕМИ 6 полями.
@@ -2100,6 +2287,16 @@ def analyze_chunk(args):
 - Не повышай и не понижай уровень ради количества. Если для уровня нет подтверждённого фрагмента договора и нормы из RAG, не создавай риск.
 - НЕ Высокий (даже если условие можно было бы прописать подробнее): ссылка на приложение/спецификацию за детальным перечнем при наличии основного предмета в тексте; общая формулировка «существенное нарушение» без развёрнутого списка случаев — это обычная и допустимая договорная практика; отсутствие исчерпывающего состава акта приёма-передачи при наличии самого условия о его составлении; неустойка с указанным процентом и разумным пределом (капом) — наличие предела снижает риск, а не создаёт его. Такие пункты — самое большее Низкий, обычно вообще не риск.
 - Ещё НЕ Высокий: периодическое изменение платы/цены с предварительным письменным уведомлением заранее (например, за 30 дней, не чаще раза в год) — это стандартное условие, а не одностороннее лишение права; отсутствие депозита/дополнительного обеспечения там, где закон не требует его обязательно; право одной стороны на досрочный отказ, если это НЕ лишает другую сторону права на судебную защиту, взыскание убытков или собственный отказ по своим основаниям. «Высокий» — это когда сторона теряет право или деньги БЕЗ какой-либо защиты или компенсации, а не когда условие просто асимметрично или неидеально детализировано.
+- Предоплата/оплата после подписания, срок поставки от момента оплаты, отсылка к моменту
+  подписания как точке отсчёта срока — это стандартная договорная техника, а не риск.
+  Отсутствие полного описания процедуры (напр. точного момента перехода права
+  собственности, детального гарантийного порядка) при наличии основного условия — это
+  НЕ Высокий, а Низкий или вообще не риск: закон восполняет такие пробелы диспозитивными
+  нормами.
+- Самопроверка перед выводом: если в этом фрагменте получилось больше одного риска уровня
+  «Высокий» — перечитай каждый из них по критерию выше («теряет право или деньги БЕЗ
+  защиты») и понизь до «Средний»/«Низкий» все, что не проходит этот критерий буквально.
+  «Высокий» — это редкая, а не стандартная оценка.
 """
     prompt += """
 
@@ -2113,8 +2310,44 @@ def analyze_chunk(args):
 7. До ответа проведи внутреннюю проверку каждого пункта. Если не можешь подтвердить любой из шести полей — исключи пункт целиком.
 8. Выводи только подтверждённые риски в заданном формате; никаких вступлений, дисклеймеров, предположений и дополнительных рекомендаций.
 """
-    send_to_ollama(prompt, stream_callback=collect, num_predict=2400, temperature=0.15)
+    if variant == 1:
+        numbered = re.findall(r"(?m)^\s*(\d+(?:\.\d+)*)[.)]", chunk)
+        prompt += (
+            "\n\nРЕЖИМ ПОПУНКТНОЙ ПРОВЕРКИ (дополнительный проход, он ловит то, что пропускает общий разбор). "
+            + (f"В этом фрагменте пронумерованные пункты: {', '.join(numbered)}. " if numbered else "")
+            + "Пройди по пунктам по очереди. По каждому реши, содержит ли он условие, которое ущемляет сторону, "
+            "лишает права или денег без защиты, противоречит норме из списка выше либо оставляет вопрос на "
+            "усмотрение одной стороны. Один пункт может дать несколько рисков (например, неустойка без предела и "
+            "освобождение от ответственности в одном пункте — два риска). По пунктам без риска ничего не выводи. "
+            "Формат и правила доказательности прежние."
+        )
+    send_to_ollama(prompt, stream_callback=collect, num_predict=2400, temperature=0.25 if variant else 0.15)
     return {"idx": i, "content": normalize_legal_terms("".join(result))}
+
+
+CONTRACT_SECOND_PASS = os.environ.get("CONTRACT_SECOND_PASS", "1") != "0"
+
+
+def analyze_chunk(args):
+    """Фрагмент договора разбирается двумя независимыми проходами; одинаковые риски склеит парсер.
+
+    Один проход модели на тех же условиях раз за разом пропускает часть нарушений и каждый раз разные,
+    поэтому второй проход (попунктный) поднимает полноту и убирает зависимость отчёта от удачи.
+    """
+    if not CONTRACT_SECOND_PASS:
+        return _analyze_chunk_variant(args, 0)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(_analyze_chunk_variant, args, 0)
+        second = pool.submit(_analyze_chunk_variant, args, 1)
+        parts = []
+        for future in (first, second):
+            try:
+                parts.append(future.result()["content"])
+            except Exception as error:  # noqa: BLE001
+                print(f"  ⚠️ Проход по фрагменту {args[0] + 1} не удался: {error}")
+        if not parts:
+            raise RuntimeError("оба прохода анализа фрагмента завершились ошибкой")
+    return {"idx": args[0], "content": "\n\n".join(parts)}
 
 def _calculate_finding_quality(finding):
     """Оценивает качество и достоверность риска (0-1)"""
@@ -2228,6 +2461,18 @@ def _calculate_text_similarity(text1, text2):
     
     return jaccard
 
+def _stems(text):
+    return {w[:5] for w in re.findall(r"[а-яёa-z]{4,}", (text or "").lower())}
+
+
+def _fragment_overlap(a, b):
+    """Доля общих основ слов относительно меньшего фрагмента."""
+    sa, sb = _stems(a), _stems(b)
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / min(len(sa), len(sb))
+
+
 def _is_duplicate_risk(risk1, risk2, threshold=0.70):
     """Проверяет, являются ли два риска дубликатами"""
     # Сравниваем названия
@@ -2251,6 +2496,13 @@ def _is_duplicate_risk(risk1, risk2, threshold=0.70):
     # 3. Одинаковые пункты договора (>= 0.85) И похожие названия (>= 0.60)
     if point_sim >= 0.85 and title_sim >= 0.60:
         return True
+
+    # 4. Одно и то же условие договора, описанное по-разному (общий и попунктный проход модели):
+    #    тот же пункт и почти те же слова цитаты, либо цитата совпадает практически целиком.
+    overlap = _fragment_overlap(risk1.get('fragment', ''), risk2.get('fragment', ''))
+    same_point = bool((risk1.get('point') or '').strip()) and (risk1.get('point') or '').strip() == (risk2.get('point') or '').strip()
+    if (same_point and overlap >= 0.6) or overlap >= 0.85:
+        return True
     
     return False
 
@@ -2268,11 +2520,13 @@ def _deduplicate_findings(findings):
         
         for idx, existing in enumerate(unique_findings):
             if _is_duplicate_risk(risk, existing):
-                # Вычисляем качество каждого риска
-                risk_quality = _calculate_finding_quality(risk)
-                existing_quality = _calculate_finding_quality(existing)
-                
-                # Если новый риск качественнее, заменяем
+                # Из пары остаётся находка с подтверждённой нормой, затем более качественная
+                def _rank(item):
+                    return (1 if item.get('_norm_verified') else 0, _calculate_finding_quality(item))
+                risk_quality = _rank(risk)
+                existing_quality = _rank(existing)
+
+                # Если новый риск лучше, заменяем
                 if risk_quality > existing_quality:
                     best_match_idx = idx
                     best_match_score = risk_quality
@@ -2334,6 +2588,53 @@ def _apply_severity_heuristics(findings):
                 print(f"  [SEVERITY] Эскалация: {current} → {target} | {finding.get('title', '')[:60]}")
                 current = target
                 finding["severity"] = target
+    return findings
+
+# Формулировки, которыми модель сама описывает находку как пробел/неопределённость, а
+# не как реальную потерю права или денег без защиты — то есть, по её же собственному
+# определению "Средний"/"Низкий" в промпте (см. КАЛИБРОВКА УРОВНЯ РИСКА), а не "Высокий".
+_TRIVIAL_HIGH_LANGUAGE = (
+    "неясно", "неточн", "неопределенн", "неопределённ", "не указан точн", "не детализ",
+    "не конкретизир", "нет конкретн", "нет чёткого", "нет четкого", "может привести к спору",
+    "может возникнуть спор", "рекомендуется конкретизировать", "рекомендуется уточнить",
+    "желательно уточнить", "нет явного", "не прописан", "не оговорен", "не оговорён",
+    "недостаточно детализ", "отсутствует детализация", "отсутствует конкретиз",
+    "может быть спор", "уточнить порядок", "конкретизировать",
+)
+# Формулировки настоящей высокой тяжести — если находка содержит хотя бы одну, эвристика
+# понижения её не трогает, даже если рядом есть слово из списка выше.
+_GENUINE_SEVERE_LANGUAGE = (
+    "недействительн", "ничтожн", "лишени", "лишает", "без права", "отказ от права",
+    "отказывается от права", "не подлежит возврат", "безвозвратн", "кабальн",
+    "чрезмерн", "без ограничения", "неограниченн", "бессрочн", "в одностороннем порядке",
+    "без согласия", "без объяснения причин", "запрещ", "нарушение прямой нормы",
+    "нарушает статью", "противоречит статье", "не несет ответственности",
+    "не несёт ответственности",
+)
+
+def _downgrade_overreaching_high_severity(findings):
+    """Counterpart to ``_apply_severity_heuristics``: that function only escalates,
+    so a model that mislabels a routine drafting gap as "Высокий" is never corrected
+    downward anywhere in the pipeline. Observed on gpt-5-nano against a genuinely
+    well-drafted contract: "не указан точный ассортимент" (goods were named
+    explicitly) and "оплата зависит от даты подписания" (ordinary prepayment) were
+    both marked "Высокий", inflating the score of a clean contract past "Высокий
+    риск — Не подписывать". Both examples used exactly the hedging language the
+    prompt's own calibration section defines as "Средний"/"Низкий", so that language
+    is a reliable signal the model didn't actually apply its own criterion ("теряет
+    право или деньги БЕЗ защиты"). Downgrade only fires on that combination, and
+    never on a finding that also carries genuine severe-language — a real red flag
+    described with a hedge word stays "Высокий".
+    """
+    for finding in findings:
+        if finding.get("severity") != "high" or finding.get("_heuristic") or finding.get("_deterministic"):
+            continue
+        text = " ".join(str(finding.get(k, "") or "") for k in ("title", "why", "fragment")).lower()
+        if not text or any(p in text for p in _GENUINE_SEVERE_LANGUAGE):
+            continue
+        if any(p in text for p in _TRIVIAL_HIGH_LANGUAGE):
+            print(f"  [SEVERITY] Понижение необоснованного 'Высокий' → 'Средний' | {finding.get('title', '')[:60]}")
+            finding["severity"] = "medium"
     return findings
 
 def _filter_findings_by_quality(findings, min_quality=0.45):
@@ -2521,6 +2822,9 @@ ESSENTIAL_CLAUSE_PATTERNS = {
             r"предмет\w*\s+о\s+оказани",
             r"предмет\w*\s+поставки",
             r"предмет\w*\s+выполнени",
+            r"предмет",
+            r"обязует\w*\s+(?:передать|оказ\w+|выполн\w+|поставить|продать|предоставить|принять|заказать)",
+            r"(?:оказывает|передаёт|передает|сдаёт|сдает|предоставляет|выполняет)\s+\w+\s+\w+",
         ],
         "severity": "high",
     },
@@ -2544,6 +2848,10 @@ ESSENTIAL_CLAUSE_PATTERNS = {
             r"общая\s+стоимост",
             r"вознаграждени",
             r"плата\s+(?:за|по)\b",
+            r"\d[\d\s]*\s*(?:сомони|смн|руб|долл|usd|евро)",
+            r"оплат",
+            r"\bцен[аыу]\b",
+            r"арендн\w+\s+плат",
         ],
         "severity": "high",
     },
@@ -2565,6 +2873,9 @@ ESSENTIAL_CLAUSE_PATTERNS = {
             r"заключ\w*\s+на\s+срок",
             r"в\s+течение\s+\d+\s*\(?\s*[а-яё]*\s*\)?\s*(?:календарн\w*\s+)?(?:дн|суток|месяц|год|недел)",
             r"\bс\s+\d{1,2}\s+[а-яё]+\s+\d{4}\s*(?:года)?\s*(?:по|до)\s+\d{1,2}\s+[а-яё]+\s+\d{4}",
+            r"\bсрок\w*",
+            r"бессрочн",
+            r"вступает\s+в\s+силу",
         ],
         "severity": "high",
     },
@@ -2584,6 +2895,8 @@ ESSENTIAL_CLAUSE_PATTERNS = {
             r"прекращени\s+договор",
             r"односторонн\w*\s+расторжени",
             r"расторжени\w*\s+договор",
+            r"расторг",
+            r"отказ\w*\s+от\s+(?:исполнения\s+)?договор",
         ],
         "severity": "medium",
     },
@@ -2595,6 +2908,8 @@ ESSENTIAL_CLAUSE_PATTERNS = {
             r"\bсуд\b",
             r"разрешение\s+споров",
             r"компетентный\s+суд",
+            r"\bспор",
+            r"судебн\w+\s+порядк",
         ],
         "severity": "medium",
     },
@@ -2665,7 +2980,46 @@ ESSENTIAL_CLAUSE_PATTERNS = {
             r"порядок\s+передач\w*\s+товар",
             r"акт\s+приёмк\w*\s+работ",
             r"акт\s+приёмк\w*\s+поставки",
+            r"приёмк|приемк",
+            r"\bакт\w*\b",
         ],
+        "severity": "low",
+    },
+}
+
+# Существенные и обычные условия трудового договора. Общий чек-лист ему не подходит: «предмет», «цена» и
+# «приёмка» в трудовом договоре заменяют трудовая функция, оплата труда и режим работы.
+LABOR_ESSENTIAL_PATTERNS = {
+    "трудовая функция (должность)": {
+        "patterns": [r"должност", r"професси", r"специальност", r"трудов\w+\s+функци", r"принимается\s+на"],
+        "severity": "high",
+    },
+    "место работы": {
+        "patterns": [r"место\s+работы", r"рабоч\w+\s+мест", r"по\s+адресу"],
+        "severity": "medium",
+    },
+    "размер и сроки оплаты труда": {
+        "patterns": [r"заработн\w+\s+плат", r"оклад", r"оплат\w+\s+труда", r"сомони"],
+        "severity": "high",
+    },
+    "режим рабочего времени и отдыха": {
+        "patterns": [r"рабоч\w+\s+(?:врем|недел|день)", r"\d+\s*час", r"график\s+работы", r"режим\s+работы"],
+        "severity": "medium",
+    },
+    "ежегодный оплачиваемый отпуск": {
+        "patterns": [r"отпуск"],
+        "severity": "medium",
+    },
+    "срок трудового договора": {
+        "patterns": [r"\bсрок\w*", r"бессрочн", r"неопределённ\w+\s+срок", r"неопределенн\w+\s+срок", r"вступает\s+в\s+силу"],
+        "severity": "medium",
+    },
+    "порядок расторжения договора": {
+        "patterns": [r"расторг", r"увольн", r"прекращени"],
+        "severity": "medium",
+    },
+    "порядок разрешения трудовых споров": {
+        "patterns": [r"\bспор", r"\bсуд"],
         "severity": "low",
     },
 }
@@ -2703,9 +3057,12 @@ def check_essential_conditions(text, contract_type_info=None):
     contract_type = (contract_type_info or {}).get("type")
     confidence = float((contract_type_info or {}).get("confidence") or 0)
     skip = CLAUSES_NOT_APPLICABLE.get(contract_type, set()) if confidence >= 0.5 else set()
+    labor = contract_type == "трудовой договор" and confidence >= 0.5
+    clauses = LABOR_ESSENTIAL_PATTERNS if labor else ESSENTIAL_CLAUSE_PATTERNS
+    code_note = "Проверьте существенные условия в Трудовом кодексе РТ" if labor else "Проверьте существенные условия в Гражданском кодексе РТ"
 
     text_lower = text.lower()
-    for clause, cfg in ESSENTIAL_CLAUSE_PATTERNS.items():
+    for clause, cfg in clauses.items():
         if clause in skip:
             continue
         found = any(re.search(p, text_lower) for p in cfg["patterns"])
@@ -2716,7 +3073,7 @@ def check_essential_conditions(text, contract_type_info=None):
             "severity": cfg["severity"],
             "point": "весь договор",
             "fragment": "",
-            "norm": "Проверьте существенные условия в Гражданском кодексе РТ",
+            "norm": code_note,
             "why": (
                 f"В договоре не обнаружено условие о {clause}. "
                 "Отсутствие существенного условия создаёт риск признания договора незаключённым "
@@ -2812,7 +3169,138 @@ def _raw_risk_score(high, medium, low):
         + _severity_series(2.5, 0.6, low)
     )
 
-def estimate_risk_metrics(analysis_text, contract_text="", rag_context="", contract_type_info=None):
+VERIFY_MAX_CONTRACT_CHARS = int(os.environ.get("VERIFY_MAX_CONTRACT_CHARS", "14000"))
+VERIFY_MAX_FINDINGS = 24
+VERIFY_BATCH = 8
+
+
+def _norm_candidates(finding, contract_type, labor, index):
+    """Статьи, которые могут относиться к условию из находки: по теме условия и по смыслу находки."""
+    search = lambda query, top_k: retrieve_rag(query, top_k=top_k, index=index)  # noqa: E731
+    allowed = _contract_code_filter(labor)
+    seed = " ".join(str(finding.get(k) or "") for k in ("fragment", "title"))
+    pool = contract_topics.topic_results(seed, search, contract_type, per_topic=1, max_topics=3, labor=labor)
+    pool += search(" ".join(str(finding.get(k) or "") for k in ("title", "why")), 8)
+    out, seen = [], set()
+    for item in pool:
+        key = (item.get("code_short"), item.get("article"))
+        if key in seen or not allowed(item):
+            continue
+        seen.add(key)
+        out.append(item)
+        if len(out) >= 5:
+            break
+    return out
+
+
+def _llm_verify_findings(findings, contract_text, contract_type_info=None):
+    """Второй проход: модель-проверяющий сверяет каждый вывод с полным текстом договора.
+
+    Убирает выводы, которые сам договор опровергает другим пунктом (например, «не предусмотрена оплата
+    фактических расходов», когда такой пункт есть) и обычную допустимую практику, понижает преувеличенный
+    уровень и подбирает статью, которая действительно регулирует это условие. При любой ошибке модели
+    выводы возвращаются без изменений.
+    """
+    pool = [f for f in findings if not f.get('_deterministic')]
+    if not pool or not (contract_text or '').strip():
+        return findings
+    index = load_chat_rag_index(force=False)
+    if not index.get('ready'):
+        return findings
+    contract_type = (contract_type_info or {}).get('type')
+    labor = contract_topics.is_labor_text(contract_text)
+    batches = [pool[i:i + VERIFY_BATCH] for i in range(0, min(len(pool), VERIFY_MAX_FINDINGS), VERIFY_BATCH)]
+    dropped = set()
+    with ThreadPoolExecutor(max_workers=min(3, len(batches))) as executor:
+        for result in executor.map(lambda b: _verify_batch(b, contract_text, contract_type, labor, index), batches):
+            dropped |= result
+    return [f for f in findings if id(f) not in dropped]
+
+
+def _verify_batch(batch, contract_text, contract_type, labor, index):
+    """Проверка одной пачки выводов; возвращает множество id выводов, которые нужно убрать."""
+    blocks, candidate_map = [], {}
+    for n, finding in enumerate(batch, 1):
+        options = _norm_candidates(finding, contract_type, labor, index)
+        candidate_map[n] = options
+        lines = []
+        current = _cited_article_numbers(finding.get("norm", ""))
+        if current:
+            lines.append(f"   [0] текущая ссылка модели: {finding.get('norm', '')}")
+        for k, item in enumerate(options, 1):
+            text = re.sub(r"\s+", " ", item.get("text", "")).strip()[:330]
+            lines.append(f"   [{k}] {item.get('citation') or legal_rag.citation_for(item)} — {item.get('title')}: {text}")
+        blocks.append(
+            f"ВЫВОД {n}: [{finding.get('severity')}] {finding.get('title')}\n"
+            f"   Цитата: {finding.get('fragment')}\n   Почему риск: {finding.get('why')}\n"
+            "   Нормы-кандидаты:\n" + "\n".join(lines)
+        )
+
+    prompt = (
+        "Ты — старший юрист по праву Республики Таджикистан. Младший юрист составил выводы о рисках договора. "
+        "Проверь каждый вывод по ПОЛНОМУ тексту договора и нормам-кандидатам.\n\n"
+        f"ТЕКСТ ДОГОВОРА:\n{contract_text[:VERIFY_MAX_CONTRACT_CHARS]}\n\n"
+        "ВЫВОДЫ:\n" + "\n\n".join(blocks) + "\n\n"
+        "Для каждого вывода верни:\n"
+        "- verdict: \"keep\" или \"drop\".\n"
+        "- drop_reason (только при drop): \"contradicted\" — договор сам закрывает вопрос другим пунктом "
+        "(в evidence дословно процитируй этот пункт); \"standard_practice\" — это обычное допустимое условие, "
+        "которое закон разрешает и которое не ущемляет сторону.\n"
+        "- severity: \"high\" — сторона теряет право или деньги без защиты либо условие противоречит императивной "
+        "норме; \"medium\" — несбалансированное или неопределённое условие; \"low\" — устранимый пробел.\n"
+        "- norm: номер нормы-кандидата, которая НАПРЯМУЮ регулирует именно это условие; 0 — если подходит текущая "
+        "ссылка модели; если подходят и общая, и специальная для этого вида договора норма — выбирай специальную; "
+        "-1 — если ни одна из норм не относится к этому условию (не подбирай норму «по смыслу», "
+        "если она про другое).\n"
+        "Не повышай и не понижай уровень без причины, не добавляй новых выводов.\n"
+        "Ответ — только JSON: {\"items\":[{\"id\":1,\"verdict\":\"keep\",\"drop_reason\":\"\",\"evidence\":\"\","
+        "\"severity\":\"high\",\"norm\":1}]}"
+    )
+    try:
+        raw = _analysis_llm(prompt, 2600, json_mode=True)
+        if os.environ.get("VERIFY_DEBUG"):
+            print("  [VERIFY-DEBUG] candidates: " + " || ".join(blocks)[:6000] + " [VERIFY-DEBUG] answer: " + str(raw)[:3000])
+        data = json.loads(re.sub(r"^```(?:json)?|```$", "", (raw or "").strip(), flags=re.M).strip())
+        items = {int(item["id"]): item for item in data.get("items", []) if str(item.get("id", "")).lstrip("-").isdigit()}
+    except Exception as error:  # noqa: BLE001
+        print(f"  [VERIFY] Проверочный проход не выполнен ({type(error).__name__}): {error}")
+        return set()
+
+    source = _normalize_text(contract_text)
+    dropped = set()
+    for n, finding in enumerate(batch, 1):
+        item = items.get(n)
+        if not item:
+            continue
+        if str(item.get("verdict")).lower() == "drop":
+            reason = str(item.get("drop_reason") or "").lower()
+            evidence = _normalize_text(str(item.get("evidence") or "")).strip('«»"\'')
+            if reason == "standard_practice" or (reason == "contradicted" and len(evidence) >= 15 and _quote_matches_contract(evidence, source)):
+                print(f"  [VERIFY] Убран вывод ({reason}): {finding.get('title', '')[:70]}")
+                dropped.add(id(finding))
+                continue
+        severity = str(item.get("severity") or "").lower()
+        if severity in ("high", "medium", "low") and severity != finding.get("severity"):
+            print(f"  [VERIFY] Уровень {finding.get('severity')} → {severity}: {finding.get('title', '')[:60]}")
+            finding["severity"] = severity
+        try:
+            choice = int(item.get("norm"))
+        except (TypeError, ValueError):
+            continue
+        options = candidate_map.get(n) or []
+        if 1 <= choice <= len(options):
+            picked = options[choice - 1]
+            finding["norm"] = picked.get("citation") or legal_rag.citation_for(picked)
+            finding["_norm_verified"] = True
+            finding.pop("norm_text", None)
+        elif choice == -1:
+            finding["norm"] = "Статья не найдена в подключённой базе (требуется ручная проверка)"
+            finding["_norm_verified"] = False
+            finding.pop("norm_text", None)
+    return dropped
+
+
+def estimate_risk_metrics(analysis_text, contract_text="", rag_context="", contract_type_info=None, verifier=None):
     text = (analysis_text or "").lower()
     
     if not text.strip():
@@ -2940,6 +3428,12 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context="", contr
     findings = _filter_findings_by_quality(findings, min_quality=0.45)
     findings = _filter_findings_by_contract_evidence(findings, contract_text)
     findings = _filter_findings_by_rag_evidence(findings, contract_text, rag_context)
+
+    # Дубли уходят до проверки: общий и попунктный проход модели описывают часть условий дважды
+    findings = _deduplicate_findings(findings)
+
+    if verifier and findings:
+        findings = verifier(findings, contract_text)
     
     # Добавляем эвристический чек-лист отсутствующих существенных условий.
     # Для «отсутствующего» условия цитата из договора невозможна, поэтому добавляем после фильтров.
@@ -2951,11 +3445,19 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context="", contr
     # модель (см. docstring check_wrong_jurisdiction_in_contract).
     jurisdiction_finding = check_wrong_jurisdiction_in_contract(contract_text)
     if jurisdiction_finding:
+        # Тот же вывод, который сделала модель, дублировал бы проверенную находку.
+        findings = [f for f in findings if not detect_wrong_jurisdiction(str(f.get("fragment") or ""))]
         findings.append(jurisdiction_finding)
 
     # Удаляем дубликаты
     findings = _deduplicate_findings(findings)
-    
+
+    # Понижаем "Высокий", которым модель по факту описала обычный пробел в детализации
+    # (см. docstring _downgrade_overreaching_high_severity), ДО эскалации — чтобы
+    # находка с одновременно тревожным и формальным описанием всё равно могла
+    # вернуться на "Высокий" по конкретному ключевому признаку ниже.
+    findings = _downgrade_overreaching_high_severity(findings)
+
     # Усиливаем severity по эвристикам (одностороннее расторжение → высокий и т.п.)
     findings = _apply_severity_heuristics(findings)
 
@@ -2967,16 +3469,28 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context="", contr
         quality = f.get('_quality', 0)
         print(f"    [{f['severity']}] {f['title'][:50]} | quality={quality:.2f} | point={bool(f['point'])} frag={bool(f['fragment'])} norm={bool(f['norm'])}")
 
-    # Подсчет по severity
-    high = sum(1 for f in findings if f['severity'] == 'high')
-    medium = sum(1 for f in findings if f['severity'] == 'medium')
-    low = sum(1 for f in findings if f['severity'] == 'low')
+    # Чек-лист отсутствующих существенных условий (check_essential_conditions)
+    # не является выводом модели — это механический regex-перебор, который
+    # честно "находит" отсутствие условия и тогда, когда в договоре реально
+    # нет текста для проверки (скан без текстового слоя и т.п.). Раньше эти
+    # пункты считались наравне с подтверждёнными находками модели, и на
+    # документах с почти пустым текстом чек-лист (7-8 однотипных пунктов)
+    # полностью определял score и вердикт "Не подписывать", хотя по сути
+    # анализа договора не произошло. Теперь эти пункты не входят в счёт
+    # severity/score — они показываются отдельным информационным блоком.
+    real_findings = [f for f in findings if not f.get('_heuristic')]
+    checklist_findings = [f for f in findings if f.get('_heuristic')]
+
+    # Подсчет по severity — только по подтверждённым находкам модели
+    high = sum(1 for f in real_findings if f['severity'] == 'high')
+    medium = sum(1 for f in real_findings if f['severity'] == 'medium')
+    low = sum(1 for f in real_findings if f['severity'] == 'low')
 
     raw_score = _raw_risk_score(high, medium, low)
 
     score, level, verdict, manual_review_required = summarize_contract_risk(
         raw_score,
-        findings_count=len(findings),
+        findings_count=len(real_findings),
         contract_len=len((contract_text or "").strip()),
         wrong_jurisdiction_count=wrong_jurisdiction_count,
     )
@@ -2986,13 +3500,11 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context="", contr
     # Норма, которую не удалось подтвердить по подключённому RAG. Раньше это
     # число всегда уходило в интерфейс нулём, хотя фильтр такие выводы уже
     # помечал, — пользователь видел «галлюцинаций: 0» независимо от реальности.
-    unverified_norms = sum(1 for f in findings if f.get("_norm_verified") is False)
+    unverified_norms = sum(1 for f in real_findings if f.get("_norm_verified") is False)
 
     # Очищаем внутренние поля
-    clean_findings = []
-    for f in findings:
-        clean_finding = {k: v for k, v in f.items() if not k.startswith('_')}
-        clean_findings.append(clean_finding)
+    clean_findings = [{k: v for k, v in f.items() if not k.startswith('_')} for f in real_findings]
+    clean_checklist_findings = [{k: v for k, v in f.items() if not k.startswith('_')} for f in checklist_findings]
 
     return {
         "score": score,
@@ -3002,6 +3514,7 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context="", contr
         "low": low,
         "verdict": verdict,
         "findings": clean_findings,
+        "checklist_findings": clean_checklist_findings,
         "hallucinations_detected": unverified_norms,
         "wrong_jurisdiction_mentions": wrong_jurisdiction_count,
         "wrong_jurisdiction_violations": wrong_jurisdiction_violations[:10],
@@ -3033,67 +3546,90 @@ def format_verified_findings_for_prompt(findings, max_items=20):
         )
     return "\n\n".join(blocks)
 
-def build_grounded_contract_report(metrics, contract_type_info=None):
-    """Render the final report from verified records only; no second model pass."""
+def build_grounded_contract_report(metrics, contract_type_info=None, lang="ru"):
+    """Render the final report from verified records only; no second model pass.
+
+    lang="tg": подписи отчёта на таджикском (doc_lang.REPORT_LABELS). Тексты рисков к этому
+    моменту уже переведены (doc_lang.localize_report_inputs); русская версия не меняется.
+    """
+    L = doc_lang.REPORT_LABELS.get(lang) or doc_lang.REPORT_LABELS["ru"]
     findings = metrics.get("findings", [])
-    severity_labels = {"high": "Высокий", "medium": "Средний", "low": "Низкий"}
+    severity_labels = L["severity"]
     lines = [
-        "## Проверенный RAG-анализ договора",
+        L["title"],
         "",
-        f"Источник права: `{CONTRACT_RAG_SOURCE_NAME}` (Республика Таджикистан).",
-        "В отчёт включены пункты с цитатой из договора и нормой, сверенной с подключённым RAG.",
-        "Если модель не смогла указать точную статью, это честно помечено как требующее ручной проверки.",
+        L["source"].format(source=CONTRACT_RAG_SOURCE_NAME),
+        L["scope"],
+        L["honest"],
     ]
+    if L.get("translated"):
+        lines.extend(["", L["translated"]])
     # Добавляем тип договора, если определён
     if contract_type_info and contract_type_info.get("type") != "неопределённый":
         lines.append(f"")
-        lines.append(f"Определённый тип договора: **{contract_type_info['type']}** (уверенность: {contract_type_info.get('confidence', 0):.0%}).")
+        lines.append(L["type"].format(type=contract_type_info['type'], confidence=f"{contract_type_info.get('confidence', 0):.0%}"))
         if contract_type_info.get('types_with_scores'):
             alt_types = [t['type'] for t in contract_type_info['types_with_scores'][1:3] if t['score'] > 0.2]
             if alt_types:
-                lines.append(f"Альтернативные варианты: {', '.join(alt_types)}.")
+                lines.append(L["alt"].format(types=", ".join(alt_types)))
     lines.append("")
-    lines.append("### Выявленные риски")
+    lines.append(L["risks"])
     if not findings:
         lines.extend([
             "",
-            "Подтверждённых рисков не найдено: для публикации требуется одновременно цитата из договора и применимая статья из RAG.",
+            L["none"],
         ])
         if metrics.get("manual_review_required"):
             lines.extend([
                 "",
-                "⚠️ **Требуется ручная проверка.** Договор объёмный, но система не подтвердила ни одного риска. "
-                "Это может быть следствием нестандартных формулировок — заключение должен проверить практикующий юрист.",
+                L["manual"],
             ])
     else:
         for number, finding in enumerate(findings, 1):
             lines.extend([
                 "",
-                f"#### {number}. {finding.get('title') or 'Юридический риск'}",
-                f"- Уровень: **{severity_labels.get(finding.get('severity'), 'Низкий')}**",
-                f"- Пункт договора: {finding.get('point') or 'не указан в документе'}",
-                f"- Цитата из договора: «{finding.get('fragment') or 'условие отсутствует в договоре'}»",
-                f"- Норма РТ из RAG: {finding.get('norm') or ''}",
-                f"- Основание: {finding.get('why') or ''}",
-                f"- Рекомендуемая правка: {finding.get('fix') or ''}",
+                f"#### {number}. {finding.get('title') or L['risk_default']}",
+                f"- {L['level']}: **{severity_labels.get(finding.get('severity'), severity_labels['low'])}**",
+                f"- {L['point']}: {finding.get('point') or L['point_none']}",
+                f"- {L['quote']}: «{finding.get('fragment') or L['quote_none']}»",
+                f"- {L['norm']}: {finding.get('norm') or ''}",
+                f"- {L['why']}: {finding.get('why') or ''}",
+                f"- {L['fix']}: {finding.get('fix') or ''}",
             ])
             if finding.get("norm_text"):
                 lines.extend([
                     "",
-                    f"**Текст нормы из подключённого RAG:**",
+                    L["norm_text"],
                     finding["norm_text"],
                 ])
+
+    checklist_findings = metrics.get("checklist_findings") or []
+    if checklist_findings:
+        lines.extend([
+            "",
+            L["checklist"],
+            "",
+            L["checklist_note"],
+        ])
+        for finding in checklist_findings:
+            lines.extend([
+                "",
+                f"- **{finding.get('title') or L['condition']}** "
+                f"({L['significance']}: {severity_labels.get(finding.get('severity'), severity_labels['low'])}) — "
+                f"{finding.get('fix') or ''}",
+            ])
+
     lines.extend([
         "",
-        "### Резюме",
-        f"- Балл риска: **{metrics.get('score', 0)}/100**",
-        f"- Уровень: **{metrics.get('level', 'Низкий')}**",
-        f"- Высоких рисков: **{metrics.get('high', 0)}**",
-        f"- Средних рисков: **{metrics.get('medium', 0)}**",
-        f"- Низких рисков: **{metrics.get('low', 0)}**",
-        f"- Вердикт: **{metrics.get('verdict', '')}**",
+        L["summary"],
+        f"- {L['score']}: **{metrics.get('score', 0)}/100**",
+        f"- {L['level']}: **{metrics.get('level', severity_labels['low'])}**",
+        f"- {L['high']}: **{metrics.get('high', 0)}**",
+        f"- {L['medium']}: **{metrics.get('medium', 0)}**",
+        f"- {L['low']}: **{metrics.get('low', 0)}**",
+        f"- {L['verdict']}: **{metrics.get('verdict', '')}**",
         "",
-        "Отчёт основан на подключённой базе RAG и не заменяет проверку практикующим юристом.",
+        L["footer"],
     ])
     return "\n".join(lines)
 
@@ -3137,6 +3673,31 @@ def normalize_legal_terms(text):
     return text
 
 # ================= SSE ГЕНЕРАТОР =================
+def _analysis_llm(prompt, num_predict, json_mode=False):
+    """Вызов модели для перевода документа и отчёта: без размышлений, температура 0."""
+    return llm_once(MODEL_NAME, prompt, num_predict, temperature=0.0, timeout=240, json_mode=json_mode,
+                    openai_model=ANALYSIS_GPT_MODEL, reasoning_effort="minimal")
+
+
+def _with_heartbeat(fn, send_event, step, message, start=9, cap=14, every=8):
+    """Выполняет fn в потоке и пока она работает отдаёт признаки жизни (SSE не должен молчать минуту).
+
+    Генератор: yield-ит события, а результат функции возвращает через StopIteration.value.
+    """
+    pool = ThreadPoolExecutor(max_workers=1)
+    future = pool.submit(fn)
+    waited = 0
+    try:
+        while True:
+            done, _ = wait([future], timeout=every)
+            if done:
+                return future.result()
+            waited += every
+            yield send_event({"step": step, "message": message, "progress_percent": min(cap, start + waited // every)}, "status")
+    finally:
+        pool.shutdown(wait=False)
+
+
 def generate_sse(file_path, request_id, original_filename=None, generate_revised=False):
     def send_event(data, event_type="message"):
         payload = {
@@ -3204,12 +3765,43 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
             yield send_event({"error": error_msg, "step": "extraction_failed"}, "error")
             return
 
-        if not full_text or len(full_text.strip()) < 50:
+        # Порог поднят с 50 до 300 символов: реальный договор всегда заметно
+        # длиннее, а 50 символов пропускали случаи вроде отсканированного PDF
+        # без текстового слоя, где pypdf вытаскивал только заголовок/пометку
+        # сканера. С таким текстом полноценный анализ невозможен: RAG-модель
+        # находит от силы 1 реальный пункт, а эвристический чек-лист
+        # существенных условий не совпадает ни с одним паттерном по всем
+        # категориям сразу — отчёт выглядит как анализ, но им не является.
+        # Честная ошибка здесь лучше, чем уверенный вердикт на пустом месте.
+        if not full_text or len(full_text.strip()) < 300:
+            length = len(full_text.strip()) if full_text else 0
+            hint = (
+                " Похоже, это скан без текстового слоя — OCR в системе пока не реализован, "
+                "загрузите документ с текстовым слоем (например, экспортированный из Word) "
+                "или текстовую копию (DOCX/TXT)."
+                if ext == ".pdf"
+                else ""
+            )
             yield send_event({
-                "error": "Текст не извлечён или слишком короткий",
-                "length": len(full_text) if full_text else 0
+                "error": f"Текст не извлечён или слишком короткий для анализа ({length} симв.).{hint}",
+                "length": length,
             }, "error")
             return
+
+        # Таджикский договор разбирается по русскому переводу (корпус кодексов и промпты русские),
+        # а готовый отчёт переводится обратно: язык ответа следует за языком документа.
+        source_lang = "ru"
+        if doc_lang.is_tajik_text(full_text):
+            try:
+                original_text = full_text
+                translated_text = yield from _with_heartbeat(
+                    lambda: doc_lang.translate_text(original_text, "tg", "ru", _analysis_llm, kind="текст договора"),
+                    send_event, "translating", "Шартнома ба забони русӣ тарҷума мешавад...")
+                if translated_text and len(translated_text) >= len(original_text) * 0.4:
+                    full_text, source_lang = translated_text, "tg"
+                    print(f"🌐 Договор на таджикском: переведён на русский ({len(full_text)} симв.)")
+            except Exception as translate_error:  # noqa: BLE001
+                print(f"⚠️ Перевод договора не удался, разбор по оригиналу: {translate_error}")
 
         print(f"✅ Текст извлечён: {len(full_text)} символов")
         yield send_event({
@@ -3220,38 +3812,6 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
             "progress_percent": 8
         }, "status")
         time.sleep(0.1)
-
-        # Full-report cache: identical document text + identical RAG revision
-        # can return immediately without invoking the model again. Revised
-        # contract generation remains live because it creates a new file.
-        analysis_cache_key = get_analysis_cache_key(full_text, contract_rag)
-        if not generate_revised:
-            cached_report = load_analysis_cache(analysis_cache_key)
-            if cached_report:
-                cached_metrics = cached_report["metrics"]
-                yield send_event({
-                    "step": "cache_hit",
-                    "message": "Найден проверенный кэш: загружаем готовый RAG-отчёт",
-                    "progress_percent": 96,
-                    "cache_hit": True,
-                    "cached_at": cached_report.get("cached_at"),
-                }, "status")
-                yield send_event({
-                    "step": "summary_complete",
-                    "content": cached_report["content"],
-                    "length": len(cached_report["content"]),
-                    "revised_contract": None,
-                    "metrics": cached_metrics,
-                    "cache_hit": True,
-                }, "summary_complete")
-                yield send_event({
-                    "step": "complete",
-                    "status": "success",
-                    "chunks_processed": cached_report.get("chunks_processed", 0),
-                    "errors_count": 0,
-                    "cache_hit": True,
-                }, "complete")
-                return
 
         chunks = split_text_smart(full_text, CHUNK_SIZE, CHUNK_OVERLAP)
         print(f"📦 Разбито на {len(chunks)} чанков")
@@ -3352,12 +3912,17 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
             "\n\nRAG-контекст по кодексам Республики Таджикистан не найден или база еще не подключена.\n"
         )
         
-        risk_metrics = estimate_risk_metrics(
-            full_analysis_text,
-            contract_text=full_text,
-            rag_context=rag_summary_context,
-            contract_type_info=contract_type_info,
-        )
+        risk_metrics = yield from _with_heartbeat(
+            lambda: estimate_risk_metrics(
+                full_analysis_text,
+                contract_text=full_text,
+                rag_context=rag_summary_context,
+                contract_type_info=contract_type_info,
+                verifier=lambda found, text: _llm_verify_findings(found, text, contract_type_info),
+            ),
+            send_event, "verifying",
+            "Проверка выводов по тексту договора..." if source_lang == "ru" else "Санҷиши хулосаҳо аз рӯи матни шартнома...",
+            start=92, cap=95)
         verified_findings_text = format_verified_findings_for_prompt(risk_metrics.get("findings", []))
 
         # Формируем промпт для summary с жёстким требованием указать статьи РТ
@@ -3400,7 +3965,17 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
             # Do not let a second generative pass introduce unsupported claims.
             # The published report is rendered only from findings that passed
             # contract-quote and RAG-article verification.
-            final_summary = build_grounded_contract_report(risk_metrics, contract_type_info=contract_type_info)
+            if source_lang == "tg":
+                try:
+                    report_metrics, report_type_info = yield from _with_heartbeat(
+                        lambda: doc_lang.localize_report_inputs(risk_metrics, contract_type_info, _analysis_llm),
+                        send_event, "translating_report", "Ҳисобот ба забони тоҷикӣ тарҷума мешавад...", start=93, cap=96)
+                    final_summary = build_grounded_contract_report(report_metrics, contract_type_info=report_type_info, lang="tg")
+                except Exception as report_error:  # noqa: BLE001
+                    print(f"⚠️ Перевод отчёта не удался, отчёт на русском: {report_error}")
+                    final_summary = build_grounded_contract_report(risk_metrics, contract_type_info=contract_type_info)
+            else:
+                final_summary = build_grounded_contract_report(risk_metrics, contract_type_info=contract_type_info)
 
             if final_summary and not final_summary.startswith("⚠️"):
                 revised_contract = None
@@ -3418,8 +3993,14 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
                             "message": f"Preparing revised contract: {part_index + 1}/{len(chunks)}",
                             "progress_percent": min(98, 94 + int((part_index + 1) / max(len(chunks), 1) * 4)),
                         }, "status")
+                    revised_text = "\n\n".join(revised_parts)
+                    if source_lang == "tg":
+                        try:
+                            revised_text = doc_lang.translate_text(revised_text, "ru", "tg", _analysis_llm, kind="текст договора")
+                        except Exception as revise_error:  # noqa: BLE001
+                            print(f"⚠️ Перевод исправленного договора не удался, остаётся русский: {revise_error}")
                     revised_contract = create_revised_contract_output(
-                        "\n\n".join(revised_parts),
+                        revised_text,
                         original_filename or os.path.basename(file_path),
                     )
                 metrics_header = f"""📊 МЕТРИКИ РИСКА (расчет системы)
@@ -3446,13 +4027,6 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
                     # разбору доверять нельзя.
                     "manual_review_required": risk_metrics.get("manual_review_required", False),
                 }
-                if not generate_revised:
-                    save_analysis_cache(analysis_cache_key, {
-                        "content": final_summary,
-                        "metrics": response_metrics,
-                        "chunks_processed": len(all_findings),
-                        "rag_source": CONTRACT_RAG_SOURCE_NAME,
-                    })
                 yield send_event({
                     "step": "summary_complete",
                     "content": final_summary,
@@ -3585,19 +4159,368 @@ def _crime_description(data):
     for key in ("description", "crime_description", "query", "text"):
         value = (data.get(key) or "").strip()
         if value:
-            return value
+            return _crime_text_to_russian(value)
     return ""
 
 
-def _crime_not_found_payload(query, results, status_key="qualification"):
+def _crime_llm_translate_to_russian(text):
+    """Точный перевод описания с таджикского моделью; пусто — не вышло."""
+    prompt = (
+        "Переведи текст с таджикского на русский язык точно: не добавляй и не убирай факты, "
+        "сохрани все числа, суммы, названия улиц и городов, способ действий и орудия. "
+        "Ответ — только перевод, без пояснений и кавычек.\n\nТЕКСТ:\n" + text[:2000] + "\n\nПЕРЕВОД:"
+    )
+    try:
+        raw = llm_once(CRIME_MODEL, prompt, 600, temperature=0.0, keep_alive=CRIME_KEEP_ALIVE,
+                       timeout=45, openai_model=CRIME_GPT_MODEL)
+    except Exception as error:  # noqa: BLE001
+        print("  [CRIME] перевод моделью не удался (%s)" % type(error).__name__)
+        return ""
+    return (raw or "").strip().strip("«»\"")
+
+
+def _crime_source_lang(data):
+    """Язык исходного описания: таджикское описание получает ответ на таджикском."""
+    for key in ("description", "crime_description", "query", "text"):
+        value = (data.get(key) or "").strip()
+        if value:
+            try:
+                return "tg" if lang_service.detect_lang(value, default="ru") == "tg" else "ru"
+            except Exception:  # noqa: BLE001
+                return "ru"
+    return "ru"
+
+
+CRIME_TG_RULE = (
+    "Переведи разбор по уголовному праву Республики Таджикистан на таджикский язык (кириллица), точно и понятно "
+    "человеку без юридического образования.\n"
+    "Правила: строки-заголовки разделов (например «ЧТО ДЕЛАТЬ ПОСТРАДАВШЕМУ», «ЧТО ГРОЗИТ НАРУШИТЕЛЮ», «КАКИЕ ЗАКОНЫ "
+    "НАРУШЕНЫ», «1. КВАЛИФИКАЦИЯ», «2. САНКЦИИ ПО ТЕКСТУ СТАТЬИ», «3. ФАКТЫ И ДОКАЗАТЕЛЬСТВА», «4. ОБСТОЯТЕЛЬСТВА», "
+    "«5. ПРАВОВОЙ АНАЛИЗ», «6. ИТОГОВЫЙ ВЫВОД») оставь без изменений на русском вместе с номерами; номера статей, частей, "
+    "пунктов, числа, суммы и сроки не меняй; цитаты из текста статей в «ёлочках» тоже переведи на таджикский точно, "
+    "сохранив кавычки, числа, суммы и сроки; пометки «(общий "
+    "совет)» и «(ст. N УПК РТ)» переведи, номер оставь; нумерацию и маркеры списков сохрани. "
+    "Не оставляй русских слов: весь текст, кроме строк-заголовков разделов, должен быть на таджикском. "
+    "Ничего не добавляй и не объясняй. Ответ — только перевод.\n\nТЕКСТ:\n"
+)
+
+CRIME_NOT_FOUND_MESSAGE_TG = (
+    "Дар Кодекси ҷиноятии Ҷумҳурии Тоҷикистон меъёрҳои ба ин тавсиф дахлдор ёфт нашуданд. "
+    "Ҳодисаро муфассалтар тавсиф кунед: аниқ чӣ рӯй дод, бо кадом усул, бо чӣ зарар расонида шуд. "
+    "Берун аз матни КҶ ҶТ система ҷавоб намедиҳад."
+)
+
+# Итог для плашки считается по русскому разбору до перевода: метки «Квалификация:» и
+# «Наказание по статье:» после перевода меняются, и страница уже не нашла бы их в тексте.
+_CRIME_SUMMARY_NEGATIVE = re.compile(
+    r"(невозможно|нельзя|не удалось|не указан|не определ|недостаточно|отсутствует|не найден)", re.I)
+
+
+def _crime_summary_lines(text):
+    """Квалификация и наказание одной строкой из русского разбора; none — квалификацию не установили."""
+    def pick(pattern):
+        found = re.findall(pattern, text or "", re.I)
+        return found[-1].strip() if found else ""
+
+    def clean(value):
+        return re.sub(r"\*\*", "", re.sub(r"^[\s•\-–*]+", "", value)).strip()
+
+    qual = clean(pick(r"Квалификация:\s*([^\n]+)") or pick(r"Основная статья[^:\n]*:\s*([^\n]+)"))
+    punish = clean(pick(r"Наказание по статье:\s*([^\n]+)") or pick(r"Основное наказание:\s*([^\n]+)"))
+    return {
+        "qual": qual,
+        "punish": "" if _CRIME_SUMMARY_NEGATIVE.search(punish) else punish,
+        "none": (not qual) or bool(_CRIME_SUMMARY_NEGATIVE.search(qual)),
+    }
+
+
+def _crime_summary(text, lang="ru"):
+    """Итог для плашки; на таджикском запросе обе строки переводятся."""
+    summary = _crime_summary_lines(text)
+    if lang == "tg" and not summary["none"]:
+        try:
+            out, _ok = _crime_to_tajik([summary["qual"], summary["punish"]])
+            summary["qual"], summary["punish"] = out[0], out[1]
+        except Exception as error:  # noqa: BLE001
+            print("  [CRIME] перевод итога не удался (%s)" % type(error).__name__)
+    summary["lang"] = lang
+    return summary
+
+
+# Тексты статей и названия для таджикского запроса: индекс кодекса русский, а страница
+# обязана отвечать на языке вопроса. Перевод машинный, поэтому страница помечает его как таковой.
+CRIME_TR_CACHE = {}
+CRIME_TR_CACHE_MAX = 2000
+CRIME_TR_MAX_ITEMS = 40
+CRIME_TR_MAX_CHARS = 6000
+CRIME_TR_SHORT = 400
+CRIME_STATUTE_TG_RULES = (
+    "Это текст статьи уголовного или процессуального закона Республики Таджикистан: сохрани структуру "
+    "(части, пункты, нумерацию), номера статей и частей, числа, суммы и сроки. «Статья N» — «Моддаи N». "
+)
+
+
+def _crime_to_tajik(items):
+    """Русские строки -> таджикские. Возвращает (список, список флагов «переведено»).
+
+    Короткие строки идут одним вызовом, длинные (тексты статей) — каждая отдельно. Что перевести не
+    удалось, остаётся русским оригиналом и в кэш не попадает.
+    """
+    items = [str(item or "") for item in items]
+    out = list(items)
+    done = [False] * len(items)
+    pending_short, pending_long = [], []
+    for i, text in enumerate(items):
+        if not text.strip():
+            done[i] = True
+        elif text in CRIME_TR_CACHE:
+            out[i], done[i] = CRIME_TR_CACHE[text], True
+        elif len(text) <= CRIME_TR_SHORT:
+            pending_short.append(i)
+        else:
+            pending_long.append(i)
+
+    def remember(i, value):
+        value = (value or "").strip()
+        if not value or value == items[i]:
+            return
+        if len(CRIME_TR_CACHE) >= CRIME_TR_CACHE_MAX:
+            CRIME_TR_CACHE.pop(next(iter(CRIME_TR_CACHE)))
+        CRIME_TR_CACHE[items[i]] = value
+        out[i], done[i] = value, True
+
+    if pending_short:
+        try:
+            translated = _tajik_cards([items[i] for i in pending_short])
+        except Exception as error:  # noqa: BLE001
+            print("  [CRIME] перевод строк не удался (%s)" % type(error).__name__)
+            translated = None
+        for i, value in zip(pending_short, translated or []):
+            remember(i, value)
+
+    for i in pending_long:
+        try:
+            if _llm_tajik_available():
+                value = doc_lang.translate_text(items[i], "ru", "tg", _analysis_llm, kind="текст статьи закона",
+                                                rules=CRIME_STATUTE_TG_RULES, workers=2)
+            elif lang_service.translator.available():
+                value = lang_service.translator.translate_text(items[i], "ru", "tg")
+            else:
+                value = ""
+        except Exception as error:  # noqa: BLE001
+            print("  [CRIME] перевод статьи не удался (%s)" % type(error).__name__)
+            value = ""
+        remember(i, value)
+    return out, done
+
+
+@app.route("/api/crime/translate", methods=["POST"])
+@app.route("/api/codex/translate", methods=["POST"])
+def crime_translate():
+    """Перевод названий и текстов статей на таджикский для страниц квалификации и кодексов."""
+    data = request.get_json(silent=True) or {}
+    items = data.get("items")
+    if not isinstance(items, list) or not items:
+        return jsonify({"error": "items is required"}), 400
+    items = [str(item or "")[:CRIME_TR_MAX_CHARS] for item in items[:CRIME_TR_MAX_ITEMS]]
+    translated, flags = _crime_to_tajik(items)
+    return jsonify({"items": translated, "translated": flags})
+
+
+# ---------------------------------------------------------------------------
+# Страница /contract/codex: все кодексы РТ из общего RAG-индекса.
+# ---------------------------------------------------------------------------
+_codex_state = {"key": None, "catalog": None}
+
+
+def _codex():
+    """Каталог кодексов по текущему индексу; None — индекс не готов. Пересобирается при смене индекса."""
+    index = load_chat_rag_index()
+    if not index.get("ready") or not index.get("chunks"):
+        return None
+    key = (id(index), index.get("built_at"), len(index["chunks"]))
+    if _codex_state["key"] != key:
+        _codex_state["catalog"] = codex_catalog.Catalog(index)
+        _codex_state["key"] = key
+    return _codex_state["catalog"]
+
+
+def _codex_unavailable():
+    return jsonify({"error": "Индекс кодексов РТ не готов", "codes": []}), 503
+
+
+@app.route("/api/codex/catalog")
+def codex_catalog_route():
+    """Список кодексов (группы, число статей и глав) — главный экран страницы."""
+    catalog = _codex()
+    if catalog is None:
+        return _codex_unavailable()
+    return jsonify(catalog.catalog())
+
+
+@app.route("/api/codex/toc")
+def codex_toc():
+    """Оглавление кодекса: разделы -> главы -> статьи (номер и название)."""
+    catalog = _codex()
+    if catalog is None:
+        return _codex_unavailable()
+    toc = catalog.toc(request.args.get("code", ""))
+    if toc is None:
+        return jsonify({"error": "Кодекс не найден"}), 404
+    return jsonify(toc)
+
+
+@app.route("/api/codex/article")
+def codex_article():
+    """Текст одной статьи, собранный из фрагментов индекса, и соседние статьи."""
+    catalog = _codex()
+    if catalog is None:
+        return _codex_unavailable()
+    article = catalog.article(request.args.get("code", ""), request.args.get("n", ""))
+    if article is None:
+        return jsonify({"error": "Статья не найдена"}), 404
+    return jsonify(article)
+
+
+@app.route("/api/codex/search")
+def codex_search():
+    """Поиск по всем кодексам или по одному (?code=): номер статьи, название, полный текст."""
+    catalog = _codex()
+    if catalog is None:
+        return _codex_unavailable()
+    index = catalog.index
+    try:
+        limit = int(request.args.get("limit") or 30)
+    except ValueError:
+        limit = 30
+    query = request.args.get("q", "")
+    # Индекс русский: таджикский запрос переводится до поиска, а страница показывает, по чему искали.
+    query_ru = _crime_text_to_russian(query) if query.strip() else query
+    payload = catalog.search(
+        query_ru,
+        lambda text, n: legal_rag.lexical_search(index, text, limit=n),
+        code_id=request.args.get("code") or None,
+        limit=limit,
+    )
+    payload["query"] = query
+    if query_ru != query:
+        payload["query_ru"] = query_ru
+    return jsonify(payload)
+
+
+def _crime_translate_answer(text):
+    """Ответ квалификации на таджикском; при сбое перевода возвращается русский оригинал."""
+    try:
+        out = _analysis_llm(CRIME_TG_RULE + text + "\n\nПЕРЕВОД:", max(1200, len(text) * 2))
+        out = (out or "").strip()
+        return out if len(out) >= len(text) * 0.4 else text
+    except Exception as error:  # noqa: BLE001
+        print("  [CRIME] перевод ответа не удался (%s)" % type(error).__name__)
+        return text
+
+
+def _crime_text_to_russian(text):
+    """Описание на таджикском переводится на русский до поиска.
+
+    Индекс УК и промпт русскоязычные: таджикский текст BM25 не находит ничего.
+    Перевод машинный (NLLB, как в чате), поэтому при его недоступности или
+    сбое остаётся исходный текст — поиск просто ответит «норма не найдена».
+    """
+    try:
+        if lang_service.detect_lang(text, default="ru") != "tg":
+            return text
+        # NLLB на бытовых описаниях искажает смысл («бо мушт» — «ножом»,
+        # «ҳамён» — «нос»), а от этого зависит статья. Облачная модель переводит
+        # с таджикского заметно точнее, поэтому она первая, NLLB — запасной.
+        if LLM_PROVIDER == "openai":
+            translated = _crime_llm_translate_to_russian(text)
+            if translated:
+                return translated
+        if not lang_service.translator.available():
+            return text
+        translated = lang_service.translator.translate_text(text, "tg", "ru")
+        return (translated or "").strip() or text
+    except Exception as error:  # noqa: BLE001
+        print("  [CRIME] перевод описания не удался (%s)" % type(error).__name__)
+        return text
+
+
+CRIME_CLARIFY_ENABLED = os.environ.get("CRIME_CLARIFY", "1").strip().lower() not in {"0", "false", "no", "off"}
+CRIME_CLARIFY_MAX_QUESTIONS = 3
+
+
+def _crime_clarify_prompt(description):
+    return (
+        "Ты юрист-криминалист Республики Таджикистан. Перед квалификацией деяния по УК РТ проверь, "
+        "хватает ли в описании фактов, от которых зависит выбор статьи, части и пункта.\n"
+        "Такие факты: размер ущерба; применялось ли насилие или оружие; наступили ли смерть или вред "
+        "здоровью и какой; проникновение в жилище; возраст потерпевшего или виновного; должность "
+        "виновного; повторность и группа лиц; состояние опьянения; способ (обман, тайно, открыто).\n"
+        "Правила:\n"
+        "- Спрашивай ТОЛЬКО о том, чего нет в описании и без чего часть или пункт статьи не определить.\n"
+        "- Не больше 3 вопросов, каждый короткий, на русском, один факт на вопрос.\n"
+        "- Если описание уже достаточно подробное или это не описание деяния — вопросов не нужно.\n"
+        'Ответ строго JSON: {"enough": true|false, "questions": ["...", "..."]}. '
+        'Если enough=true, questions пустой.\n\n'
+        "ОПИСАНИЕ: " + description + "\nJSON:"
+    )
+
+
+def _crime_clarify_questions(description):
+    """Список уточняющих вопросов; пустой — фактов хватает или проверка не удалась.
+
+    Сбой модели никогда не блокирует квалификацию: лучше ответить по тому, что
+    есть, чем остановить человека на лишнем шаге.
+    """
+    if not CRIME_CLARIFY_ENABLED or len(description.split()) < 3:
+        return []
+    try:
+        raw = llm_once(CRIME_MODEL, _crime_clarify_prompt(description[:1500]), 300,
+                       temperature=0.0, keep_alive=CRIME_KEEP_ALIVE, timeout=40,
+                       json_mode=True, openai_model=CRIME_GPT_MODEL)
+        payload = json.loads(raw)
+    except Exception as error:  # noqa: BLE001
+        print("  [CRIME] уточняющие вопросы не получены (%s)" % type(error).__name__)
+        return []
+    if not isinstance(payload, dict) or payload.get("enough") is not False:
+        return []
+    questions = []
+    for item in payload.get("questions") or []:
+        text = re.sub(r"\s+", " ", str(item or "")).strip()
+        if 5 <= len(text) <= 200 and text not in questions:
+            questions.append(text)
+    return questions[:CRIME_CLARIFY_MAX_QUESTIONS]
+
+
+@app.route("/api/crime/clarify", methods=["POST"])
+def crime_clarify():
+    """Чего не хватает описанию для точной квалификации (до 3 вопросов)."""
+    data = request.get_json(silent=True) or {}
+    description = _crime_description(data)
+    if not description:
+        return jsonify({"error": "crime description is required"}), 400
+    questions = _crime_clarify_questions(description)
+    if questions and _crime_source_lang(data) == "tg":
+        try:
+            questions = _tajik_cards(questions) or questions
+        except Exception as error:  # noqa: BLE001
+            print("  [CRIME] перевод вопросов не удался (%s)" % type(error).__name__)
+    return jsonify({"enough": not questions, "questions": questions, "lang": _crime_source_lang(data)})
+
+
+def _crime_not_found_payload(query, results, status_key="qualification", lang="ru"):
     """Ответ, когда опоры в УК РТ нет. Модель в этом случае не вызывается:
     сгенерированный без нормы текст и есть та самая выдумка, ради запрета
     которой страница переведена на RAG."""
     return {
-        status_key: CRIME_NOT_FOUND_MESSAGE,
+        status_key: CRIME_NOT_FOUND_MESSAGE_TG if lang == "tg" else CRIME_NOT_FOUND_MESSAGE,
+        "lang": lang,
         "grounded": False,
         "query": query,
         "articles": [],
+        # В УК нормы нет, но область права могла быть названа: смежные нормы
+        # (например, Водного кодекса) полезнее пустого «не найдено».
+        "related_norms": retrieve_related_norms(query),
         "rag_sources": [crime_article_payload(item) for item in results],
         "article_numbers": [],
         "sources": [],
@@ -3633,6 +4556,36 @@ def _unverified_article_numbers(text, allowed):
     allowed_set = {str(number) for number in allowed}
     cited = {match.group(1) for match in _ARTICLE_REF_RE.finditer(text or "")}
     return sorted(cited - allowed_set)
+
+
+# Ссылки вида «Закон РТ от 17.05.2004г. №35» — законная часть текста кодексов
+# (каждая правка статьи сопровождается «в редакции Закона РТ от ...»), так что
+# сам паттерн не подозрителен. Подозрительна конкретная дата+номер, которых не
+# было в переданном модели RAG-контексте: наблюдался случай, когда модель по
+# вопросу о налоговой декларации сослалась на «Закон РТ от 11.02.2025 №2143» —
+# ни даты, ни номера не было ни в одном найденном фрагменте, то есть модель
+# правдоподобно выдумала конкретную ссылку вместо того, чтобы честно сказать,
+# что нормы под рукой нет (см. КАЛИБРОВКА в промпте чата).
+_LAW_REF_RE = re.compile(
+    r"закон[а-яё]*\s+(?:РТ|Республики\s+Таджикистан)\s+от\s+"
+    r"(\d{1,2}[.\s]\d{1,2}[.\s]\d{2,4})\s*г?\.?\s*(?:№|N|No)\.?\s*(\d+)",
+    re.IGNORECASE,
+)
+
+
+def _unverified_law_references(text, rag_context):
+    """Ссылки на законы о внесении изменений, которых нет дословно в RAG-контексте."""
+    context_digits = re.sub(r"\D", "", rag_context or "")
+    unverified = []
+    for match in _LAW_REF_RE.finditer(text or ""):
+        date_digits = re.sub(r"\D", "", match.group(1))
+        number = match.group(2)
+        if not date_digits or not number:
+            continue
+        if date_digits in context_digits and number in context_digits:
+            continue
+        unverified.append(match.group(0).strip())
+    return unverified
 
 
 @app.route("/api/crime/catalog")
@@ -3677,6 +4630,7 @@ def crime_catalog():
 def crime_search():
     """Чистый поиск по УК РТ без языковой модели: что нашлось — то и показано."""
     data = request.get_json(silent=True) or {}
+    src_lang = _crime_source_lang(data)
     description = _crime_description(data)
     if not description:
         return jsonify({"error": "crime description is required"}), 400
@@ -3692,45 +4646,129 @@ def crime_search():
 
     grounded = grounded_crime_results(results)
     if not grounded:
-        return jsonify(_crime_not_found_payload(description, results, status_key="message"))
+        return jsonify(_crime_not_found_payload(description, results, status_key="message", lang=src_lang))
 
     return jsonify({
         "grounded": True,
+        "lang": src_lang,
         "query": description,
         "articles": [crime_article_payload(item) for item in grounded],
         "article_numbers": _allowed_article_numbers(grounded),
+        "related_norms": retrieve_related_norms(description),
         "crime_rag": crime_rag_status(),
     })
 
 
-def _crime_qualify_prompt(description, rag_results, allowed):
-    """Промпт разбора. Ответ обязан целиком помещаться в границы выдачи поиска."""
+CRIME_PROCEDURE_SOURCE = "УГОЛОВНО - ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx"
+CRIME_PROCEDURE_TOP = int(os.environ.get("CRIME_PROCEDURE_TOP", "3"))
+CRIME_PROCEDURE_MIN_SCORE = float(os.environ.get("CRIME_PROCEDURE_MIN_SCORE", "12.0"))
+CRIME_PROCEDURE_MAX_CHARS = int(os.environ.get("CRIME_PROCEDURE_MAX_CHARS", "2400"))
+# Слова, которые поднимают процессуальные статьи (заявление о преступлении,
+# права потерпевшего, доказательства), а не статьи о самом составе: «что делать»
+# человеку нужно из УПК, а не из УК. Без них поиск по описанию события
+# возвращал бы те же нормы, что и квалификация.
+CRIME_PROCEDURE_QUERY_SUFFIX = " заявление о преступлении потерпевший права доказательства возбуждение уголовного дела"
+
+
+def retrieve_crime_procedure(description):
+    """Статьи УПК РТ для блока «Что делать»: заявление, права потерпевшего, доказательства.
+
+    Возвращает до CRIME_PROCEDURE_TOP разных статей. Пусто — индекса УПК нет
+    или ничего достаточно близкого: тогда совет строится только из общих шагов
+    с пометкой, а не из выдуманных ссылок.
+    """
+    try:
+        index = load_related_rag_index(CRIME_PROCEDURE_SOURCE)
+        if not index.get("ready"):
+            return []
+        results = legal_rag.search(index, (description or "")[:400] + CRIME_PROCEDURE_QUERY_SUFFIX, top_k=10)
+    except Exception as error:  # noqa: BLE001
+        print("  [CRIME] поиск по УПК не удался (%s)" % type(error).__name__)
+        return []
+    picked, seen = [], set()
+    for item in results:
+        article = item.get("article")
+        if not article or article in seen:
+            continue
+        if float(item.get("lexical_score") or 0) < CRIME_PROCEDURE_MIN_SCORE:
+            continue
+        seen.add(article)
+        picked.append(item)
+        if len(picked) >= CRIME_PROCEDURE_TOP:
+            break
+    return picked
+
+
+def _crime_todo_rules(procedure_numbers, detailed):
+    """Правила блока «Что делать» — общие для краткого и полного режимов."""
+    if procedure_numbers:
+        source_rule = (
+            "- Шаги, которые опираются на приведённые ниже статьи УПК РТ, сопровождай ссылкой "
+            "«(ст. N УПК РТ)». Разрешены только эти статьи УПК: " + ", ".join(procedure_numbers) + "\n"
+            "- Шаги вне этих статей (сохранить доказательства, обратиться за медицинской помощью, к адвокату) "
+            "помечай «(общий совет)»"
+        )
+    else:
+        source_rule = (
+            "- Статей УПК под рукой нет: давай только общие шаги, каждый с пометкой «(общий совет)», "
+            "без номеров статей"
+        )
+    size = ("6-8 пронумерованных шагов, у каждого одна-две фразы: что сделать, куда и зачем"
+            if detailed else "3-5 коротких пронумерованных шагов, у каждого одна фраза")
+    return (
+        source_rule + "\n"
+        "- Пиши для пострадавшего или свидетеля; если описание от лица самого нарушителя, дай нейтральные "
+        "шаги: явка, помощь адвоката, последствия\n"
+        "- Не выдумывай телефоны, сроки, названия органов и размеры выплат, которых нет в приведённых статьях\n"
+        "- Объём: " + size
+    )
+
+
+def _crime_procedure_block(procedure):
+    if not procedure:
+        return ""
+    return ("\n\nСТАТЬИ УПК РТ ДЛЯ СОВЕТА «ЧТО ДЕЛАТЬ» (допустимый источник для шагов):\n"
+            + format_rag_context(procedure, max_chars=CRIME_PROCEDURE_MAX_CHARS))
+
+
+def _crime_qualify_prompt(description, rag_results, allowed, procedure=None, procedure_numbers=None):
+    """Промпт полного разбора. Ответ обязан целиком помещаться в границы выдачи поиска."""
     rag_context = format_rag_context(rag_results, max_chars=CRIME_RAG_MAX_CHARS)
     allowed_line = ", ".join(allowed)
+    todo_rules = _crime_todo_rules(procedure_numbers or [], detailed=True)
     return f"""Ты — юрист по уголовному праву Республики Таджикистан.
 
-ЗАДАЧА: квалифицировать деяние по УК РТ, опираясь ТОЛЬКО на приведённые ниже статьи.
+ЗАДАЧА: подробно квалифицировать деяние по УК РТ, опираясь ТОЛЬКО на приведённые ниже статьи, и подсказать пострадавшему, что делать.
 
 ОПИСАНИЕ ДЕЯНИЯ:
 {description}
 
-СТАТЬИ УК РТ, НАЙДЕННЫЕ ПОИСКОМ (единственный допустимый источник):
-{rag_context}
+СТАТЬИ УК РТ, НАЙДЕННЫЕ ПОИСКОМ (единственный допустимый источник для квалификации):
+{rag_context}{_crime_procedure_block(procedure)}
 
 ЖЁСТКИЕ ПРАВИЛА (нарушение любого делает ответ негодным):
-- Разрешено ссылаться только на статьи: {allowed_line}
-- Ни номеров, ни санкций, ни формулировок вне этих статей приводить нельзя
+- Для квалификации разрешено ссылаться только на статьи УК РТ: {allowed_line}
+- Ни номеров, ни санкций, ни формулировок вне приведённых статей приводить нельзя
 - Сроки и виды наказания бери дословно из текста статьи выше; если санкция
   во фрагменте не указана — так и напиши, не восстанавливай её по памяти
 - Только право Республики Таджикистан: упоминания РФ и её кодексов запрещены
 - Пиши сразу ответ, без рассуждений о том, как ты его строишь
-- Если приведённых статей не хватает для вывода, напиши прямо:
-  «Для полной квалификации найденных норм УК РТ недостаточно»
+- Фразу «Для полной квалификации найденных норм УК РТ недостаточно» пиши
+  ТОЛЬКО если ни одна из приведённых статей не подходит к деянию и основную
+  статью назвать нельзя. Если основная статья названа, эту фразу не пиши:
+  недостающие детали (часть, пункт, размер ущерба) укажи в «ФАКТЫ» одной
+  строкой «Не хватает фактов: ...»
+Правила раздела «ЧТО ДЕЛАТЬ»:
+{todo_rules}
 
-СТРУКТУРА ОТВЕТА:
+СТРУКТУРА ОТВЕТА (все семь разделов обязательны, названия не менять):
+
+ЧТО ДЕЛАТЬ ПОСТРАДАВШЕМУ
+   1. [шаг]
+   2. [шаг]
 
 1. КВАЛИФИКАЦИЯ
-   • Основная статья УК РТ: [номер и название из списка]
+   • Основная статья УК РТ: [номер, часть, пункт и название из списка]
    • Дополнительные статьи (совокупность): [из списка или «нет»]
 
 2. САНКЦИИ ПО ТЕКСТУ СТАТЬИ
@@ -3745,14 +4783,61 @@ def _crime_qualify_prompt(description, rag_results, allowed):
    • Смягчающие: [то же правило]
 
 5. ПРАВОВОЙ АНАЛИЗ
-   [1-2 абзаца строго по тексту приведённых статей]
+   [2-3 абзаца строго по тексту приведённых статей: почему именно эта статья, часть и пункт]
 
 6. ИТОГОВЫЙ ВЫВОД
    • Квалификация: [статья и часть]
    • Наказание по статье: [диапазон из текста статьи]"""
 
 
-def _crime_ollama_stream(prompt):
+def _crime_qualify_prompt_short(description, rag_results, allowed, procedure=None, procedure_numbers=None):
+    """Краткий режим: что делать, что грозит нарушителю и какие законы нарушены.
+
+    Заголовки разделов разбирает страница (ЧТО ДЕЛАТЬ / ЧТО ГРОЗИТ / КАКИЕ ЗАКОНЫ),
+    поэтому менять их нельзя.
+    """
+    rag_context = format_rag_context(rag_results, max_chars=CRIME_RAG_MAX_CHARS)
+    allowed_line = ", ".join(allowed)
+    todo_rules = _crime_todo_rules(procedure_numbers or [], detailed=False)
+    return f"""Ты — юрист по уголовному праву Республики Таджикистан.
+
+ЗАДАЧА: коротко и понятно для человека без юридического образования ответить на три вопроса: что делать в такой ситуации, что грозит нарушителю и какие статьи УК РТ нарушены. Опирайся ТОЛЬКО на приведённые ниже статьи.
+
+ОПИСАНИЕ ДЕЯНИЯ:
+{description}
+
+СТАТЬИ УК РТ, НАЙДЕННЫЕ ПОИСКОМ (единственный допустимый источник для квалификации):
+{rag_context}{_crime_procedure_block(procedure)}
+
+ЖЁСТКИЕ ПРАВИЛА:
+- Для квалификации разрешено ссылаться только на статьи УК РТ: {allowed_line}
+- Санкцию бери дословно из текста статьи; если во фрагменте её нет — так и напиши
+- Только право Республики Таджикистан: упоминания РФ и её кодексов запрещены
+- Пиши сразу ответ, без рассуждений о том, как ты его строишь
+- Выбери наиболее вероятную статью из приведённых, даже если часть фактов неизвестна:
+  назови её с пометкой «предварительно» и укажи, чего не хватает
+- «Установить нельзя» пиши ТОЛЬКО если ни одна из приведённых статей по смыслу
+  не относится к деянию
+Правила раздела «ЧТО ДЕЛАТЬ»:
+{todo_rules}
+
+СТРУКТУРА ОТВЕТА (строго три раздела, названия не менять, всего не больше 220 слов):
+
+1. ЧТО ДЕЛАТЬ ПОСТРАДАВШЕМУ
+   1. [шаг]
+   2. [шаг]
+
+2. ЧТО ГРОЗИТ НАРУШИТЕЛЮ
+   • Наказание по статье: [дословно из приведённого фрагмента]
+   • Отягчающие обстоятельства, которые могут усилить наказание: [если названы в статье, иначе «нет»]
+
+3. КАКИЕ ЗАКОНЫ НАРУШЕНЫ
+   • Основная статья УК РТ: [номер, часть, пункт и название из списка]
+   • Дополнительные статьи: [из списка или «нет»]
+   • Что именно нарушено: [одна фраза — какие признаки состава есть в описании]"""
+
+
+def _crime_ollama_stream(prompt, max_tokens=None):
     """Токены модели по мере генерации.
 
     `think: false` здесь решает исход. Qwen3 по умолчанию сначала пишет
@@ -3765,15 +4850,16 @@ def _crime_ollama_stream(prompt):
     модель объявляет 16k, а на CPU лишний контекст — это лишняя память и
     более медленный разбор промпта.
     """
-    for obj in llm_stream(CRIME_MODEL, prompt, temperature=0.2, num_predict=CRIME_MAX_TOKENS,
+    for obj in llm_stream(CRIME_MODEL, prompt, temperature=0.2, num_predict=max_tokens or CRIME_MAX_TOKENS,
                            top_p=0.9, think=False, keep_alive=CRIME_KEEP_ALIVE,
-                           num_ctx=CRIME_NUM_CTX, timeout=1800):
+                           num_ctx=CRIME_NUM_CTX, timeout=1800,
+                           openai_model=CRIME_GPT_MODEL):
         chunk = obj.get("response")
         if chunk:
             yield chunk
 
 
-def _crime_stream_events(prompt):
+def _crime_stream_events(prompt, max_tokens=None):
     """Токены модели плюс сигналы жизни, пока она молчит.
 
     До первого токена проходят минуты: разбор промпта, а на холодном старте
@@ -3787,7 +4873,7 @@ def _crime_stream_events(prompt):
 
     def worker():
         try:
-            for chunk in _crime_ollama_stream(prompt):
+            for chunk in _crime_ollama_stream(prompt, max_tokens):
                 events.put(("chunk", chunk))
         except LLMBackendError as error:
             events.put(("error", str(error)))
@@ -3811,10 +4897,15 @@ def _crime_stream_events(prompt):
         yield (kind, value)
 
 
-def _crime_unverified_note(unverified):
+def _crime_unverified_note(unverified, lang="ru"):
     """Приписка о ссылках мимо выдачи поиска."""
     if not unverified:
         return ""
+    if lang == "tg":
+        return (
+            "\n\n⚠️ RAG тасдиқ накардааст: моддаҳои " + ", ".join(unverified)
+            + " дар порчаҳои ёфташудаи КҶ ҶТ вуҷуд надоранд ва санҷида намешаванд."
+        )
     return (
         "\n\n⚠️ Не подтверждено RAG: статьи "
         + ", ".join(unverified)
@@ -3833,6 +4924,7 @@ def crime_qualify():
     по таймауту. С `{"stream": false}` эндпоинт отвечает одним JSON.
     """
     data = request.get_json(silent=True) or {}
+    src_lang = _crime_source_lang(data)
     description = _crime_description(data)
     if not description:
         return jsonify({"error": "crime description is required"}), 400
@@ -3847,43 +4939,62 @@ def crime_qualify():
 
     rag_results = grounded_crime_results(results)[:CRIME_QUALIFY_TOP_K]
     if not rag_results:
-        return jsonify(_crime_not_found_payload(description, results))
+        return jsonify(_crime_not_found_payload(description, results, lang=src_lang))
 
     allowed = _allowed_article_numbers(rag_results)
-    prompt = _crime_qualify_prompt(description, rag_results, allowed)
+    short = str(data.get("mode") or "").strip().lower() == "short"
+    procedure = retrieve_crime_procedure(description)
+    procedure_numbers = _allowed_article_numbers(procedure)
+    prompt = (_crime_qualify_prompt_short if short else _crime_qualify_prompt)(
+        description, rag_results, allowed, procedure, procedure_numbers)
+    # Ссылки в ответе проверяются по обоим кодексам: УК для квалификации, УПК для совета.
+    checkable = list(allowed) + [n for n in procedure_numbers if n not in allowed]
+    max_tokens = CRIME_MAX_TOKENS_SHORT if short else CRIME_MAX_TOKENS_FULL
     meta = {
         "grounded": True,
+        "mode": "short" if short else "full",
         "query": description,
         "primary_source": RAG_CODE_LABELS.get(CRIME_RAG_SOURCE_NAME, CRIME_RAG_SOURCE_NAME),
         "sources": [{"name": CRIME_RAG_SOURCE_NAME,
                      "label": RAG_CODE_LABELS.get(CRIME_RAG_SOURCE_NAME, CRIME_RAG_SOURCE_NAME)}],
         "article_numbers": allowed,
         "articles": [crime_article_payload(item) for item in rag_results],
+        "procedure": [crime_article_payload(item) for item in procedure],
+        # Справочно, в квалификацию и в проверку ссылок не входят.
+        "related_norms": retrieve_related_norms(description),
         "crime_rag": crime_rag_status(),
     }
 
     if data.get("stream") is False:
         try:
-            text = normalize_legal_terms("".join(_crime_ollama_stream(prompt)))
+            text = normalize_legal_terms("".join(_crime_ollama_stream(prompt, max_tokens)))
         except LLMBackendError as error:
             text = str(error)
         except Exception as error:  # noqa: BLE001
             text = f"⚠️ Ошибка генерации ответа: {error}"
-        unverified = _unverified_article_numbers(text, allowed)
+        unverified = _unverified_article_numbers(text, checkable)
+        summary = _crime_summary(text, src_lang)
+        if src_lang == "tg":
+            text = _crime_translate_answer(text)
         return jsonify(dict(
             meta,
-            qualification=text + _crime_unverified_note(unverified),
+            qualification=text + _crime_unverified_note(unverified, src_lang),
             unverified_articles=unverified,
+            summary=summary,
+            lang=src_lang,
         ))
 
     def generate():
-        yield json.dumps({"meta": meta}, ensure_ascii=False) + "\n"
+        yield json.dumps({"meta": dict(meta, lang=src_lang)}, ensure_ascii=False) + "\n"
         collected = []
-        for kind, value in _crime_stream_events(prompt):
+        for kind, value in _crime_stream_events(prompt, max_tokens):
             if kind == "chunk":
                 chunk = normalize_legal_terms(value)
                 collected.append(chunk)
-                yield json.dumps({"response": chunk}, ensure_ascii=False) + "\n"
+                # Таджикский ответ показывается целиком после перевода: русские токены на экране
+                # сменились бы таджикским текстом, а это сбивает с толку.
+                if src_lang != "tg":
+                    yield json.dumps({"response": chunk}, ensure_ascii=False) + "\n"
             elif kind == "wait":
                 # Признак жизни: держит соединение и показывает, что модель
                 # ещё не выдала ни одного токена.
@@ -3892,11 +5003,17 @@ def crime_qualify():
                 yield json.dumps({"response": "\n\n⚠️ " + value},
                                  ensure_ascii=False) + "\n"
 
-        unverified = _unverified_article_numbers("".join(collected), allowed)
+        answer_ru = "".join(collected)
+        unverified = _unverified_article_numbers(answer_ru, checkable)
+        summary = _crime_summary(answer_ru, src_lang)
+        if src_lang == "tg":
+            translated = _crime_translate_answer(answer_ru)
+            yield json.dumps({"response": translated}, ensure_ascii=False) + "\n"
         yield json.dumps({
             "done": True,
             "unverified_articles": unverified,
-            "note": _crime_unverified_note(unverified),
+            "note": _crime_unverified_note(unverified, src_lang),
+            "summary": summary,
         }, ensure_ascii=False) + "\n"
 
     return Response(
@@ -3930,10 +5047,84 @@ def _translate_split_point(buffer):
     return None
 
 
+CHAT_TG_RULES = (
+    "Сохрани разметку Markdown (**жирный**, списки, нумерацию) и пустые строки. Строки вида «### ключ» (латиницей) "
+    "и слова «КРИТЕРИЙ:» не меняй. Названия кодексов переводи принятыми формами: Гражданский кодекс Республики "
+    "Таджикистан — Кодекси граждании Ҷумҳурии Тоҷикистон, Трудовой — Кодекси меҳнат, Семейный — Кодекси оила, "
+    "Налоговый — Кодекси андоз, Уголовный — Кодекси ҷиноятӣ; «статья N» — «моддаи N», «часть» — «қисми», «пункт» — «банди». "
+    "Цитаты в «ёлочках» из текста закона оставь дословно по-русски. "
+)
+# Пока модель пишет по-русски, а перевод идёт кусками, блоки укрупняются: на каждый вызов уходит
+# секунда-две, и десяток коротких абзацев растянул бы ответ.
+CHAT_TG_LLM_MIN_BLOCK = 900
+
+
+def _llm_tajik_available():
+    """Перевод на таджикский моделью: только при облачном провайдере (там модель сильная)."""
+    return LLM_PROVIDER == "openai" and bool(OPENAI_API_KEY)
+
+
+def _tg_block_via_llm(block):
+    """Блок ответа на таджикском от модели; None — не вышло, тогда работает NLLB."""
+    try:
+        out = doc_lang.translate_text(block, "ru", "tg", _analysis_llm, kind="ответ юридического помощника",
+                                      rules=CHAT_TG_RULES, workers=1)
+        return out if len(out.strip()) >= len(block.strip()) * 0.35 else None
+    except Exception as error:  # noqa: BLE001
+        print("  [TG] перевод блока моделью не удался (%s)" % type(error).__name__)
+        return None
+
+
+def _tajik_translation_available():
+    return _llm_tajik_available() or lang_service.translator.available()
+
+
+def _questions_to_russian(texts):
+    """Таджикские реплики пользователя на русский: моделью, а при её недоступности NLLB."""
+    if _llm_tajik_available():
+        try:
+            out = doc_lang.translate_items(texts, "tg", "ru", _analysis_llm, kind="реплики пользователя юридического чата")
+            if out and len(out) == len(texts):
+                return out
+        except Exception as error:  # noqa: BLE001
+            print("  [TG] перевод вопроса моделью не удался (%s)" % type(error).__name__)
+    return lang_service.translator.translate(texts, "tg", "ru")
+
+
 def _translate_chat_stream(chunks, src, tgt):
     """Оборачивает поток Ollama переводом на язык пользователя."""
     buffer = ""
     final_obj = None
+    use_llm = tgt == "tg" and src == "ru" and _llm_tajik_available()
+
+    if use_llm:
+        # Блоки по очереди растягивали глубокий ответ до минуты: на каждый уходила своя секунда ожидания.
+        # Весь русский ответ готов раньше, чем его начнут переводить, поэтому куски идут параллельно.
+        full, last = [], None
+        for obj in chunks:
+            if obj.get("done"):
+                last = obj
+            full.append(obj.get("response") or "")
+        russian = "".join(full)
+        parts = doc_lang.split_paragraphs(russian, 3200) if russian.strip() else []
+
+        def _one(part):
+            done_part = _tg_block_via_llm(part)
+            if done_part is None:
+                done_part = lang_service.translator.translate_block(part, src, tgt)
+            return part if done_part is None else done_part
+
+        with ThreadPoolExecutor(max(1, min(4, len(parts) or 1))) as pool:
+            translated_parts = list(pool.map(_one, parts))
+        for piece in translated_parts:
+            yield json.dumps({"response": piece + "\n\n", "done": False}, ensure_ascii=False) + "\n"
+        done = dict(last or {})
+        done["done"] = True
+        done["response"] = ""
+        done["source_response"] = russian
+        done["lang"] = tgt
+        yield json.dumps(done, ensure_ascii=False) + "\n"
+        return
     # Русский оригинал уходит фронту вместе с последним куском и ложится в
     # историю диалога вместо перевода: на следующем ходу промпт должен остаться
     # русским, иначе модель получит в контексте язык, которого не знает.
@@ -3941,7 +5132,9 @@ def _translate_chat_stream(chunks, src, tgt):
 
     def _emit(block):
         source_text.append(block)
-        translated = lang_service.translator.translate_block(block, src, tgt)
+        translated = _tg_block_via_llm(block) if use_llm else None
+        if translated is None:
+            translated = lang_service.translator.translate_block(block, src, tgt)
         # Слой мог отвалиться посреди ответа. Отдать русский фрагмент честнее,
         # чем оборвать диалог на полуслове.
         return json.dumps(
@@ -3954,6 +5147,8 @@ def _translate_chat_stream(chunks, src, tgt):
             final_obj = obj
         buffer += obj.get("response") or ""
         while True:
+            if use_llm and len(buffer) < CHAT_TG_LLM_MIN_BLOCK and not obj.get("done"):
+                break
             cut = _translate_split_point(buffer)
             if cut is None:
                 break
@@ -3972,6 +5167,454 @@ def _translate_chat_stream(chunks, src, tgt):
     yield json.dumps(done, ensure_ascii=False) + "\n"
 
 
+CHAT_CLARIFY_ENABLED = os.environ.get("CHAT_CLARIFY", "1") != "0"
+# Шаг «понять вопрос» формулирует поиск на языке кодексов; от его качества зависит,
+# дойдёт ли до модели нужная статья. Поэтому он идёт на сильной модели (GPT_MODEL_DEEP)
+# и в быстром режиме тоже. CHAT_QUERY_STRONG=0 возвращает общую модель.
+CHAT_QUERY_STRONG = os.environ.get("CHAT_QUERY_STRONG", "1") != "0"
+CHAT_QUERIES_MAX = 3
+
+
+def _parse_json_object(raw):
+    """JSON-объект из ответа модели; терпит обёртку из ```json и лишний текст."""
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", raw, re.S)
+        if not match:
+            return None
+        try:
+            data = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return None
+    return data if isinstance(data, dict) else None
+
+
+_TG_LETTERS_RE = re.compile(r"[ӣӯқҳҷғӢӮҚҲҶҒ]")
+_CYRILLIC_RE = re.compile(r"[а-яёА-ЯЁ]")
+# Слова, которые сами по себе не называют предмет вопроса: «сколько штраф»,
+# «какой срок», «этот договор». Основы, а не формы, чтобы «штрафа» и «сроков»
+# тоже считались пустыми, а «срок исковой давности» — нет.
+_GENERIC_TOPIC_STEMS = (
+    "штраф", "срок", "размер", "ставк", "наказан", "ответственн", "договор",
+    "закон", "вопрос", "сумм", "прав", "какой", "сколько", "можно", "этот",
+    "ҷарима", "мӯҳлат", "шартнома", "чанд", "чӣ", "қадар", "аст", "чист",
+    "будет", "составля",
+)
+_GENERIC_TOPIC_STOP = {
+    "за", "по", "ли", "и", "в", "о", "на", "не", "что", "это", "ин",
+    # «Что делать?», «Оё мумкин аст?», «Чӣ кор кунам?» — вопрос без предмета.
+    "делать", "быть", "как", "оё", "мумкин", "кор", "кунам", "кардан", "бояд",
+}
+_FIRST_PERSON_RE = re.compile(
+    r"\b(я|меня|мне|мной|мною|мой|моя|моё|мои|мою|моих|моим|мы|нас|нам|"
+    r"ман|маро|манам|мо|моро)\b", re.I,
+)
+
+
+_FALLBACK_ASK = "К какой области права относится ваш вопрос?"
+_FALLBACK_OPTIONS = (
+    "Трудовое право", "Семейное право", "Гражданское право (договоры)",
+    "Уголовное право", "Налоговое право",
+)
+_SITUATION_ASK_RE = re.compile(r"что\s+(мне\s+)?делать|как\s+быть|куда\s+обращаться|чӣ\s+кор\s+кун", re.I)
+_DEMONSTRATIVE_RE = re.compile(
+    r"\b(этот|этого|этому|этим|данн\w+|ин)\s+(договор|документ|решени|шартнома|ҳуҷҷат|қарор)\w*", re.I,
+)
+
+
+def _topic_is_generic(topic):
+    words = re.findall(r"\w+", (topic or "").lower())
+    if not words:
+        return True
+    return all(w in _GENERIC_TOPIC_STOP or w.startswith(_GENERIC_TOPIC_STEMS) for w in words)
+
+
+def _vague_reason(original, machine_ru, has_history):
+    """Очевидно неясные формулировки, которые не стоит отдавать на усмотрение модели.
+
+    Её решение о переспросе недетерминировано: «сколько штраф» в трети случаев
+    проходил как готовый вопрос, и чат отвечал по случайной статье. Здесь только
+    то, что видно по самому тексту: вопрос целиком из слов без предмета, ссылка
+    «этот договор» без единой реплики истории, рассказ «меня уволили, что
+    делать» без деталей. Возвращает "no_topic", "no_facts" или None.
+    """
+    texts = [t for t in (original, machine_ru) if t]
+    # С историей «а сколько штраф?» продолжает разговор и понятно из контекста.
+    if not has_history and any(_topic_is_generic(re.sub(r"[?!.,]", " ", t)) for t in texts):
+        return "no_topic"
+    if not has_history and any(_DEMONSTRATIVE_RE.search(t) for t in texts):
+        return "no_topic"
+    joined = " ".join(texts)
+    if len(original.split()) <= 8 and _FIRST_PERSON_RE.search(joined) and _SITUATION_ASK_RE.search(joined):
+        return "no_facts"
+    return None
+
+
+def _understand_question(model, original, machine_ru, lang, prior_turns, allow_clarify, llm_kwargs=None):
+    """Один вызов модели до RAG: понять вопрос и решить, нужно ли переспросить.
+
+    Возвращает None при сбое (тогда чат работает по-старому, без переписывания)
+    или {"ru", "search", "clarify"}:
+      ru      — вопрос по-русски, самодостаточный (с учётом истории и ответа на
+                уточнение);
+      search  — русские юридические ключевые слова для поиска по кодексам;
+      clarify — None либо {"question", "options", "source"}, где source — тот же
+                вопрос с вариантами по-русски для истории диалога.
+
+    Зачем в одном вызове. Машинный перевод искажает таджикские вопросы («мӯҳлати
+    даъво» превращался в «сколько лет для подачи исков»), а BM25 по вопросу в
+    разговорной форме не находил нужную статью (ст. 93 об отпуске стояла ниже
+    пятёрки). Модель читает оригинал, видит перевод как подсказку и отдаёт и
+    чистую формулировку, и ключевые слова; решение о переспросе стоит рядом и
+    не требует второго обращения к провайдеру.
+    """
+    history = "\n".join(
+        f"{'Пользователь' if role == 'user' else 'Ассистент'}: {content}"
+        for role, content in prior_turns
+    ) or "нет"
+    clarify_rules = """
+УТОЧНЕНИЕ.
+topic — о какой норме, институте или документе идёт речь, 2–5 слов. Бери слова
+только из вопроса пользователя и истории, ничего не придумывай. Если предмет
+неясен, оставь пустую строку. Слова «штраф», «срок», «размер», «ставка»,
+«наказание», «договор», «закон», «можно ли» сами по себе предмет не называют.
+gap — чего не хватает для ответа, одно из трёх значений:
+  "no_topic" — предмета нет: вопрос обрывочный, не ясно, о чём речь (когда
+               спрашивают «сколько штраф» или «какой срок», не сказав за что и
+               чего; «можно ли расторгнуть этот договор» без указания договора);
+  "no_facts" — предмет есть, но пользователь не сказал, что именно произошло,
+               а от этого зависит всё (просто «меня уволили»);
+  "offtopic" — вопрос вообще не о праве и законах (погода, рецепты, программи-
+               рование, спорт): переспрашивать нечего, юридической нормы нет;
+  "none"     — отвечать можно сразу. Это значение по умолчанию: если назван
+               институт, норма, документ или действие, отвечай, даже когда часть
+               деталей опущена. Короткая оговорка в ответе лучше лишнего вопроса.
+ask и choices заполняй всегда, даже при gap="none": приложение может
+решить переспросить само. ask — один короткий вопрос пользователю (не повтор
+его вопроса), о самом важном. choices — 2–4 варианта ответа на ask: короткие
+(до 8 слов), не пересекаются, каждый отвечает на ask. Это возможные ответы
+самого пользователя (виды нарушений, типы договоров, основания, его статус), а
+не советы, не просьбы что-то сделать и не «да/нет». Если у вопроса вообще нет
+предмета (например, только «можно ли?» или «что делать?»), спроси, к какой области
+права он относится, а в choices дай области: трудовое, семейное, гражданское
+(договоры), уголовное, налоговое право. Не добавляй варианты
+«Другое», «Не указано», «Не знаю», «Уточнить невозможно»: интерфейс добавит
+своё «Другое» сам.
+""" if allow_clarify else """
+УТОЧНЕНИЕ. Пользователь уже ответил на твой уточняющий вопрос, переспрашивать
+нельзя: gap="none", ask и choices пустые.
+"""
+
+    prompt = f"""Ты помощник юриста по законодательству Республики Таджикистан.
+Задача: понять последний вопрос пользователя и подготовить его к поиску по
+кодексам РТ. Вопрос может быть на русском или таджикском (кириллицей).
+
+ru и search — ТОЛЬКО по-русски, даже если вопрос на таджикском: ни одного
+таджикского слова и ни одной таджикской буквы (ӣ ӯ қ ҳ ҷ ғ), никакого английского.
+ru — самодостаточная формулировка вопроса по-русски: с учётом истории диалога
+(если последняя реплика — ответ на твой уточняющий вопрос, объедини её с
+исходным вопросом). Сохраняй смысл точно, ничего не добавляй от себя и не
+переноси в вопрос темы, о которых пользователь не спрашивал. Не путай
+таджикское «ҷазо» (наказание) и «ҷарима» (штраф).
+queries — 2–3 коротких названия статей или институтов ТАК, КАК ОНИ НАЗВАНЫ В КОДЕКСАХ РТ, которые нужны для
+ответа (3–6 слов, именительный падеж), например «Размер алиментов на несовершеннолетних детей»,
+«Раздел имущества супругов», «Сроки выплаты заработной платы». Это важнее всего: бытовое «муж не платит» и
+кодексовое «взыскание алиментов» разные слова, и статью о размере поиск без такого названия не находит.
+domain — область права одним словом: "трудовое", "семейное", "гражданское", "уголовное", "налоговое",
+"процессуальное", "административное" или "" если неясно.
+search — 4–8 русских слов для поиска по названиям и тексту статей кодексов:
+юридические термины в именительном падеже, без вопросительных слов. Названия
+статей кодексов начинаются с «Продолжительность», «Размер», «Срок», «Ставка»,
+«Возраст», «Порядок», «Право», «Ответственность»: если спрашивают «сколько
+дней», «какой размер», «какой срок», «какая ставка», «с какого возраста»,
+добавь соответствующее слово.
+{clarify_rules}
+ask и choices пиши по-русски, даже если пользователь пишет на таджикском:
+приложение переведёт их само.
+
+История диалога:
+{history}
+
+Последний вопрос пользователя (оригинал):
+{original}
+
+Машинный перевод оригинала на русский (может быть неточным, это подсказка):
+{machine_ru}
+
+Ответь только JSON без пояснений:
+{{"topic": "...", "gap": "no_topic" или "no_facts" или "none", "ru": "...", "search": "...", "queries": ["..."], "domain": "...", "ask": "...", "choices": ["..."]}}"""
+
+    try:
+        raw = llm_once(model, prompt, 700, temperature=0.0, keep_alive=CHAT_KEEP_ALIVE,
+                       timeout=60, json_mode=True, **(llm_kwargs or {}))
+    except Exception as error:  # noqa: BLE001
+        # Шаг — надстройка над ответом: сбой не должен его блокировать, поэтому
+        # чат просто работает как раньше, по машинному переводу.
+        print("  [CHAT] понимание вопроса не удалось (%s)" % type(error).__name__)
+        return None
+
+    data = _parse_json_object(raw)
+    if not data:
+        print("  [CHAT] ответ шага «понять вопрос» не разобран: %r" % (raw or "")[:120])
+        return None
+
+    # «Да», «Нет», «Подробнее» не отвечают на уточняющий вопрос и в карточке
+    # выглядят как заглушка («Бале.», «На, на.» на таджикском).
+    filler = {"да", "нет", "подробнее", "другое", "иное", "не знаю", "не указано", "ещё", "еще"}
+
+    def _clean(items):
+        cleaned = []
+        for item in items or []:
+            item = str(item).strip().strip("-•* ").rstrip(".")
+            if item.lower().strip(" ,.!") in filler:
+                continue
+            if item and item.lower() not in [c.lower() for c in cleaned]:
+                cleaned.append(item[:90])
+        return cleaned[:4]
+
+    ru = str(data.get("ru") or "").strip()[:500]
+    search = str(data.get("search") or "").strip()[:200]
+    # Корпус русский: таджикские буквы или английский в этих полях делают поиск
+    # бесполезным (модель иногда так отвечает), тогда лучше машинный перевод.
+    # Иногда в ru просачивается пересказ инструкции: «С учётом истории диалога и
+    # перевода, …». Вводную часть отбрасываем, а если ссылка на историю или
+    # перевод осталась, поле бесполезно.
+    ru = re.sub(r"^\s*С учет[оа]м[^,:]{0,80}[,:]\s*", "", ru, flags=re.I)
+    if re.search(r"истори[июя] диалога|машинн\w* перевод|перевод\w* вопрос", ru, re.I):
+        ru = ""
+    if _TG_LETTERS_RE.search(ru) or not _CYRILLIC_RE.search(ru):
+        ru = ""
+    if _TG_LETTERS_RE.search(search) or not _CYRILLIC_RE.search(search):
+        search = ""
+
+    # Решение модели о переспросе недетерминировано (gpt-5-nano не принимает
+    # temperature): одна и та же «какой срок исковой давности» то проходила, то
+    # получала уточнение, а «сколько штраф» иногда отвечалась наугад. Поэтому
+    # опираемся на topic, который модель заполняет стабильнее: пустая или
+    # «пустая по смыслу» тема — переспрашиваем, названная — отвечаем.
+    gap = str(data.get("gap") or "").strip().lower()
+    topic = str(data.get("topic") or "").strip()
+    # no_facts относится к рассказу о собственной ситуации («меня уволили»).
+    # На безличных вопросах («какой срок…», «сколько дней…») модель ставила его
+    # наугад и переспрашивала там, где ответ лежит прямо в кодексе.
+    if gap == "no_facts" and not _FIRST_PERSON_RE.search(original + " " + machine_ru):
+        gap = "none"
+    # Названная конкретная тема отменяет «нет предмета». Обратное правило
+    # («тема пустая по смыслу, значит переспросить») не нужно и вредно: модель
+    # пишет темой одно слово «наказание» и на «что за кражу», а очевидно пустые
+    # формулировки целиком ловит _vague_reason ниже.
+    if gap == "no_topic" and topic and not _topic_is_generic(topic):
+        gap = "none"
+    # Область права названа («виды административных процедур» — маркеры Кодекса
+    # об административных процедурах): «нет предмета» от модели не принимается,
+    # она ставила его и на такие вопросы. Очевидно пустые формулировки («сколько
+    # штраф») ниже всё равно ловит _vague_reason.
+    if gap == "no_topic" and legal_rag.matched_codes(original + " " + machine_ru):
+        gap = "none"
+    vague = _vague_reason(original, machine_ru, bool(prior_turns))
+    gap = vague or gap
+
+    # «offtopic» принимается только когда в вопросе нет ни одного юридического
+    # маркера и нет истории: иначе редкая, но законная тема (без слов из
+    # CODE_HINTS) получила бы отказ вместо ответа.
+    offtopic = (
+        gap == "offtopic"
+        and not prior_turns
+        and not legal_rag.matched_codes(original + " " + machine_ru)
+    )
+    if gap == "offtopic":
+        gap = "none"
+
+    # Названия статей, как их пишет кодекс: каждое идёт отдельным запросом поиска.
+    # Чистятся так же, как подвопросы глубокого режима: русские строки без повторов.
+    queries = chat_modes.parse_subqueries(
+        {"queries": data.get("queries")}, base=ru or original, limit=CHAT_QUERIES_MAX)
+    result = {"ru": ru, "search": search, "queries": queries,
+              "domain": str(data.get("domain") or "").strip().lower()[:30],
+              "clarify": None, "offtopic": offtopic}
+    if allow_clarify and gap in ("no_topic", "no_facts"):
+        ask = str(data.get("ask") or "").strip()[:300]
+        options = _clean(data.get("choices"))
+        # Модель иногда подставляет в ask сам вопрос пользователя (или его
+        # пересказ): такой «уточняющий» вопрос бесполезен, лучше ответить, чем
+        # спросить то же самое.
+        echo = any(
+            difflib.SequenceMatcher(None, ask.lower(), (known or "").lower()).ratio() > 0.75
+            for known in (original, machine_ru, ru)
+        )
+        # Латиница в ask значит мусор («işti»): лучше ответить, чем показать это.
+        # Расширенная латиница (ş, ı, ü) тоже мусор, поэтому не только [A-Za-z].
+        latin = re.compile(r"[A-Za-zÀ-ɏ]")
+        if latin.search(ask) or any(latin.search(o) for o in options):
+            ask = ""
+        # Формулировка очевидно пустая («сколько штраф»), а модель на этот раз
+        # прислала негодные вопрос или варианты: без запасной карточки такой
+        # вопрос уходил в ответ по случайной статье. Запасной вопрос
+        # фиксированный, он не зависит от настроения модели.
+        if vague == "no_topic" and not (ask and len(options) >= 2 and not echo):
+            ask, options, echo = _FALLBACK_ASK, list(_FALLBACK_OPTIONS), False
+        if ask and len(options) >= 2 and not echo:
+            # Модель пишет ask и choices только по-русски, а таджикоязычному
+            # пользователю их переводит встроенный переводчик: таджикский
+            # текст самой модели то приходил русским, то с мусором, а русская
+            # карточка в таджикском диалоге выглядит как «система не поняла».
+            shown_ask, shown_options = ask, options
+            if lang == "tg":
+                translated = _tajik_cards([ask] + options)
+                if translated and len(translated) == len(options) + 1:
+                    shown_ask, shown_options = translated[0], list(translated[1:])
+            result["clarify"] = {
+                "question": shown_ask,
+                "options": shown_options,
+                # В историю диалога уходит русская версия: промпт русский.
+                "source": ask + "\n" + "\n".join(f"- {option}" for option in options),
+            }
+    return result
+
+
+# Заголовки статей кодексов строятся по одному шаблону: «Продолжительность …»,
+# «Размер …», «Ставки …», «Возраст, с которого …». Вопрос «сколько дней отпуска»
+# этих слов не содержит, и BM25 поднимал статьи, где «отпуск» есть в заголовке
+# чаще, а ст. 93 «Продолжительность ежегодного основного минимального отпуска»
+# в выдачу не попадала, хотя ответ (24 дня) лежит именно в ней. Модель, которую
+# просили добавить такое слово в ключевые слова, подсказку игнорировала.
+_TITLE_WORD_HINTS = (
+    (re.compile(r"сколько\s+(?:дней|месяцев|лет|времени)|как\s+долго|сколько\s+длится", re.I),
+     "продолжительность"),
+    (re.compile(r"какой\s+срок|на\s+какой\s+срок", re.I), "срок"),
+    (re.compile(r"какой\s+размер|какая\s+сумма|сколько\s+(?:штраф|составля|платить|платят)", re.I),
+     "размер"),
+    (re.compile(r"какая\s+ставка|какой\s+процент|сколько\s+процентов|какие\s+ставки", re.I), "ставка ставки"),
+    (re.compile(r"с\s+какого\s+возраста|в\s+каком\s+возрасте|какой\s+возраст", re.I), "возраст"),
+)
+
+
+# Название кодекса и страны в ключевых словах разбавляют долю слов заголовка,
+# по которой движок начисляет бонус: «ежегодный отпуск Трудовой кодекс
+# Таджикистан» ст. 93 не находил, а «ежегодный отпуск продолжительность» находил.
+# Выбор кодекса делает основной запрос (route_codes), здесь эти слова лишние.
+_SEARCH_NOISE_RE = re.compile(
+    r"\b\w+(?:ый|ой|ая|ого|ом)\s+кодекс\w*|\b(?:кодекс\w*|таджикистан\w*|республик\w*|рт|тк|ук|гк|нк|ск)\b",
+    re.I,
+)
+
+
+def _augment_search(search, question):
+    """Ключевые слова поиска: без названия кодекса и со словами шаблонных заголовков."""
+    words = re.sub(r"\s+", " ", _SEARCH_NOISE_RE.sub(" ", search or "")).strip()
+    extra = [hint for pattern, hint in _TITLE_WORD_HINTS if pattern.search(question or "")]
+    return (words + " " + " ".join(extra)).strip()
+
+
+def _no_basis_note(question):
+    """Пояснение к отказу «нормы в базе нет»: что именно отсутствует."""
+    note = "\n\nВ подключённой базе кодексов РТ подходящей нормы для этого вопроса не нашлось."
+    if re.search(r"штраф|размер\w*\s+наказан|административн", question or "", re.I):
+        note += (
+            " Размеры административных штрафов устанавливает материальная часть Кодекса об "
+            "административных правонарушениях, а в базе есть только процессуальный кодекс "
+            "(порядок производства по делам), без сумм. Точный размер штрафа назвать не могу: "
+            "проверьте его в действующей редакции Кодекса об административных правонарушениях Республики Таджикистан."
+        )
+    else:
+        note += " Уточните формулировку или проверьте вопрос по официальному тексту закона."
+    return note
+
+
+def _retrieve_chat_merged(queries, top_k):
+    """Выдача нескольких запросов вперемешку: первый, второй, первый, второй…
+
+    По одной формулировке нужная статья то поднималась, то нет: по вопросу
+    «сколько дней отпуска положено работнику» ст. 93 о продолжительности отпуска
+    стояла восьмой, а по ключевым словам «ежегодный основной минимальный отпуск»
+    первой; ставка НДС (ст. 264) вовсе выпадала, и модель называла число из
+    головы. Чередование берёт лучшее из обоих списков и стоит одного лишнего
+    BM25-запроса, а не обращения к модели.
+    """
+    index = load_chat_rag_index()
+    lists = [retrieve_rag(query, top_k=top_k, index=index) for query in queries if query]
+    merged, seen = [], set()
+    for rank in range(top_k):
+        for results in lists:
+            if rank >= len(results):
+                continue
+            item = results[rank]
+            key = (item.get("source"), item.get("title"), (item.get("text") or "")[:60])
+            if key not in seen:
+                seen.add(key)
+                merged.append(item)
+    return merged[:top_k + 2]
+
+
+def _prefer_domain_codes(results, texts, limit):
+    """Статьи кодекса, о котором идёт речь, выше статей чужого кодекса.
+
+    «При разводе как делится имущество» находило Гражданский кодекс (ст. 326,
+    общая долевая собственность) рядом с Семейным (ст. 38, имущество супругов), и
+    слабая модель отвечала по ГК: закон не тот, а уверенность прежняя. Область
+    определяется по словам вопроса и названий статей (маркеры кодексов в
+    legal_rag). Подавляются только кодексы, у которых совпадений меньше половины
+    от лучшего, так что спор на стыке отраслей не теряет нужных норм. Порядок
+    внутри групп сохраняется. Нет явной области — выдача не меняется.
+    """
+    hits = legal_rag.matched_codes(" ".join(t for t in texts if t))
+    if not hits:
+        return results[:limit]
+    best = max(hits.values())
+    primary = {source for source, count in hits.items() if count * 2 >= best}
+    own = [item for item in results if item.get("source") in primary]
+    other = [item for item in results if item.get("source") not in primary]
+    return (own + other)[:limit]
+
+
+def _tajik_cards(texts):
+    """Русские тексты карточки -> таджикские; None, если перевести нечем.
+
+    Сначала модель (при облачном провайдере), затем локальный NLLB: карточки и вопросы короткие,
+    и модель переводит их заметно естественнее.
+    """
+    if _llm_tajik_available():
+        try:
+            out = doc_lang.translate_items(list(texts), "ru", "tg", _analysis_llm, kind="элементы интерфейса юридического чата")
+            if out and len(out) == len(texts) and any(a != b for a, b in zip(out, texts)):
+                return out
+        except Exception as error:  # noqa: BLE001
+            print("  [TG] перевод карточки моделью не удался (%s)" % type(error).__name__)
+    if not lang_service.translator.available():
+        return None
+    return lang_service.translator.translate(texts, "ru", "tg")
+
+
+def _plan_subqueries(model, question, llm_kwargs=None):
+    """Режим «глубина»: разбить ситуацию на юридические подвопросы для поиска.
+
+    Один запрос к кодексам находит статьи по самой яркой части рассказа
+    («уволили»), а долг по зарплате, срок обращения в суд и порядок расчёта
+    остаются без нормы. Каждый подвопрос идёт отдельным поисковым запросом.
+    Сбой не блокирует ответ: без подвопросов чат ищет по основному запросу.
+    """
+    try:
+        raw = llm_once(model, chat_modes.subquery_prompt(question), 400, temperature=0.0,
+                       keep_alive=CHAT_KEEP_ALIVE, timeout=60, json_mode=True, **(llm_kwargs or {}))
+    except Exception as error:  # noqa: BLE001
+        print("  [CHAT] разбиение на подвопросы не удалось (%s)" % type(error).__name__)
+        return []
+    return chat_modes.parse_subqueries(_parse_json_object(raw), base=question)
+
+
+# Служебная метка контекста. Правило в промпте «не пиши это в ответе» модель
+# игнорирует (в ответах встречалась и латиницей, «PROVERENNAYA SSILKA RAG»),
+# поэтому метка заменяется на нейтральное «Источник:» прямо в потоке.
+_RAG_LABEL_RE = re.compile(
+    r"ПРОВЕРЕННАЯ\s+ССЫЛКА(?:\s+RAG)?\s*:?|PROVERENNAYA\s+\w+\s+RAG\s*:?", re.I,
+)
+_RAG_LABEL_HOLD = 56
+
+
 def stream_chat_response(payload):
     message = (payload.get("message") or "").strip()
     history = payload.get("history") or []
@@ -3979,23 +5622,54 @@ def stream_chat_response(payload):
     temperature = max(0.0, min(float(payload.get("temperature", 0.2)), 0.3))
     personality = payload.get("personality") or "professional"
 
-    system_prompts = {
-        "professional": "Вы профессиональный юрист по законодательству Республики Таджикистан. Отвечайте точно, структурированно и на русском языке. Используйте ТОЛЬКО законы РТ, никогда не упоминайте РФ.",
-        "friendly": "Вы дружелюбный юридический помощник по законодательству Республики Таджикистан. Объясняйте простым языком, но юридически аккуратно. Только законы РТ.",
-        "concise": "Вы краткий юридический эксперт по законодательству Республики Таджикистан. Только суть, риски и практические шаги. Только законы РТ.",
-    }
+    # Роль (юрист / адвокат) и глубина (скорость / глубина) выбираются в
+    # интерфейсе. Клиенты, которые их не присылают, получают «юриста» и
+    # «скорость»: значения из .env, то есть прежнее поведение.
+    role = chat_modes.normalize_role(payload.get("role"))
+    profile = chat_modes.depth_profile(
+        payload.get("depth"), CHAT_RAG_TOP_K, CHAT_RAG_MAX_CHARS, CHAT_MAX_TOKENS
+    )
+    deep = profile.depth == "deep"
+
+    # В глубоком режиме служебные шаги (понять вопрос, разбить на подвопросы)
+    # тоже идут на сильной модели: слабая для одной и той же ситуации давала то
+    # «затопление, ущерб», то «забота, обида» и ничего полезного для поиска.
+    aux_kwargs = {}
+    if deep and chat_modes.strong_model():
+        aux_kwargs = {"openai_model": chat_modes.strong_model(), "reasoning_effort": chat_modes.strong_effort()}
+    # Шаг «понять вопрос» нужен в любом режиме. В быстром он идёт на той же сильной
+    # модели, но без размышлений: короткий JSON, а не рассуждение.
+    understand_kwargs = aux_kwargs
+    if not deep and CHAT_QUERY_STRONG and chat_modes.strong_model():
+        understand_kwargs = {"openai_model": chat_modes.strong_model(), "reasoning_effort": "minimal"}
 
     # Язык берётся из самого вопроса, а не из переключателя локали: спросить
     # по-таджикски пользователь может и на русской версии интерфейса. Локаль
     # страницы остаётся значением по умолчанию для случаев, где сигнала нет.
     lang = lang_service.detect_lang(message, default=payload.get("lang"))
 
+    # Составленный в этом диалоге документ нужен целиком, если его просят
+    # поправить, а реплики истории ниже режутся: берём его до нарезки.
+    prev_doc = chat_modes.previous_document(history)
+
     turns = []
-    for item in history[-4:]:
-        role = item.get("role")
+    for item in history[-profile.history_turns:]:
+        speaker = item.get("role")
         content = (item.get("content") or "").strip()
-        if role in ["user", "ai"] and content:
-            turns.append([role, content[:600]])
+        if speaker in ["user", "ai"] and content:
+            turns.append([speaker, content[:profile.history_chars]])
+    current_in_history = (bool(turns) and turns[-1][0] == "user"
+                          and turns[-1][1] == message[:profile.history_chars])
+
+    # Ответ на уточнение — часто одно-два слова («16 сол»), по которым язык не
+    # определить: детектор принимал их за русский, и продолжение таджикского
+    # диалога приходило по-русски. Язык берём у исходного вопроса.
+    clarified = bool(payload.get("clarified"))
+    if clarified and len(message) <= 40:
+        earlier = [content for role, content in (turns[:-1] if current_in_history else turns)
+                   if role == "user"]
+        if earlier:
+            lang = lang_service.detect_lang(earlier[-1], default=lang)
 
     # Корпус кодексов РТ русский — таджикских текстов в storage/app/rag нет.
     # Поэтому таджикский вопрос переводится в русский поисковый запрос: без
@@ -4012,9 +5686,7 @@ def stream_chat_response(payload):
         # который не читает. Ответы ассистента фронт присылает уже по-русски
         # (source_response), поэтому второй раз их переводить не нужно.
         user_turns = [turn for turn in turns if turn[0] == "user"]
-        translated = lang_service.translator.translate(
-            [message] + [turn[1] for turn in user_turns], "tg", "ru"
-        )
+        translated = _questions_to_russian([message] + [turn[1] for turn in user_turns])
         # Длины совпадают по построению translate(), но обращение по индексу
         # надёжнее итератора: StopIteration внутри генератора стал бы
         # RuntimeError и уронил бы весь ответ (PEP 479).
@@ -4023,10 +5695,123 @@ def stream_chat_response(payload):
             for turn, text in zip(user_turns, translated[1:]):
                 turn[1] = text
 
-    rag_results = [] if smalltalk else retrieve_rag(
-        search_query, top_k=CHAT_RAG_TOP_K, index=load_chat_rag_index()
-    )
-    rag_context = format_rag_context(rag_results, max_chars=CHAT_RAG_MAX_CHARS)
+    # Фронт присылает историю вместе с текущей репликой (она последняя), а
+    # другие клиенты могут её не включать. Предыдущие ходы нужны шагу
+    # «понять вопрос»: без них ответ на уточнение («16 сол») не к чему приложить.
+    prior_turns = list(turns[:-1]) if current_in_history else list(turns)
+
+    # clarified=True приходит, когда текущая реплика — ответ на нашу карточку
+    # с вариантами. Повторно переспрашивать после ответа нельзя: диалог
+    # зациклился бы, поэтому шаг вызывается с allow_clarify=False.
+    # Просьба составить договор, заявление, иск и т. п. (или поправить только
+    # что составленный документ). Смотрим и оригинал, и перевод с таджикского.
+    # Если в просьбе не хватает главного (какой договор, с кем), чат сначала
+    # спрашивает: документ с угаданными сторонами хуже, чем один короткий вопрос.
+    # Состояние диалога приходит со страницей (doc_state) и возвращается с карточкой.
+    doc = None
+    if not smalltalk and not (payload.get("context") or "").strip():
+        doc_plan = doc_dialog.plan_document(
+            message, search_query if search_query != message else "", prev_doc,
+            payload.get("doc_state"), lang, translate=_tajik_cards,
+        )
+        if doc_plan and doc_plan.ask:
+            card = doc_plan.ask
+            yield json.dumps({
+                "response": "",
+                "clarify": {"question": card["question"], "options": card["options"]},
+                "doc_state": doc_plan.state,
+                "source_response": card["source"],
+                "lang": lang,
+                "done": True,
+            }, ensure_ascii=False) + "\n"
+            return
+        if doc_plan and doc_plan.doc:
+            doc = doc_plan.doc
+            if doc_plan.request_text and not doc.edit:
+                # Просьба, собранная из первого сообщения и ответов на вопросы:
+                # одно слово «Аренды» само по себе поиску и модели ничего не даст.
+                search_query = doc_plan.request_text
+
+    # Этапы ответа уходят странице отдельными строками потока. Она показывает их,
+    # только если ответа нет дольше 25 секунд: пользователь видит, на чём чат.
+    def _stage(key, **fmt):
+        return json.dumps(chat_modes.stage_event(key, lang, **fmt), ensure_ascii=False) + "\n"
+
+    rag_queries = [search_query]
+    understood = None
+    if CHAT_CLARIFY_ENABLED and not smalltalk and not (payload.get("context") or "").strip():
+        # Документ составляется сразу, с заглушками для неизвестных данных:
+        # карточка «к какой области права относится вопрос» на «составь
+        # договор аренды» только раздражала бы. Правке документа понимание
+        # вопроса не нужно вовсе: запрос и так короткий и ясный.
+        # Документу понимание вопроса тоже не нужно: запрос уже собран диалогом
+        # (вид, суть, сторона), а нужные статьи задают document_queries.
+        if not doc:
+            yield _stage("understand")
+            understood = _understand_question(
+                model, message, search_query, lang, prior_turns,
+                allow_clarify=(not doc and not clarified and payload.get("clarify") is not False),
+                llm_kwargs=understand_kwargs,
+            )
+
+    if understood and understood.get("offtopic"):
+        reply = ("Я юридический помощник по законодательству Республики Таджикистан, "
+                 "и на этот вопрос ответить не могу. Задайте вопрос о законах РТ: договорах, "
+                 "труде, семье, налогах, уголовной или административной ответственности.")
+        if lang == "tg":
+            translated = _tajik_cards([reply])
+            if translated:
+                reply = translated[0]
+        yield json.dumps({"response": reply, "source_response": reply, "lang": lang, "done": True},
+                         ensure_ascii=False) + "\n"
+        return
+
+    if understood and understood["clarify"]:
+        card = understood["clarify"]
+        yield json.dumps({
+            "response": "",
+            "clarify": {"question": card["question"], "options": card["options"]},
+            "source_response": card["source"],
+            "lang": lang,
+            "done": True,
+        }, ensure_ascii=False) + "\n"
+        return
+
+    if understood and understood["ru"]:
+        # Чистая русская формулировка от модели точнее машинного перевода и
+        # уже учитывает ответ на уточнение; ключевые слова помогают BM25
+        # поднять статью, которую разговорная форма вопроса не находила.
+        search_query = understood["ru"]
+        rag_queries = [search_query, _augment_search(understood["search"], search_query)]
+        # Названия статей «как в кодексе»: так находятся нормы, которых бытовая
+        # формулировка не задевает (размер алиментов, раздел имущества супругов).
+        rag_queries += understood.get("queries") or []
+    elif clarified:
+        # Понять вопрос не удалось: хотя бы склеим уточнение с исходным вопросом.
+        prior_user = [content for role, content in prior_turns if role == "user"]
+        if prior_user:
+            search_query = f"{prior_user[-1]}. Уточнение пользователя: {search_query}"
+            rag_queries = [search_query]
+
+    # Документу нужны статьи, которых в просьбе не названо (форма сделки,
+    # существенные условия, содержание иска), а сложной ситуации в режиме
+    # «глубина» — по отдельной статье на каждый юридический подвопрос.
+    rag_top_k, rag_max_chars = profile.top_k, profile.max_chars
+    if doc:
+        rag_top_k, rag_max_chars = max(rag_top_k, 8), max(rag_max_chars, 9000)
+        rag_queries = rag_queries + chat_modes.document_queries(doc)
+    if profile.subqueries and not smalltalk and not (doc and doc.edit):
+        yield _stage("plan")
+        rag_queries = rag_queries + _plan_subqueries(model, search_query, aux_kwargs)
+
+    if not smalltalk:
+        yield _stage("search")
+    rag_results = [] if smalltalk else _retrieve_chat_merged(rag_queries, rag_top_k)
+    if rag_results:
+        rag_results = _prefer_domain_codes(rag_results, rag_queries, rag_top_k + 2)
+    if not smalltalk:
+        yield _stage("found", n=len(rag_results))
+    rag_context = format_rag_context(rag_results, max_chars=rag_max_chars)
     sources = [
         f"[{i + 1}] {item.get('source')} / {item.get('title')}"
         for i, item in enumerate(rag_results)
@@ -4055,11 +5840,51 @@ def stream_chat_response(payload):
 Если вносить нечего, эту строку не добавляй.
 """
 
+    role_line = chat_modes.system_line(role, personality)
+
+    # Документ — самый ответственный вид ответа: его составляет сильная модель
+    # и в быстром режиме, если она задана (GPT_MODEL_DEEP).
+    gen_model, gen_effort = profile.openai_model, profile.reasoning_effort
+    if doc:
+        gen_model = gen_model or chat_modes.strong_model()
+        gen_effort = gen_effort or chat_modes.strong_effort()
+
+    # Ответ строится по формату роли и глубины, а документ — по указаниям для
+    # его вида. Правила цитирования и юрисдикции ниже общие для обоих.
+    if doc:
+        length_rule = "- Ответ — это сам документ: полный текст, без сокращений и многоточий вместо пунктов"
+        first_line_rule = ""
+        answer_block = chat_modes.document_block(doc, role, prev_doc)
+    else:
+        length_rule = chat_modes.length_rule(profile.depth)
+        first_line_rule = """- Первой строкой дай прямой ответ на вопрос (число, срок, ставка, размер,
+  возраст, санкция), если он есть во фрагментах ниже, и сразу за ним ссылку на
+  статью. Не начинай с «К сожалению» и не говори, что ответа нет, если точная
+  цифра во фрагментах присутствует: прочитай фрагменты целиком
+"""
+        answer_block = chat_modes.format_block(role, profile.depth)
+
+    if doc:
+        no_ref_rule = "- Если такой строки нет, пиши пункт документа без ссылки на статью"
+        no_basis_block = (
+            "Документ составляй в любом случае: даже если подходящих фрагментов мало, дай рабочий "
+            "текст по общим правилам и честно отметь в разделе «Что заполнить и проверить», "
+            "какие нормы проверить по действующей редакции закона."
+        )
+    else:
+        no_ref_rule = "- Если такой строки нет, напиши: «Точная статья в нашей базе законов не найдена»"
+        no_basis_block = """ЕСЛИ ОТВЕТА НА ВОПРОС В ФРАГМЕНТАХ НИЖЕ НЕТ (нужного кодекса нет в подключённой
+базе или фрагменты относятся к другой теме) — НЕ пытайся угадать и не рассуждай
+абстрактно. Прямо и одной-двумя фразами скажи, какого именно закона или кодекса РТ
+не хватает в базе и что поэтому точный ответ назвать не можешь. Это честный и
+полезный ответ — он лучше, чем расплывчатые рассуждения. Отвечай только на тот
+вопрос, который задан: не подставляй темы, о которых пользователь не спрашивал."""
+
     if smalltalk:
         # Правила цитирования здесь только мешают: на «салом» модель начинала
         # добросовестно искать норму и приписывала в конец «Точная ссылка не
         # подтверждена RAG».
-        prompt = f"""{system_prompts.get(personality, system_prompts["professional"])}
+        prompt = f"""{role_line}
 
 Пользователь поздоровался или поблагодарил, юридического вопроса он не задал.
 Ответь ОДНОЙ короткой фразой: поздоровайся в ответ и предложи задать вопрос по
@@ -4070,19 +5895,30 @@ def stream_chat_response(payload):
 {message}
 """
     else:
-        prompt = f"""{system_prompts.get(personality, system_prompts["professional"])}
+        prompt = f"""{role_line}
 
 КРИТИЧЕСКИ ВАЖНО - ЮРИСДИКЦИЯ:
 - Используй ТОЛЬКО законы Республики Таджикистан
 - ЗАПРЕЩЕНО: "РФ", "Россия", "ГК РФ", "ТК РФ", "НК РФ", "Российская Федерация"
-- Разрешено ТОЛЬКО: "РТ", "ГК РТ", "кодекс РТ", "Республика Таджикистан"
+- Разрешено ТОЛЬКО: «Республика Таджикистан», «Гражданский кодекс Республики Таджикистан» и т. д.
 
 Правила RAG:
 - Используй фрагменты кодексов РТ ниже как основной справочный материал
 - Цитируй главу и статью только из строки «ПРОВЕРЕННАЯ ССЫЛКА RAG»
-- Если такой строки нет, напиши: «Точная ссылка не подтверждена RAG»
+  (в самом ответе называй норму по образцу «Трудовой кодекс Республики Таджикистан,
+  статья 158»: полное название кодекса, которому принадлежит фрагмент, и номер статьи,
+  без угловых скобок; служебные слова «ПРОВЕРЕННАЯ ССЫЛКА RAG» не пиши и не переводи)
+{no_ref_rule}
 - Не выдумывай номера статей, главы или название кодекса
-- Отвечай по существу: до 6 коротких абзацев или пунктов
+- Не выдумывай номера и даты законов о внесении изменений («Закон РТ от ... №...») —
+  указывай их, только если они дословно есть в переданных фрагментах ниже
+{length_rule}
+{first_line_rule}- Если в вопросе упомянуто право другой страны, не сравнивай и не излагай его:
+  ответь по законодательству РТ и одной фразой отметь, что отвечаешь по праву Республики Таджикистан
+
+{no_basis_block}
+
+{answer_block}
 
 Релевантные фрагменты кодексов Республики Таджикистан:
 {rag_context if rag_context else "RAG-контекст не найден."}
@@ -4097,7 +5933,7 @@ def stream_chat_response(payload):
 {chr(10).join(sources) if sources else "Нет найденных источников."}
 """
 
-    num_predict = 120 if smalltalk else CHAT_MAX_TOKENS
+    num_predict = 120 if smalltalk else (profile.doc_tokens if doc else profile.max_tokens)
     allowed_articles = _allowed_article_numbers(rag_results)
 
     def _generation_stream():
@@ -4116,22 +5952,87 @@ def stream_chat_response(payload):
         # is appended as a trailing note rather than rewriting anything
         # already streamed.
         full_text = []
+        # Хвост в _RAG_LABEL_HOLD символов придерживается до следующего куска:
+        # метка может прийти разорванной между двумя токенами.
+        pending = ""
         for obj in llm_stream(model, prompt, temperature=temperature, num_predict=num_predict,
-                               top_p=0.85, think=False, keep_alive=CHAT_KEEP_ALIVE, timeout=600):
-            if obj.get("response"):
-                obj["response"] = normalize_legal_terms(obj["response"])
-                full_text.append(obj["response"])
+                               top_p=0.85, think=False, keep_alive=CHAT_KEEP_ALIVE, timeout=600,
+                               openai_model=gen_model, reasoning_effort=gen_effort):
+            pending = _RAG_LABEL_RE.sub("Источник:", pending + (obj.get("response") or ""))
+            # Сокращения («ГК РТ», «ст.») раскрываются здесь, до показа и до
+            # перевода на таджикский: полные названия переводятся точнее.
+            pending = chat_modes.expand_abbreviations(pending)
+            pending = chat_modes.humanize(pending)
             if obj.get("done"):
-                unverified = _unverified_article_numbers("".join(full_text), allowed_articles)
+                ready, pending = pending, ""
+            else:
+                cut = max(0, len(pending) - _RAG_LABEL_HOLD)
+                ready, pending = pending[:cut], pending[cut:]
+            ready = normalize_legal_terms(ready) if ready else ""
+            obj["response"] = ready
+            if ready:
+                full_text.append(ready)
+            elif not obj.get("done"):
+                continue
+            if obj.get("done"):
+                answer_text = "".join(full_text)
+                # Провайдер иногда закрывает поток без единого символа (сбой,
+                # исчерпанный бюджет на «размышления»): пустой пузырь в чате
+                # выглядит как зависание.
+                if not answer_text.strip():
+                    obj["response"] = ("⚠️ Модель не вернула ответ. Повторите запрос или "
+                                       "переключитесь на режим «Скорость».")
+                    yield obj
+                    return
+                # Модель нередко отказывает одной фразой «Точная ссылка не
+                # подтверждена RAG» без объяснений: пользователь не понимает,
+                # чего именно в базе нет.
+                if len(answer_text.strip()) < 120 and "в нашей базе законов не найдена" in answer_text:
+                    obj["response"] = (obj.get("response") or "") + _no_basis_note(search_query)
+                unverified = _unverified_article_numbers(answer_text, allowed_articles)
                 if unverified:
                     obj["response"] = (obj.get("response") or "") + (
-                        "\n\n⚠️ Не подтверждено RAG: статьи " + ", ".join(unverified)
-                        + " не входят в подборку фрагментов кодексов РТ для этого ответа и проверке не подлежат."
+                        "\n\n⚠️ Не подтверждено по базе законов: статьи " + ", ".join(unverified)
+                        + " не найдены среди статей, по которым составлен этот ответ. Проверьте их по тексту закона."
                     )
+                unverified_laws = _unverified_law_references(answer_text, rag_context)
+                if unverified_laws:
+                    obj["response"] = (obj.get("response") or "") + (
+                        "\n\n⚠️ Не подтверждено по базе законов: ссылки на закон(ы) " + "; ".join(unverified_laws)
+                        + " не найдены среди статей, по которым составлен этот ответ. Не полагайтесь на эту дату и номер без проверки."
+                    )
+                # Цифра статьи совпала с найденной, но статья с таким номером
+                # найдена в другом кодексе: «ст. 39 ГК РТ» вместо «ст. 39 ТК РТ».
+                wrong_code = chat_modes.misattributed_citations(answer_text, rag_results)
+                if wrong_code:
+                    obj["response"] = (obj.get("response") or "") + (
+                        "\n\n⚠️ Проверьте кодекс: " + "; ".join(wrong_code[:3]) + "."
+                    )
+                # В глубоком режиме модель обязана цитировать статью дословно:
+                # цитата, которой нет в тексте найденной статьи, — выдумка или
+                # вольный пересказ, и пользователь должен об этом знать.
+                if deep:
+                    bad_quotes = chat_modes.unverified_quotes(
+                        answer_text, [item.get("text") for item in rag_results],
+                        message, *[content for _, content in turns],
+                    )
+                    if bad_quotes:
+                        shown = "; ".join("«%s»" % (q if len(q) <= 90 else q[:87] + "…") for q in bad_quotes[:3])
+                        obj["response"] = (obj.get("response") or "") + (
+                            "\n\n⚠️ Цитаты не найдены дословно в текстах найденных статей: " + shown
+                            + ". Сверьте их с текстом закона."
+                        )
+                # Развёрнутая консультация и готовый документ читаются как
+                # заключение юриста — приписка об ограничениях ставится кодом.
+                if not smalltalk and (deep or doc):
+                    obj["response"] = (obj.get("response") or "") + chat_modes.DISCLAIMER
             yield obj
 
+    if not smalltalk:
+        yield _stage("write_doc" if doc else "write")
+
     try:
-        if lang == "tg" and not lang_service.translator.available():
+        if lang == "tg" and not _tajik_translation_available():
             # Молча ответить по-русски на таджикский вопрос нельзя: пользователь
             # решит, что система его не поняла. Причина уходит в лог сервера.
             print("TG перевод недоступен: %s" % lang_service.translator.reason)
@@ -4192,7 +6093,8 @@ def _ollama_once(model, prompt, num_predict, temperature=0.1):
     Нужен для прохода выбора разделов: там ответ в десяток токенов, и стрим
     только усложнил бы разбор.
     """
-    return llm_once(model, prompt, num_predict, temperature=temperature, keep_alive=CHAT_KEEP_ALIVE)
+    return llm_once(model, prompt, num_predict, temperature=temperature, keep_alive=CHAT_KEEP_ALIVE,
+                    openai_model=DRAFT_GPT_MODEL)
 
 
 def _select_sections(model, prefix, known_keys):
@@ -4443,7 +6345,8 @@ def stream_contract_draft(payload):
         budget = min(CONTRACT_DRAFT_MAX_TOKENS, max(320, 360 * len(keys)))
         for obj in llm_stream(model, _edit_prompt(keys, strict_note), temperature=0.12,
                                num_predict=budget, top_p=0.85, think=False,
-                               keep_alive=CHAT_KEEP_ALIVE, timeout=1800):
+                               keep_alive=CHAT_KEEP_ALIVE, timeout=1800,
+                               openai_model=DRAFT_GPT_MODEL):
             if obj.get("response"):
                 obj["response"] = normalize_legal_terms(obj["response"])
             yield obj
@@ -4523,7 +6426,7 @@ def stream_contract_draft(payload):
         yield done
 
     try:
-        if lang == "tg" and not lang_service.translator.available():
+        if lang == "tg" and not _tajik_translation_available():
             yield json.dumps({
                 "response": "_Тарҷумон дастрас нест — матн бо забони русӣ._\n"
                             "_(Переводчик недоступен, текст на русском.)_\n\n",
@@ -4563,6 +6466,36 @@ def contract_draft():
             "Access-Control-Allow-Origin": "*",
         }
     )
+
+# ================= ГЕНЕРАТОР ДОГОВОРОВ (/contract/generate) =================
+GENERATE_MAX_CHARS = 12000
+
+
+@app.route("/api/generate/chat", methods=["POST"])
+def generate_chat():
+    """Один запрос модели для страницы-генератора (раньше страница ходила в Ollama прямо из браузера).
+
+    Через сервер модель одна на весь сайт и выбирается провайдером из .env: облачная gpt-6-luna
+    пишет по-таджикски и по-русски заметно лучше локальной llama3.1:8b, а пользователю не нужно
+    запускать Ollama с OLLAMA_ORIGINS. Язык ответа задаёт сама страница в промпте (по языку описания).
+    """
+    payload = request.get_json(silent=True) or {}
+    system = str(payload.get("system") or "").strip()
+    user = str(payload.get("user") or "").strip()
+    if not (system or user):
+        return jsonify({"error": "system or user is required"}), 400
+    prompt = (system + "\n\n" + user).strip()[:GENERATE_MAX_CHARS]
+    try:
+        text = llm_once(
+            CONTRACT_DRAFT_MODEL, prompt, 3000, temperature=0.15, timeout=600,
+            json_mode=bool(payload.get("json")), openai_model=DRAFT_GPT_MODEL, reasoning_effort="minimal",
+        )
+    except LLMBackendError as error:
+        return jsonify({"error": str(error)}), 503
+    except Exception as error:  # noqa: BLE001
+        return jsonify({"error": "Ошибка генерации: %s" % error}), 500
+    return jsonify({"ok": True, "text": (text or "").strip()})
+
 
 # ================= СРАВНЕНИЕ ДВУХ ДОГОВОРОВ (/contract/compare) =================
 COMPARE_MAX_CHARS = 6000
@@ -4692,6 +6625,12 @@ def _compare_parse_json(content):
     return None
 
 
+TAJIK_COMPARE_RULE = """# ЯЗЫК ОТВЕТА: ТАДЖИКСКИЙ
+Один из договоров написан по-таджикски, поэтому текстовые поля ответа пиши на таджикском языке (кириллица): summary, title, legalRisk, recommendation, action, rationale, overallConclusion.
+Цитаты inDocA и inDocB приводи дословно, на языке самого договора. Ключи JSON, а также значения severity, priority, category и compatibilityLabel оставь ровно такими, как в образце выше (не переводи их).
+"""
+
+
 @app.route("/api/contract/compare", methods=["POST"])
 def contract_compare():
     payload = request.get_json(silent=True) or {}
@@ -4705,10 +6644,21 @@ def contract_compare():
     system_prompt, user_prompt = _compare_prompts(name_a, name_b, text_a, text_b)
     combined_prompt = system_prompt + "\n\n" + user_prompt
 
+    # Язык отчёта следует за языком документов: если хотя бы один договор таджикский,
+    # текстовые поля отвечаются по-таджикски. Служебные значения (severity, priority,
+    # category, compatibilityLabel) остаются как в образце — по ним страница красит карточки.
+    tajik = doc_lang.is_tajik_text(text_a) or doc_lang.is_tajik_text(text_b)
+    extra = {}
+    if tajik:
+        combined_prompt = combined_prompt.replace(
+            "JSON:", TAJIK_COMPARE_RULE + "JSON:") if combined_prompt.endswith("JSON:") else combined_prompt + "\n" + TAJIK_COMPARE_RULE
+        extra = {"openai_model": DRAFT_GPT_MODEL, "reasoning_effort": "minimal"}
+
     try:
         raw = llm_once(
             CONTRACT_DRAFT_MODEL, combined_prompt,
-            num_predict=COMPARE_MAX_TOKENS, temperature=0.1, timeout=180, json_mode=True,
+            num_predict=COMPARE_MAX_TOKENS, temperature=0.1, timeout=240 if tajik else 180, json_mode=True,
+            **extra,
         )
     except LLMBackendError as error:
         return jsonify({"error": str(error)}), 503
@@ -4842,6 +6792,18 @@ def health():
         "analysis_version": ANALYSIS_VERSION,
         "model": _active_model_tag(),
         "llm_provider": LLM_PROVIDER,
+        # Что реально отвечает на странице квалификации по УК РТ: страница
+        # показывает пользователю, уходит ли описание события во внешнее облако.
+        "draft_llm": {
+            "provider": LLM_PROVIDER,
+            "model": DRAFT_GPT_MODEL if LLM_PROVIDER == "openai" else CONTRACT_DRAFT_MODEL,
+            "ready": LLM_PROVIDER != "openai" or bool(OPENAI_API_KEY),
+        },
+        "crime_llm": {
+            "provider": LLM_PROVIDER,
+            "model": CRIME_GPT_MODEL if LLM_PROVIDER == "openai" else CRIME_MODEL,
+            "cloud": LLM_PROVIDER == "openai",
+        },
         "ollama": {"status": ollama_status, "models": ollama_models, "url": OLLAMA_URL},
         "openai": {"status": openai_status, "model": OPENAI_MODEL, "base_url": OPENAI_BASE_URL},
         "temp_dir": {"path": os.path.abspath(TEMP_DIR), "files": temp_files, "size_bytes": temp_size},

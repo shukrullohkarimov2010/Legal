@@ -10,16 +10,16 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://unpkg.com/docx@7.4.1/build/index.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="{{ asset('vendor/marked.min.js') }}"></script>
+    <script src="{{ asset('vendor/docx-7.4.1.js') }}"></script>
+    <script src="{{ asset('vendor/html2canvas.min.js') }}"></script>
+    <script src="{{ asset('vendor/jspdf.umd.min.js') }}"></script>
 
     <style>
         :root {
@@ -1299,7 +1299,7 @@
             color: #1e293b;
             border-radius: var(--radius-lg);
             padding: 0;
-            font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-size: 0.9rem;
             line-height: 1.7;
             max-height: 800px;
@@ -2712,16 +2712,13 @@
 
         <div class="setup-box">
             <strong>{{ __('generate.ai_settings') }}</strong>
-            <code>OLLAMA_ORIGINS="*" ollama serve</code>
             <div class="toggle-row">
                 <input type="checkbox" id="useOllama" checked>
                 <label for="useOllama">{{ __('generate.use_local_ollama') }}</label>
             </div>
             <div class="toggle-row">
-                <select id="aiModel" class="field-select" style="width: auto; padding: 6px 12px; font-size: 0.8125rem;">
-                    <option value="llama3.1:8b">{{ __('generate.model_fast') }}</option>
-                    <option value="llama3">{{ __('generate.model_quality') }}</option>
-                    <option value="mixtral">{{ __('generate.model_max') }}</option>
+                <select id="aiModel" class="field-select" disabled style="width: auto; padding: 6px 12px; font-size: 0.8125rem;">
+                    <option value="gpt-6-luna">gpt-6-luna</option>
                 </select>
                 <span style="color: var(--text-muted); font-size: 0.75rem;">{{ __('generate.analysis_model') }}</span>
             </div>
@@ -3062,18 +3059,36 @@
 <script>
     // ===== I18N (server-driven, follows the app locale) =====
     const T = @json(__('generate.js'));
+    // Язык документа определяется языком описания сделки, а не языком интерфейса: таджикский запрос даёт
+    // таджикский договор, русский — русский. T — подписи интерфейса, DT — подписи и промпты самого документа.
+    const PACKS = { ru: @json(trans('generate.js', [], 'ru')), tg: @json(trans('generate.js', [], 'tg')) };
+    let DT = T;
+    // Таджикские служебные слова, которых нет в русском. Многие набирают таджикский без ӣ/ӯ/қ/ғ/ҳ/ҷ,
+    // поэтому одних специфических букв для определения языка мало.
+    const TG_WORDS = new Set(('ва дар барои аз бо ба ки мо ман шартнома шартномаи шартномаро иҷора ичора иҷорадеҳ иҷорагир фурӯш фуруш фурӯшанда ' +
+        'харидор хариду пардохт муҳлат мухлат мебошад мекунад мекунанд мешавад шавад шаванд бояд ҳамчунин хамчунин мехоҳам мехохам мехоҳем ' +
+        'мехоҳад мехохад тарафҳо тарафхо ҷамъияти чамъияти ҳамаи хамаи нарх соҳибкор сохибкор ҳуқуқ хукук хуқуқ ҳуқуқи ӯҳдадорӣ рӯз руз моҳ ' +
+        'ҳар хар ин он ҳам хам лекин ё агар вале то пас бе аммо хизматрасонӣ хизматрасони пудрат таъмир таъминот меҳнат').split(' '));
+    function packFor(text) {
+        const src = String(text);
+        const cyrillic = (src.match(/[А-Яа-яЁёӢӣӮӯҚқҒғҲҳҶҷ]/g) || []).length;
+        if (!cyrillic) return T;
+        const tajik = (src.match(/[ӢӣӮӯҚқҒғҲҳҶҷ]/g) || []).length;
+        if (tajik >= 2 && tajik / cyrillic >= 0.015) return PACKS.tg;
+        const tokens = src.toLowerCase().match(/[а-яёӣӯқғҳҷ]+/g) || [];
+        const hits = tokens.filter(w => TG_WORDS.has(w)).length;
+        return hits >= 2 && hits / tokens.length >= 0.08 ? PACKS.tg : PACKS.ru;
+    }
     const tr = (str, params = {}) => Object.entries(params).reduce((acc, [k, v]) => acc.split(':' + k).join(v), str || '');
-    const typeName = t => (T.types && T.types[t]) || t || T.doc_type_default;
-    const roleName = r => (T.roles && T.roles[r]) || r || '';
-    const roleGen = r => (T.roles_gen && T.roles_gen[r]) || roleName(r);
-    const roleDat = r => (T.roles_dat && T.roles_dat[r]) || roleName(r);
-    const vatName = v => (T.vat && T.vat[v]) || v || '';
-    const disputeName = v => (T.dispute && T.dispute[v]) || v || '';
+    const typeName = t => (DT.types && DT.types[t]) || t || DT.doc_type_default;
+    const roleName = r => (DT.roles && DT.roles[r]) || r || '';
+    const roleGen = r => (DT.roles_gen && DT.roles_gen[r]) || roleName(r);
+    const roleDat = r => (DT.roles_dat && DT.roles_dat[r]) || roleName(r);
+    const vatName = v => (DT.vat && DT.vat[v]) || v || '';
+    const disputeName = v => (DT.dispute && DT.dispute[v]) || v || '';
 
     // ===== Configuration =====
     const CONFIG = {
-        OLLAMA_URL: 'http://localhost:11434/api/chat',
-        OLLAMA_TAGS_URL: 'http://localhost:11434/api/tags',
         HISTORY_KEY: 'contract_builder_history_v5',
         API_CACHE_KEY: 'contract_builder_api_cache_v2',
         FORM_CACHE_KEY: 'contract_builder_form_state_v1',
@@ -3084,6 +3099,9 @@
         API_CACHE_TTL: 24 * 60 * 60 * 1000,
         TOTAL_STEPS: 5
     };
+    // ИИ идёт только через сервер сайта: модель (gpt-6-luna) задаётся в .env, браузер к Ollama не обращается.
+    const PY_API = "{{ rtrim(env('PYTHON_API_URL', 'http://127.0.0.1:5000'), '/') }}";
+    const aiBackend = 'server';
     const CABINET_ACTIVITY_URL = '{{ route('cabinet.activity.store') }}';
 
     async function recordCabinetActivity(payload) {
@@ -3131,7 +3149,7 @@
         if (!silent) toast(tr(T.ok_style_selected, { style: styleName(style) }), 'success');
     }
 
-    const styleName = s => (T.styles && T.styles[s]) || s;
+    const styleName = s => (DT.styles && DT.styles[s]) || s;
 
     // ===== Theme System =====
     function setTheme(theme) {
@@ -3338,61 +3356,53 @@
 
     // ===== Ollama =====
     async function checkOllamaConnection() {
-        const modelSelect = document.getElementById('aiModel');
-
         try {
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 8000);
-
-            const res = await fetch(CONFIG.OLLAMA_TAGS_URL, {
-                method: 'GET',
-                signal: controller.signal
-            });
-
+            const timeout = setTimeout(() => controller.abort(), 6000);
+            const res = await fetch(PY_API + '/health', { signal: controller.signal });
             clearTimeout(timeout);
-
-            if (!res.ok) throw new Error(`Status ${res.status}`);
-
-            const data = await res.json();
-            const models = data.models || [];
-
-            if (models.length === 0) {
-                ollamaStatus = 'no-model';
-                return false;
-            }
-
-            ollamaStatus = 'connected';
-
+            const info = res.ok ? (await res.json()).draft_llm : null;
+            if (!info || !info.ready) throw new Error('draft_llm is not ready');
+            const modelSelect = document.getElementById('aiModel');
             if (modelSelect) {
-                const currentVal = modelSelect.value;
                 modelSelect.innerHTML = '';
-
-                models.forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m.name;
-                    const sizeGB = m.size ? ` (${(m.size / 1e9).toFixed(1)} GB)` : '';
-                    opt.textContent = `🟢 ${m.name}${sizeGB}`;
-                    modelSelect.appendChild(opt);
-                });
-
-                const matchOption = Array.from(modelSelect.options).find(o => o.value === currentVal);
-                if (matchOption) modelSelect.value = currentVal;
-                else if (models.length > 0) modelSelect.value = models[0].name;
-
-                debounceSaveForm();
+                const opt = document.createElement('option');
+                opt.value = info.model;
+                opt.textContent = '🟢 ' + info.model;
+                modelSelect.appendChild(opt);
             }
-
+            ollamaStatus = 'connected';
             return true;
-
         } catch (e) {
             ollamaStatus = 'disconnected';
             return false;
         }
     }
 
-    async function ollamaChat(system, user, model = 'llama3.1:8b') {
-        if (!model) throw new Error(T.err_model_not_selected);
+    async function serverChat(system, user, json) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 600000);
+        try {
+            const res = await fetch(PY_API + '/api/generate/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ system, user, json: !!json }),
+                signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || tr(T.err_api, { status: res.status }));
+            if (!data.text) throw new Error(T.err_empty_response);
+            return data.text;
+        } catch (e) {
+            clearTimeout(timeout);
+            if (e.name === 'AbortError') throw new Error(T.err_timeout);
+            if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) throw new Error(T.err_connect);
+            throw e;
+        }
+    }
 
+    async function ollamaChat(system, user, model = 'gpt-6-luna', opts = {}) {
         const cacheKey = simpleHash(`${model}:${system}:${user}`);
         const cached = requestCache.get(cacheKey);
 
@@ -3400,54 +3410,10 @@
             return cached.data;
         }
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 600000);
-
-        try {
-            const res = await fetch(CONFIG.OLLAMA_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model,
-                    messages: [
-                        { role: 'system', content: system },
-                        { role: 'user', content: user }
-                    ],
-                    stream: false,
-                    options: { temperature: 0.15, num_predict: 3000 }
-                }),
-                signal: controller.signal
-            });
-
-            clearTimeout(timeout);
-
-            if (!res.ok) {
-                if (res.status === 404) {
-                    throw new Error(tr(T.err_model_not_found, { model }));
-                }
-                throw new Error(tr(T.err_api, { status: res.status }));
-            }
-
-            const json = await res.json();
-            const content = json.message?.content?.trim() || '';
-
-            if (!content) throw new Error(T.err_empty_response);
-
-            requestCache.set(cacheKey, { data: content, ts: Date.now() });
-            saveApiCache();
-
-            return content;
-        } catch (e) {
-            clearTimeout(timeout);
-
-            if (e.name === 'AbortError') throw new Error(T.err_timeout);
-
-            if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
-                throw new Error(T.err_connect);
-            }
-
-            throw e;
-        }
+        const text = await serverChat(system, user, opts.json);
+        requestCache.set(cacheKey, { data: text, ts: Date.now() });
+        saveApiCache();
+        return text;
     }
 
     // ===== Analysis =====
@@ -3458,6 +3424,7 @@
             return;
         }
 
+        DT = packFor(desc);
         const useOllama = document.getElementById('useOllama').checked;
         const model = document.getElementById('aiModel').value;
         const loader = document.getElementById('loader');
@@ -3479,9 +3446,9 @@
                     throw new Error(T.err_no_models);
                 }
 
-                const prompt = `${T.prompt_extract}\n\n${desc}`;
+                const prompt = `${DT.prompt_extract}\n\n${desc}`;
 
-                const resp = await ollamaChat(prompt, '', model);
+                const resp = await ollamaChat(prompt, '', model, { json: true });
                 const clean = resp.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
                 data = JSON.parse(clean);
             } else {
@@ -3538,7 +3505,22 @@
         return d;
     }
 
+    // Модель иногда пишет в «название стороны» описание услуги («Профессиональная курьерская служба», «Бизнес»).
+    // Оставляем только то, что похоже на название организации или ФИО; иначе поле остаётся пустым.
+    const GENERIC_PARTY = /^(бизнес|клиент|компания|организация|предприятие|фирма|физическое лицо|юридическое лицо|заказчик|исполнитель|покупатель|продавец|арендатор|арендодатель|поставщик|подрядчик|тараф|муштарӣ|ширкат|корхона|ташкилот|фармоишгар|иҷрокунанда|харидор|фурӯшанда|иҷорагир|иҷорадеҳ|таъминкунанда|пудратчӣ)$/i;
+    const LEGAL_FORM = /(^|\s)(ООО|ОАО|ЗАО|АО|ИП|ГУП|МУП|ЧП|ҶДММ|ҶСК|ҶСВК|ТДММ|СИ|ҶК|ММ)(\s|$)|[«"“]/;
+    function cleanParty(name) {
+        const v = String(name || '').trim();
+        if (!v || v.length > 80 || GENERIC_PARTY.test(v)) return '';
+        if (LEGAL_FORM.test(v)) return v;
+        const words = v.split(/\s+/);
+        const capitals = words.filter(w => /^[A-ZА-ЯЁӢӮҚҒҲҶ]/.test(w)).length;
+        return words.length === 1 || capitals >= 2 ? v : '';
+    }
+
     function fillForm(a) {
+        if (a.party1) a.party1.name = cleanParty(a.party1.name);
+        if (a.party2) a.party2.name = cleanParty(a.party2.name);
         const set = (id, v) => {
             const el = document.getElementById(id);
             if (el && v) el.value = v;
@@ -3616,6 +3598,8 @@
 
     // ===== Generate =====
     async function generate() {
+        // Язык договора — язык того, что ввёл пользователь (описание, предмет, условия, стороны), а не язык интерфейса.
+        DT = packFor(['f_desc', 'f_subject', 'f_extra', 'f_pay', 'f_p1', 'f_p2'].map(id => document.getElementById(id)?.value || '').join(' '));
         const data = {
             type: document.getElementById('f_type')?.value,
             p1: document.getElementById('f_p1')?.value.trim(),
@@ -3703,25 +3687,25 @@
 
     // ===== Промпт для ИИ: строго по законодательству Республики Таджикистан =====
     function buildContractPrompt(d) {
-        return `${T.prompt_build_intro}
-${T.prompt_data}
-• ${T.lbl_style}: ${styleName(d.style || contractStyle)}
-• ${T.lbl_type}: ${typeName(d.type)}
+        return `${DT.prompt_build_intro}
+${DT.prompt_data}
+• ${DT.lbl_style}: ${styleName(d.style || contractStyle)}
+• ${DT.lbl_type}: ${typeName(d.type)}
 • ${roleName(d.role1)}: ${d.p1}
 • ${roleName(d.role2)}: ${d.p2}
-• ${T.lbl_amount}: ${d.amount ? `${parseInt(d.amount).toLocaleString(T.intl_locale)} ${T.currency}` : T.prompt_not_specified_f} ${vatName(d.vat) || ''}
-• ${T.lbl_payment}: ${d.pay || T.prompt_by_agreement}
-• ${T.lbl_duration}: ${d.duration || T.prompt_not_specified_m}
-• ${T.lbl_city}: ${d.city || '__________'}
-• ${T.lbl_penalty}: ${d.penalty || T.txt_default_penalty}
-• ${T.lbl_confidentiality}: ${d.conf ? T.yes : T.no}
-• ${T.lbl_jurisdiction}: ${disputeName(d.dispute) || T.txt_default_dispute}
-• ${T.lbl_subject}: ${d.subject || typeName(d.type)}
-• ${T.lbl_legal_basis}: ${legalBasisFor(d.type)}
+• ${DT.lbl_amount}: ${d.amount ? `${parseInt(d.amount).toLocaleString(DT.intl_locale)} ${DT.currency}` : DT.prompt_not_specified_f} ${vatName(d.vat) || ''}
+• ${DT.lbl_payment}: ${d.pay || DT.prompt_by_agreement}
+• ${DT.lbl_duration}: ${d.duration || DT.prompt_not_specified_m}
+• ${DT.lbl_city}: ${d.city || '__________'}
+• ${DT.lbl_penalty}: ${d.penalty || DT.txt_default_penalty}
+• ${DT.lbl_confidentiality}: ${d.conf ? DT.yes : DT.no}
+• ${DT.lbl_jurisdiction}: ${disputeName(d.dispute) || DT.txt_default_dispute}
+• ${DT.lbl_subject}: ${d.subject || typeName(d.type)}
+• ${DT.lbl_legal_basis}: ${legalBasisFor(d.type)}
 
-${T.prompt_rt_rules}
+${DT.prompt_rt_rules}
 
-${T.prompt_outro}`;
+${DT.prompt_outro}`;
     }
 
     // ===== Фоновая доработка текста договора ИИ =====
@@ -3741,7 +3725,7 @@ ${T.prompt_outro}`;
             if (ollamaStatus === 'disconnected') throw new Error(T.err_ollama_unavailable);
 
             const model = document.getElementById('aiModel')?.value;
-            const aiText = await ollamaChat(T.prompt_system, buildContractPrompt(d), model);
+            const aiText = await ollamaChat(DT.prompt_system, buildContractPrompt(d), model);
 
             if (aiText) {
                 contractText = aiText;
@@ -3761,11 +3745,11 @@ ${T.prompt_outro}`;
     // ===== Красивый Стартап-шаблон договора =====
     function buildStartupContract(d, aiContent = '') {
         const dt = new Date(d.date || Date.now());
-        const dateStr = dt.toLocaleDateString(T.intl_locale, { day: 'numeric', month: 'long', year: 'numeric' });
+        const dateStr = dt.toLocaleDateString(DT.intl_locale, { day: 'numeric', month: 'long', year: 'numeric' });
         const contractNumber = `№ ${Math.floor(Math.random() * 9000) + 1000}/${dt.getFullYear()}`;
         const amt = d.amount ? parseInt(d.amount) : null;
-        const amtW = amt ? numWords(amt) : T.doc_amount_in_words_placeholder;
-        const amtF = amt ? amt.toLocaleString(T.intl_locale) : '—';
+        const amtW = amt ? numWords(amt) : DT.doc_amount_in_words_placeholder;
+        const amtF = amt ? amt.toLocaleString(DT.intl_locale) : '—';
         const typeLocal = typeName(d.type);
         const typeUpper = typeLocal.toUpperCase();
         const typeIcon = getTypeIcon(d.type);
@@ -3781,23 +3765,23 @@ ${T.prompt_outro}`;
                     <div class="contract-brand-logo">⚖️</div>
                     <div class="contract-brand-name">LEGAL PRO · CONTRACT</div>
                 </div>
-                <div class="contract-title">${tr(T.doc_title, { type: typeUpper })}</div>
-                <div class="contract-subtitle">${T.doc_subtitle}</div>
+                <div class="contract-title">${tr(DT.doc_title, { type: typeUpper })}</div>
+                <div class="contract-subtitle">${DT.doc_subtitle}</div>
                 <div class="contract-meta">
                     <div class="contract-meta-item">
-                        <span class="contract-meta-label">${T.doc_number}</span>
+                        <span class="contract-meta-label">${DT.doc_number}</span>
                         <span class="contract-meta-value">${contractNumber}</span>
                     </div>
                     <div class="contract-meta-item">
-                        <span class="contract-meta-label">${T.doc_date}</span>
+                        <span class="contract-meta-label">${DT.doc_date}</span>
                         <span class="contract-meta-value">${dateStr}</span>
                     </div>
                     <div class="contract-meta-item">
-                        <span class="contract-meta-label">${T.doc_city}</span>
-                        <span class="contract-meta-value">${d.city || T.doc_city_blank}</span>
+                        <span class="contract-meta-label">${DT.doc_city}</span>
+                        <span class="contract-meta-value">${d.city || DT.doc_city_blank}</span>
                     </div>
                     <div class="contract-meta-item">
-                        <span class="contract-meta-label">${T.doc_type}</span>
+                        <span class="contract-meta-label">${DT.doc_type}</span>
                         <span class="contract-meta-value">${typeIcon} ${typeLocal}</span>
                     </div>
                 </div>
@@ -3807,7 +3791,7 @@ ${T.prompt_outro}`;
             <div class="contract-body">
                 <!-- PARTIES -->
                 <div class="contract-parties">
-                    <div class="contract-parties-title">${T.doc_parties_title}</div>
+                    <div class="contract-parties-title">${DT.doc_parties_title}</div>
                     <div class="contract-parties-grid">
                         <div class="contract-party">
                             <div class="contract-party-role">${role1}</div>
@@ -3822,7 +3806,7 @@ ${T.prompt_outro}`;
                 </div>
 
                 <p class="contract-text" style="font-size: 1rem; margin-bottom: 32px; color: #475569;">
-                    ${tr(T.doc_preamble, {
+                    ${tr(DT.doc_preamble, {
                         p1: `<strong style="color: #0f172a;">${d.p1}</strong>`,
                         p2: `<strong style="color: #0f172a;">${d.p2}</strong>`,
                         role1: `<strong>${role1}</strong>`,
@@ -3832,23 +3816,23 @@ ${T.prompt_outro}`;
 
                 <!-- DEAL SUMMARY CARD -->
                 <div class="contract-summary">
-                    <div class="contract-summary-title">${T.doc_summary_title}</div>
+                    <div class="contract-summary-title">${DT.doc_summary_title}</div>
                     <div class="contract-summary-grid">
                         <div class="contract-summary-item">
-                            <div class="contract-summary-label">${T.doc_sum_amount}</div>
-                            <div class="contract-summary-value highlight">${amtF}${amt ? ' ' + T.currency_short : ''}</div>
+                            <div class="contract-summary-label">${DT.doc_sum_amount}</div>
+                            <div class="contract-summary-value highlight">${amtF}${amt ? ' ' + DT.currency_short : ''}</div>
                         </div>
                         <div class="contract-summary-item">
-                            <div class="contract-summary-label">${T.doc_sum_term}</div>
-                            <div class="contract-summary-value">${d.duration || T.doc_default_duration}</div>
+                            <div class="contract-summary-label">${DT.doc_sum_term}</div>
+                            <div class="contract-summary-value">${d.duration || DT.doc_default_duration}</div>
                         </div>
                         <div class="contract-summary-item">
-                            <div class="contract-summary-label">${T.doc_sum_payment}</div>
-                            <div class="contract-summary-value">${d.pay || T.doc_default_payment}</div>
+                            <div class="contract-summary-label">${DT.doc_sum_payment}</div>
+                            <div class="contract-summary-value">${d.pay || DT.doc_default_payment}</div>
                         </div>
                         <div class="contract-summary-item">
-                            <div class="contract-summary-label">${T.doc_sum_vat}</div>
-                            <div class="contract-summary-value">${vatName(d.vat) || T.doc_vat_not_specified}</div>
+                            <div class="contract-summary-label">${DT.doc_sum_vat}</div>
+                            <div class="contract-summary-value">${vatName(d.vat) || DT.doc_vat_not_specified}</div>
                         </div>
                     </div>
                 </div>
@@ -3858,26 +3842,26 @@ ${T.prompt_outro}`;
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-bullseye"></i></div>
                         <div>
-                            <div class="contract-section-title">${T.doc_s1_title}</div>
+                            <div class="contract-section-title">${DT.doc_s1_title}</div>
                             <div class="contract-section-number">§ 1</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">1.1.</span>
                         <span class="contract-clause-text">
-                            ${tr(T.doc_s1_1, { gen1: gen1, role1: role1, role2: role2, subject: d.subject || typeLocal })}
+                            ${tr(DT.doc_s1_1, { gen1: gen1, role1: role1, role2: role2, subject: d.subject || typeLocal })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">1.2.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s1_2}
+                            ${DT.doc_s1_2}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">1.3.</span>
                         <span class="contract-clause-text">
-                            ${tr(T.doc_s1_3, { dat1: dat1 })}
+                            ${tr(DT.doc_s1_3, { dat1: dat1 })}
                         </span>
                     </div>
                 </div>
@@ -3887,25 +3871,25 @@ ${T.prompt_outro}`;
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-balance-scale"></i></div>
                         <div>
-                            <div class="contract-section-title">${T.doc_s2_title}</div>
+                            <div class="contract-section-title">${DT.doc_s2_title}</div>
                             <div class="contract-section-number">§ 2</div>
                         </div>
                     </div>
                     <div class="contract-highlight">
                         <div class="contract-highlight-icon">👤</div>
                         <div class="contract-highlight-content">
-                            <div class="contract-highlight-title">${tr(T.doc_s2_duties_b, { gen2: gen2 })}</div>
+                            <div class="contract-highlight-title">${tr(DT.doc_s2_duties_b, { gen2: gen2 })}</div>
                             <div class="contract-highlight-text">
-                                ${tr(T.doc_s2_b_list, { dat1: dat1 })}
+                                ${tr(DT.doc_s2_b_list, { dat1: dat1 })}
                             </div>
                         </div>
                     </div>
                     <div class="contract-info">
                         <div class="contract-info-icon">👤</div>
                         <div class="contract-info-content">
-                            <div class="contract-info-title">${tr(T.doc_s2_duties_a, { gen1: gen1 })}</div>
+                            <div class="contract-info-title">${tr(DT.doc_s2_duties_a, { gen1: gen1 })}</div>
                             <div class="contract-info-text">
-                                ${T.doc_s2_a_list}
+                                ${DT.doc_s2_a_list}
                             </div>
                         </div>
                     </div>
@@ -3916,26 +3900,26 @@ ${T.prompt_outro}`;
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-coins"></i></div>
                         <div>
-                            <div class="contract-section-title">${T.doc_s3_title}</div>
+                            <div class="contract-section-title">${DT.doc_s3_title}</div>
                             <div class="contract-section-number">§ 3</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">3.1.</span>
                         <span class="contract-clause-text">
-                            ${tr(T.doc_s3_1, { amount: amtF, words: amtW, vat: d.vat !== 'не указано' ? `, ${vatName(d.vat)}` : '' })}
+                            ${tr(DT.doc_s3_1, { amount: amtF, words: amtW, vat: d.vat !== 'не указано' ? `, ${vatName(d.vat)}` : '' })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">3.2.</span>
                         <span class="contract-clause-text">
-                            ${tr(T.doc_s3_2, { payment: d.pay || T.doc_s3_by_agreement })}
+                            ${tr(DT.doc_s3_2, { payment: d.pay || DT.doc_s3_by_agreement })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">3.3.</span>
                         <span class="contract-clause-text">
-                            ${tr(T.doc_s3_3, { gen2: gen2 })}
+                            ${tr(DT.doc_s3_3, { gen2: gen2 })}
                         </span>
                     </div>
                 </div>
@@ -3945,26 +3929,26 @@ ${T.prompt_outro}`;
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-calendar-alt"></i></div>
                         <div>
-                            <div class="contract-section-title">${T.doc_s4_title}</div>
+                            <div class="contract-section-title">${DT.doc_s4_title}</div>
                             <div class="contract-section-number">§ 4</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">4.1.</span>
                         <span class="contract-clause-text">
-                            ${tr(T.doc_s4_1, { duration: d.duration || T.doc_s4_default_duration })}
+                            ${tr(DT.doc_s4_1, { duration: d.duration || DT.doc_s4_default_duration })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">4.2.</span>
                         <span class="contract-clause-text">
-                            ${tr(T.doc_s4_2, { role1: role1 })}
+                            ${tr(DT.doc_s4_2, { role1: role1 })}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">4.3.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s4_3}
+                            ${DT.doc_s4_3}
                         </span>
                     </div>
                 </div>
@@ -3974,29 +3958,29 @@ ${T.prompt_outro}`;
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-shield-alt"></i></div>
                         <div>
-                            <div class="contract-section-title">${T.doc_s5_title}</div>
+                            <div class="contract-section-title">${DT.doc_s5_title}</div>
                             <div class="contract-section-number">§ 5</div>
                         </div>
                     </div>
                     <div class="contract-highlight">
                         <div class="contract-highlight-icon">⚠️</div>
                         <div class="contract-highlight-content">
-                            <div class="contract-highlight-title">${T.doc_s5_penalty_title}</div>
+                            <div class="contract-highlight-title">${DT.doc_s5_penalty_title}</div>
                             <div class="contract-highlight-text">
-                                ${tr(T.doc_s5_1, { penalty: d.penalty || '0,1%' })}
+                                ${tr(DT.doc_s5_1, { penalty: d.penalty || '0,1%' })}
                             </div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">5.1.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s5_2}
+                            ${DT.doc_s5_2}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">5.2.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s5_3}
+                            ${DT.doc_s5_3}
                         </span>
                     </div>
                 </div>
@@ -4006,20 +3990,20 @@ ${T.prompt_outro}`;
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-cloud-bolt"></i></div>
                         <div>
-                            <div class="contract-section-title">${T.doc_s6_title}</div>
+                            <div class="contract-section-title">${DT.doc_s6_title}</div>
                             <div class="contract-section-number">§ 6</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">6.1.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s6_1}
+                            ${DT.doc_s6_1}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">6.2.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s6_2}
+                            ${DT.doc_s6_2}
                         </span>
                     </div>
                 </div>
@@ -4030,20 +4014,20 @@ ${T.prompt_outro}`;
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-lock"></i></div>
                         <div>
-                            <div class="contract-section-title">${T.doc_s7_title}</div>
+                            <div class="contract-section-title">${DT.doc_s7_title}</div>
                             <div class="contract-section-number">§ 7</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">7.1.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s7_1}
+                            ${DT.doc_s7_1}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">7.2.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s7_2}
+                            ${DT.doc_s7_2}
                         </span>
                     </div>
                 </div>
@@ -4054,20 +4038,20 @@ ${T.prompt_outro}`;
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-gavel"></i></div>
                         <div>
-                            <div class="contract-section-title">${T.doc_s8_title}</div>
+                            <div class="contract-section-title">${DT.doc_s8_title}</div>
                             <div class="contract-section-number">§ ${d.conf ? 8 : 7}</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '8' : '7'}.1.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s8_1}
+                            ${DT.doc_s8_1}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '8' : '7'}.2.</span>
                         <span class="contract-clause-text">
-                            ${tr(T.doc_s8_2, { dispute: `<strong>${disputeName(d.dispute) || T.doc_s8_default}</strong>` })}
+                            ${tr(DT.doc_s8_2, { dispute: `<strong>${disputeName(d.dispute) || DT.doc_s8_default}</strong>` })}
                         </span>
                     </div>
                 </div>
@@ -4077,39 +4061,39 @@ ${T.prompt_outro}`;
                     <div class="contract-section-header">
                         <div class="contract-section-icon"><i class="fas fa-file-signature"></i></div>
                         <div>
-                            <div class="contract-section-title">${T.doc_s9_title}</div>
+                            <div class="contract-section-title">${DT.doc_s9_title}</div>
                             <div class="contract-section-number">§ ${d.conf ? 9 : 8}</div>
                         </div>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '9' : '8'}.1.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s9_1}
+                            ${DT.doc_s9_1}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '9' : '8'}.2.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s9_2}
+                            ${DT.doc_s9_2}
                         </span>
                     </div>
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '9' : '8'}.3.</span>
                         <span class="contract-clause-text">
-                            ${T.doc_s9_3}
+                            ${DT.doc_s9_3}
                         </span>
                     </div>
                     ${d.extra ? `
                     <div class="contract-clause">
                         <span class="contract-clause-number">${d.conf ? '9' : '8'}.4.</span>
-                        <span class="contract-clause-text">${tr(T.doc_s9_extra, { extra: d.extra })}</span>
+                        <span class="contract-clause-text">${tr(DT.doc_s9_extra, { extra: d.extra })}</span>
                     </div>
                     ` : ''}
                 </div>
 
                 <!-- SIGNATURES -->
                 <div class="contract-signatures">
-                    <div class="contract-signatures-title">${T.doc_signatures_title}</div>
+                    <div class="contract-signatures-title">${DT.doc_signatures_title}</div>
                     <div class="contract-signatures-grid">
                         <div class="contract-signature">
                             <div class="contract-signature-party">${role1}</div>
@@ -4117,7 +4101,7 @@ ${T.prompt_outro}`;
                             <div class="contract-signature-line">
                                 _________________________ / _________________ /
                             </div>
-                            <div style="font-size: 0.75rem; color: #94a3b8;">${T.doc_signature_hint}</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">${DT.doc_signature_hint}</div>
                         </div>
                         <div class="contract-signature">
                             <div class="contract-signature-party">${role2}</div>
@@ -4125,49 +4109,49 @@ ${T.prompt_outro}`;
                             <div class="contract-signature-line">
                                 _________________________ / _________________ /
                             </div>
-                            <div style="font-size: 0.75rem; color: #94a3b8;">${T.doc_signature_hint}</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">${DT.doc_signature_hint}</div>
                         </div>
                     </div>
 
                     <!-- Requisites -->
                     <div class="contract-requisites">
-                        <div class="contract-requisites-title">${T.doc_requisites_title}</div>
+                        <div class="contract-requisites-title">${DT.doc_requisites_title}</div>
                         <div class="contract-requisites-grid">
                             <div class="contract-requisites-col">
                                 <h5>${role1}: ${d.p1}</h5>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">${T.doc_req_address}</span>
+                                    <span class="contract-requisites-label">${DT.doc_req_address}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">${T.doc_req_inn}</span>
+                                    <span class="contract-requisites-label">${DT.doc_req_inn}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">${T.doc_req_account}</span>
+                                    <span class="contract-requisites-label">${DT.doc_req_account}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">${T.doc_req_bank}</span>
+                                    <span class="contract-requisites-label">${DT.doc_req_bank}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                             </div>
                             <div class="contract-requisites-col">
                                 <h5>${role2}: ${d.p2}</h5>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">${T.doc_req_address}</span>
+                                    <span class="contract-requisites-label">${DT.doc_req_address}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">${T.doc_req_inn}</span>
+                                    <span class="contract-requisites-label">${DT.doc_req_inn}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">${T.doc_req_account}</span>
+                                    <span class="contract-requisites-label">${DT.doc_req_account}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                                 <div class="contract-requisites-row">
-                                    <span class="contract-requisites-label">${T.doc_req_bank}</span>
+                                    <span class="contract-requisites-label">${DT.doc_req_bank}</span>
                                     <span class="contract-requisites-value">_________________</span>
                                 </div>
                             </div>
@@ -4180,8 +4164,8 @@ ${T.prompt_outro}`;
             <div class="contract-footer">
                 <div class="contract-footer-brand">⚖️ LEGAL PRO · CONTRACT</div>
                 <div class="contract-footer-text">
-                    ${T.doc_footer_1}<br>
-                    ${dateStr} · ${T.doc_footer_2} · ${contractNumber}
+                    ${DT.doc_footer_1}<br>
+                    ${dateStr} · ${DT.doc_footer_2} · ${contractNumber}
                 </div>
             </div>
         `;
@@ -4189,7 +4173,7 @@ ${T.prompt_outro}`;
 
     // Институт ГК РТ, регулирующий выбранный тип договора
     function legalBasisFor(type) {
-        return (T.legal_basis && (T.legal_basis[type] || T.legal_basis._default)) || '';
+        return (DT.legal_basis && (DT.legal_basis[type] || DT.legal_basis._default)) || '';
     }
 
     // Стабильный номер договора: одни и те же данные дают один и тот же номер
@@ -4203,11 +4187,11 @@ ${T.prompt_outro}`;
     // ===== Классический бланк договора (официальное оформление, право РТ) =====
     function buildClassicContract(d, aiContent = '') {
         const dt = new Date(d.date || Date.now());
-        const dateStr = dt.toLocaleDateString(T.intl_locale, { day: 'numeric', month: 'long', year: 'numeric' });
+        const dateStr = dt.toLocaleDateString(DT.intl_locale, { day: 'numeric', month: 'long', year: 'numeric' });
         const contractNumber = contractNo(d, dt.getFullYear());
         const amt = d.amount ? parseInt(d.amount) : null;
-        const amtW = amt ? numWords(amt) : T.doc_amount_in_words_placeholder;
-        const amtF = amt ? amt.toLocaleString(T.intl_locale) : '—';
+        const amtW = amt ? numWords(amt) : DT.doc_amount_in_words_placeholder;
+        const amtF = amt ? amt.toLocaleString(DT.intl_locale) : '—';
         const typeLocal = typeName(d.type);
         const role1 = roleName(d.role1);
         const role2 = roleName(d.role2);
@@ -4233,26 +4217,26 @@ ${T.prompt_outro}`;
         const requisites = (role, name) => `
             <div class="cls-party-title">${role}</div>
             <div class="cls-req-row"><strong>${name}</strong></div>
-            <div class="cls-req-row">${T.doc_req_address} _____________________</div>
-            <div class="cls-req-row">${T.doc_req_inn} _____________________</div>
-            <div class="cls-req-row">${T.doc_req_account} _____________________</div>
-            <div class="cls-req-row">${T.doc_req_bank} _____________________</div>
+            <div class="cls-req-row">${DT.doc_req_address} _____________________</div>
+            <div class="cls-req-row">${DT.doc_req_inn} _____________________</div>
+            <div class="cls-req-row">${DT.doc_req_account} _____________________</div>
+            <div class="cls-req-row">${DT.doc_req_bank} _____________________</div>
             <div class="cls-sign-line">_________________ / _________________ /</div>
-            <div class="cls-stamp">${T.doc_signature_hint} ${T.cls_stamp}</div>
+            <div class="cls-stamp">${DT.doc_signature_hint} ${DT.cls_stamp}</div>
         `;
 
         return `
             <div class="cls-doc">
-                <div class="cls-title">${tr(T.doc_title, { type: typeLocal.toUpperCase() })}</div>
+                <div class="cls-title">${tr(DT.doc_title, { type: typeLocal.toUpperCase() })}</div>
                 <div class="cls-number">${contractNumber}</div>
                 <div class="cls-place">
-                    <span>${d.city || T.doc_city_blank}</span>
+                    <span>${d.city || DT.doc_city_blank}</span>
                     <span>${dateStr}</span>
                 </div>
                 <hr class="cls-rule">
 
                 <p class="cls-preamble">
-                    ${tr(T.doc_preamble, {
+                    ${tr(DT.doc_preamble, {
                         p1: `<strong>${d.p1}</strong>`,
                         p2: `<strong>${d.p2}</strong>`,
                         role1: `<strong>${role1}</strong>`,
@@ -4261,60 +4245,60 @@ ${T.prompt_outro}`;
                 </p>
 
                 <div class="cls-basis">
-                    <div class="cls-basis-title">${T.cls_basis_title}</div>
-                    <div>${tr(T.cls_basis_lead, { basis: legalBasisFor(d.type) })}</div>
-                    <ul>${(T.cls_basis_acts || []).map(a => `<li>${a}</li>`).join('')}</ul>
+                    <div class="cls-basis-title">${DT.cls_basis_title}</div>
+                    <div>${tr(DT.cls_basis_lead, { basis: legalBasisFor(d.type) })}</div>
+                    <ul>${(DT.cls_basis_acts || []).map(a => `<li>${a}</li>`).join('')}</ul>
                 </div>
 
-                ${section(T.doc_s1_title.toUpperCase(), [
-                    tr(T.doc_s1_1, { gen1: gen1, role1: role1, role2: role2, subject: d.subject || typeLocal }),
-                    T.doc_s1_2,
-                    tr(T.doc_s1_3, { dat1: dat1 })
+                ${section(DT.doc_s1_title.toUpperCase(), [
+                    tr(DT.doc_s1_1, { gen1: gen1, role1: role1, role2: role2, subject: d.subject || typeLocal }),
+                    DT.doc_s1_2,
+                    tr(DT.doc_s1_3, { dat1: dat1 })
                 ])}
 
-                ${section(T.doc_s2_title.toUpperCase(), [
-                    duties(tr(T.doc_s2_duties_b, { gen2: gen2 }), tr(T.doc_s2_b_list, { dat1: dat1 })),
-                    duties(tr(T.doc_s2_duties_a, { gen1: gen1 }), T.doc_s2_a_list)
+                ${section(DT.doc_s2_title.toUpperCase(), [
+                    duties(tr(DT.doc_s2_duties_b, { gen2: gen2 }), tr(DT.doc_s2_b_list, { dat1: dat1 })),
+                    duties(tr(DT.doc_s2_duties_a, { gen1: gen1 }), DT.doc_s2_a_list)
                 ])}
 
-                ${section(T.doc_s3_title.toUpperCase(), [
-                    tr(T.doc_s3_1, { amount: amtF, words: amtW, vat: d.vat !== 'не указано' ? `, ${vatName(d.vat)}` : '' }),
-                    tr(T.doc_s3_2, { payment: d.pay || T.doc_s3_by_agreement }),
-                    tr(T.doc_s3_3, { gen2: gen2 }),
-                    T.cls_currency_clause,
-                    T.cls_tax_clause
+                ${section(DT.doc_s3_title.toUpperCase(), [
+                    tr(DT.doc_s3_1, { amount: amtF, words: amtW, vat: d.vat !== 'не указано' ? `, ${vatName(d.vat)}` : '' }),
+                    tr(DT.doc_s3_2, { payment: d.pay || DT.doc_s3_by_agreement }),
+                    tr(DT.doc_s3_3, { gen2: gen2 }),
+                    DT.cls_currency_clause,
+                    DT.cls_tax_clause
                 ])}
 
-                ${section(T.doc_s4_title.toUpperCase(), [
-                    tr(T.doc_s4_1, { duration: d.duration || T.doc_s4_default_duration }),
-                    tr(T.doc_s4_2, { role1: role1 }),
-                    T.doc_s4_3
+                ${section(DT.doc_s4_title.toUpperCase(), [
+                    tr(DT.doc_s4_1, { duration: d.duration || DT.doc_s4_default_duration }),
+                    tr(DT.doc_s4_2, { role1: role1 }),
+                    DT.doc_s4_3
                 ])}
 
-                ${section(T.doc_s5_title.toUpperCase(), [
-                    tr(T.doc_s5_1, { penalty: d.penalty || '0,1%' }),
-                    T.doc_s5_2,
-                    T.doc_s5_3
+                ${section(DT.doc_s5_title.toUpperCase(), [
+                    tr(DT.doc_s5_1, { penalty: d.penalty || '0,1%' }),
+                    DT.doc_s5_2,
+                    DT.doc_s5_3
                 ])}
 
-                ${section(T.doc_s6_title.toUpperCase(), [T.doc_s6_1, T.doc_s6_2])}
+                ${section(DT.doc_s6_title.toUpperCase(), [DT.doc_s6_1, DT.doc_s6_2])}
 
-                ${d.conf ? section(T.doc_s7_title.toUpperCase(), [T.doc_s7_1, T.doc_s7_2]) : ''}
+                ${d.conf ? section(DT.doc_s7_title.toUpperCase(), [DT.doc_s7_1, DT.doc_s7_2]) : ''}
 
-                ${section(T.doc_s8_title.toUpperCase(), [
-                    T.doc_s8_1,
-                    tr(T.doc_s8_2, { dispute: `<strong>${disputeName(d.dispute) || T.doc_s8_default}</strong>` })
+                ${section(DT.doc_s8_title.toUpperCase(), [
+                    DT.doc_s8_1,
+                    tr(DT.doc_s8_2, { dispute: `<strong>${disputeName(d.dispute) || DT.doc_s8_default}</strong>` })
                 ])}
 
-                ${section(T.doc_s9_title.toUpperCase(), [
-                    T.doc_s9_1,
-                    T.doc_s9_2,
-                    T.doc_s9_3,
-                    T.cls_language_clause,
-                    d.extra ? tr(T.doc_s9_extra, { extra: d.extra }) : ''
+                ${section(DT.doc_s9_title.toUpperCase(), [
+                    DT.doc_s9_1,
+                    DT.doc_s9_2,
+                    DT.doc_s9_3,
+                    DT.cls_language_clause,
+                    d.extra ? tr(DT.doc_s9_extra, { extra: d.extra }) : ''
                 ])}
 
-                <div class="cls-sign-title">${T.cls_signatures_title}</div>
+                <div class="cls-sign-title">${DT.cls_signatures_title}</div>
                 <table class="cls-table">
                     <tbody>
                         <tr>
@@ -4325,7 +4309,7 @@ ${T.prompt_outro}`;
                 </table>
 
                 <div class="cls-footnote">
-                    ${T.cls_footnote} · ${contractNumber} · ${dateStr}
+                    ${DT.cls_footnote} · ${contractNumber} · ${dateStr}
                 </div>
             </div>
         `;
@@ -4345,48 +4329,48 @@ ${T.prompt_outro}`;
 
     function generateTextVersion(d) {
         const dt = new Date(d.date || Date.now());
-        const dateStr = dt.toLocaleDateString(T.intl_locale, { day: 'numeric', month: 'long', year: 'numeric' });
+        const dateStr = dt.toLocaleDateString(DT.intl_locale, { day: 'numeric', month: 'long', year: 'numeric' });
         const amt = d.amount ? parseInt(d.amount) : null;
-        const amtW = amt ? numWords(amt) : T.txt_words_placeholder;
-        const amtF = amt ? amt.toLocaleString(T.intl_locale) : T.txt_amount_placeholder;
+        const amtW = amt ? numWords(amt) : DT.txt_words_placeholder;
+        const amtF = amt ? amt.toLocaleString(DT.intl_locale) : DT.txt_amount_placeholder;
         const typeLocal = typeName(d.type);
         const role1 = roleName(d.role1);
         const role2 = roleName(d.role2);
         const dat1 = roleDat(d.role1);
 
-        return `${tr(T.txt_header, { type: typeLocal.toUpperCase() })}
+        return `${tr(DT.txt_header, { type: typeLocal.toUpperCase() })}
 
-${d.city || T.txt_city_blank} | ${dateStr}
+${d.city || DT.txt_city_blank} | ${dateStr}
 
-${tr(T.txt_preamble, { p1: d.p1, p2: d.p2, role1: role1, role2: role2 })}
+${tr(DT.txt_preamble, { p1: d.p1, p2: d.p2, role1: role1, role2: role2 })}
 
-${T.txt_s1}
-${tr(T.txt_s1_1, { dat1: dat1, role1: role1, role2: role2, subject: d.subject || typeLocal })}
+${DT.txt_s1}
+${tr(DT.txt_s1_1, { dat1: dat1, role1: role1, role2: role2, subject: d.subject || typeLocal })}
 
-${T.txt_s2}
-${tr(T.txt_s2_1, { amount: amtF, words: amtW, vat: d.vat !== 'не указано' ? vatName(d.vat) : '' })}
-${tr(T.txt_s2_2, { payment: d.pay || T.doc_default_payment })}
+${DT.txt_s2}
+${tr(DT.txt_s2_1, { amount: amtF, words: amtW, vat: d.vat !== 'не указано' ? vatName(d.vat) : '' })}
+${tr(DT.txt_s2_2, { payment: d.pay || DT.doc_default_payment })}
 
-${T.txt_s3}
-${tr(T.txt_s3_1, { duration: d.duration || T.doc_s4_default_duration })}
+${DT.txt_s3}
+${tr(DT.txt_s3_1, { duration: d.duration || DT.doc_s4_default_duration })}
 
-${T.txt_s4}
-${tr(T.txt_s4_1, { penalty: d.penalty || T.txt_default_penalty })}
+${DT.txt_s4}
+${tr(DT.txt_s4_1, { penalty: d.penalty || DT.txt_default_penalty })}
 
-${T.txt_s5}
-${tr(T.txt_s5_1, { dispute: disputeName(d.dispute) || T.txt_default_dispute })}
+${DT.txt_s5}
+${tr(DT.txt_s5_1, { dispute: disputeName(d.dispute) || DT.txt_default_dispute })}
 
-${T.txt_signatures}
+${DT.txt_signatures}
 ${role1}: ${d.p1} ___________    ${role2}: ${d.p2} ___________`;
     }
 
     function numWords(n) {
-        if (!n) return T.txt_words_placeholder;
+        if (!n) return DT.txt_words_placeholder;
         n = Math.floor(n);
-        if (n === 0) return T.num_zero + ' ' + T.currency;
+        if (n === 0) return DT.num_zero + ' ' + DT.currency;
 
-        const ones = T.num_ones, teens = T.num_teens, tens = T.num_tens, hunds = T.num_hunds;
-        const sep = T.num_sep || ' ';
+        const ones = DT.num_ones, teens = DT.num_teens, tens = DT.num_tens, hunds = DT.num_hunds;
+        const sep = DT.num_sep || ' ';
 
         const formatGroup = (num) => {
             if (num === 0) return '';
@@ -4407,14 +4391,14 @@ ${role1}: ${d.p1} ___________    ${role2}: ${d.p2} ___________`;
         const x = n;
         const th = Math.floor(x / 1000) % 1000;
         if (th > 0) {
-            const f = (th % 10 === 1 && th % 100 !== 11) ? T.num_thousand_one :
-                ((th % 10 >= 2 && th % 10 <= 4 && (th % 100 < 10 || th % 100 > 20)) ? T.num_thousand_few : T.num_thousand_many);
+            const f = (th % 10 === 1 && th % 100 !== 11) ? DT.num_thousand_one :
+                ((th % 10 >= 2 && th % 10 <= 4 && (th % 100 < 10 || th % 100 > 20)) ? DT.num_thousand_few : DT.num_thousand_many);
             result.push(formatGroup(th) + ' ' + f);
         }
         const u = formatGroup(x % 1000);
         if (u || th === 0) result.push(u);
 
-        return result.filter(Boolean).join(sep).trim() + ' ' + T.currency;
+        return result.filter(Boolean).join(sep).trim() + ' ' + DT.currency;
     }
 
     // ===== History =====

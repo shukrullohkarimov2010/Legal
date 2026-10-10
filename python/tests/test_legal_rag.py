@@ -68,6 +68,26 @@ def test_synonyms_match_by_stem():
           "синонимы: сработали там, где триггера нет")
 
 
+def test_civil_penalty_wording_reaches_the_penalty_articles():
+    """«Штраф по договору» — это неустойка, а не вид наказания."""
+    expanded = lr.expand_query("Может ли суд уменьшить штраф по договору?").lower()
+    check(expanded.count("неустойка") >= 2, "«штраф по договору» не привёл к неустойке: %s" % expanded)
+    expanded = lr.expand_query("Может ли суд уменьшить договорную штрафную санкцию?").lower()
+    check(expanded.count("неустойка") >= 2, "«штрафная санкция» + договор не привели к неустойке: %s" % expanded)
+    expanded = lr.expand_query("Какой штраф за просрочку обязательства?").lower()
+    check(expanded.count("неустойка") >= 2, "«штраф» + обязательство не привели к неустойке: %s" % expanded)
+    # Без гражданского контекста «штраф» остаётся уголовным и налоговым: вес
+    # неустойки не добавляется (одно упоминание даёт общий синоним «штраф»).
+    check(lr.expand_query("Какой штраф за кражу?").lower().count("неустойка") <= 1,
+          "уголовный вопрос про штраф получил вес неустойки")
+    check(lr.expand_query("Кто платит штраф ГИБДД?").lower().count("неустойка") <= 1,
+          "вопрос про штраф ГИБДД получил вес неустойки")
+    # Если человек сам сказал «неустойка», правило не добавляет свою.
+    once = lr.expand_query("Как уменьшить неустойку по договору?").lower()
+    check(once.count("неустойка") == lr.expand_query("Как уменьшить неустойку?").lower().count("неустойка"),
+          "правило дописало неустойку поверх собственной: %s" % once)
+
+
 def test_router_prefers_matching_code():
     labour = lr.route_codes("за что работодатель может уволить работника")
     check(labour["трудовой кодекс.docx"] > labour["1918_ru_1.docx"],
@@ -150,6 +170,42 @@ def test_embeddings_degrade_gracefully():
     results = lr.search(index, "сроки исполнения", top_k=2, store={"ids": [], "vectors": None},
                         provider=provider)
     check(bool(results), "поиск упал при недоступных эмбеддингах")
+
+
+def test_every_code_has_short_name_and_routing_hints():
+    """Кодекс без сокращения или маркеров молча выпадает из маршрутизации."""
+    missing_hints = sorted(set(lr.CODE_SHORT) - set(lr.CODE_HINTS))
+    assert not missing_hints, "нет маркеров маршрутизации: %s" % missing_hints
+    assert lr.CODE_SHORT["КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРОЦЕДУРАХ.docx"] == "КоАПр РТ"
+    assert lr.CODE_SHORT["ЭКОНОМИЧЕСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx"] == "ЭПК РТ"
+
+
+def test_matched_codes_names_only_areas_the_description_mentions():
+    """Страница УК показывает смежные нормы лишь из названных областей."""
+    health = lr.matched_codes("врач по неосторожности причинил вред пациенту")
+    assert "Кодекс здравохранение.docx" in health
+    assert "Лесной кодекс.docx" in lr.matched_codes("срубил деревья в лесу без разрешения")
+    assert "налоговый кодекс.docx" in lr.matched_codes("директор не платил налоги")
+    # Описание без названной области не даёт ни одного смежного кодекса.
+    for text in ("вырвал сумку у женщины и убежал", "какая погода в Душанбе"):
+        foreign = {s for s in lr.matched_codes(text) if s != "574_ru.doc"}
+        assert not foreign, "%s -> %s" % (text, foreign)
+    assert lr.matched_codes("") == {}
+
+
+def test_typo_article_heading_is_repaired_but_cross_references_are_not():
+    """«Статьи 55. Виды…» в исходнике — заголовок; «Статьи 12 и 13 …» — ссылка."""
+    text = lr.normalize_document_text(
+        "Статья 5. Название\nТекст.\nСтатьи 12 и 13 настоящего Кодекса применяются иначе.\n"
+        "Статьи 55. Виды процедур\nТело статьи."
+    ).split("\n")
+    assert text[2].startswith("Статьи 12 и 13"), text[2]
+    assert text[3] == "Статья 55. Виды процедур", text[3]
+
+
+def test_matched_codes_orders_by_number_of_markers():
+    hits = lr.matched_codes("врач и пациент: медицинская помощь, лечение, диагноз")
+    assert next(iter(hits)) == "Кодекс здравохранение.docx"
 
 
 def main() -> int:

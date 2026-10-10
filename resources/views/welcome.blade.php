@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
 
 @php
 /* ================================================================
@@ -59,8 +59,8 @@ $L = match (app()->getLocale()) {
     'nav' => ['home' => 'Саҳифаи асосӣ', 'dash' => 'Дашборд', 'calc' => 'Калкулятор', 'chat' => 'Чати ИИ', 'login' => 'Ворид шудан', 'notif' => 'Огоҳиномаҳо', 'menu' => 'Меню', 'search' => 'Ҷустуҷӯ'],
     'hero' => [
         'badge' => 'AI-таҳлил бо дақиқии то 95%',
-        'title1' => 'AI-платформа',
-        'title2' => 'барои кор бо ҳуҷҷатҳои ҳуқуқӣ',
+        'title1' => 'Платформаи ҳуқуқӣ',
+        'title2' => 'бо истифодаи зеҳни сунъӣ',
         'typed' => ['аз рӯи қонунгузории Тоҷикистон', 'бо ишора ба моддаҳои кодексҳо', 'барои бизнес ва ҳуқуқшиносон'],
         'sub' => 'Санҷиши худкори шартномаҳо дар 60 сония. Ошкор кардани хавфҳои пинҳон, номувофиқатӣ ба қонунгузории ҶТ ва шартҳои номусоид. То 90% вақти ҳуқуқшиносон сарфа мешавад.',
         'cta1' => 'Бақайдгирӣ барои боркунӣ', 'cta2' => 'Видео-намоиш',
@@ -215,8 +215,8 @@ $L = match (app()->getLocale()) {
     'nav' => ['home' => 'Home', 'dash' => 'Dashboard', 'calc' => 'Calculator', 'chat' => 'AI Chat', 'login' => 'Sign in', 'notif' => 'Notifications', 'menu' => 'Menu', 'search' => 'Search'],
     'hero' => [
         'badge' => 'AI analysis with up to 95% accuracy',
-        'title1' => 'AI platform',
-        'title2' => 'for legal document workflows',
+        'title1' => 'Legal platform',
+        'title2' => 'powered by artificial intelligence',
         'typed' => ['built on Tajikistan law', 'with article-level citations', 'for business and lawyers'],
         'sub' => 'Automated contract review in 60 seconds. Detection of hidden risks, non-compliance with the legislation of Tajikistan and unfavorable terms. Saves up to 90% of lawyers’ time.',
         'cta1' => 'Register to upload', 'cta2' => 'Demo video',
@@ -371,8 +371,8 @@ default => [
     'nav' => ['home' => 'Главная', 'dash' => 'Дашборд', 'calc' => 'Калькулятор', 'chat' => 'Чат ИИ', 'login' => 'Войти', 'notif' => 'Уведомления', 'menu' => 'Меню', 'search' => 'Поиск'],
     'hero' => [
         'badge' => 'AI-анализ с точностью до 95%',
-        'title1' => 'AI-платформа',
-        'title2' => 'для работы с юридическими документами',
+        'title1' => 'Юридическая платформа',
+        'title2' => 'с использованием искусственного интеллекта',
         'typed' => ['по законодательству Таджикистана', 'со ссылками на статьи кодексов', 'для бизнеса и юристов'],
         'sub' => 'Автоматическая проверка контрактов за 60 секунд. Выявление скрытых рисков, несоответствий законодательству Республики Таджикистан и невыгодных условий. Экономия до 90% времени юристов.',
         'cta1' => 'Зарегистрироваться для загрузки', 'cta2' => 'Демо-видео',
@@ -543,9 +543,9 @@ default => [
 <meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1A" media="(prefers-color-scheme: dark)">
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<link rel="stylesheet" href="{{ asset('css/tw-default.css') }}?v={{ @filemtime(public_path('css/tw-default.css')) }}">
+<script src="{{ asset('vendor/chart.min.js') }}"></script>
+<script defer src="{{ asset('vendor/alpine.min.js') }}"></script>
 
 <style>
 /* ================================================================
@@ -553,7 +553,7 @@ default => [
    ================================================================ */
 :root {
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+    --font-display: var(--font-sans);
 
     --bg-primary: #F8FAFC;
     --bg-secondary: #FFFFFF;
@@ -672,8 +672,8 @@ h4 { letter-spacing: -0.012em; }
 /* Ненавязчивая засечная акцентная гарнитура для ключевых слов в заголовках */
 .h-accent {
     font-family: var(--font-display);
-    font-style: italic;
-    font-weight: 400;
+    font-style: normal;
+    font-weight: inherit;
     letter-spacing: -0.005em;
     background: var(--accent-gradient);
     -webkit-background-clip: text;

@@ -9,25 +9,11 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        display: ['Manrope', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace']
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="{{ asset('vendor/bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/tw-dashboard.css') }}?v={{ @filemtime(public_path('css/tw-dashboard.css')) }}">
+    <script defer src="{{ asset('vendor/alpine.min.js') }}"></script>
 
     <style>
         /* ============================================
@@ -340,7 +326,7 @@
         }
 
         .brand-logo {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-weight: 800;
             font-size: 1.35rem;
             letter-spacing: -0.03em;
@@ -427,7 +413,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-weight: 800;
             font-size: 0.875rem;
             color: white;
@@ -562,7 +548,7 @@
         }
 
         .hero-title {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-weight: 800;
             font-size: clamp(2.25rem, 5.5vw, 4rem);
             line-height: 1.02;
@@ -740,7 +726,7 @@
             font-weight: 500;
         }
         .metric-value {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-size: 1.375rem;
             font-weight: 800;
             letter-spacing: -0.02em;
@@ -804,7 +790,7 @@
         }
         .trust-logos:hover { opacity: 0.85; filter: grayscale(0%); }
         .trust-logo {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-weight: 800;
             font-size: 1.125rem;
             color: var(--ink-tertiary);
@@ -831,7 +817,7 @@
         }
 
         .section-title {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-size: clamp(1.75rem, 4vw, 2.75rem);
             font-weight: 800;
             letter-spacing: -0.035em;
@@ -969,7 +955,7 @@
         [data-theme="dark"] .feature-icon-box.cyan { background: linear-gradient(135deg, rgba(8,145,178,0.25), rgba(8,145,178,0.15)); color: #22d3ee; }
 
         .feature-title {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-size: 1.375rem;
             font-weight: 700;
             letter-spacing: -0.02em;
@@ -1092,7 +1078,7 @@
         }
 
         .step-title {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-size: 1rem;
             font-weight: 700;
             color: var(--ink-primary);
@@ -1143,7 +1129,7 @@
         }
 
         .stat-value-premium {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-size: 2.5rem;
             font-weight: 800;
             letter-spacing: -0.04em;
@@ -1190,7 +1176,7 @@
         }
 
         .cta-title {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-size: clamp(1.75rem, 4vw, 2.75rem);
             font-weight: 800;
             letter-spacing: -0.035em;
@@ -1224,7 +1210,7 @@
         }
 
         .footer-brand {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-weight: 800;
             font-size: 1.25rem;
             letter-spacing: -0.03em;
@@ -1568,7 +1554,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-weight: 800;
             font-size: 0.6875rem;
             color: white;
@@ -1710,7 +1696,7 @@
         }
 
         .mini-stat-value {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             font-size: 1.125rem;
             font-weight: 800;
             color: white;
@@ -2509,7 +2495,7 @@
 
 
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('vendor/bootstrap.bundle.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 
 <script>
@@ -2834,5 +2820,6 @@
         if (bEnd) bEnd.value = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     });
 </script>
+
 </body> 
 </html>

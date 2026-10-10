@@ -184,8 +184,85 @@ def detect_lang_details(text, default=None):
 # написано в самом кодексе.
 _PROTECT_PATTERNS = [
     re.compile(r"ПРОВЕРЕННАЯ ССЫЛКА RAG:[^\n]*"),
-    re.compile(r"\b(?:ТК|ГК|НК|СК|УК|ГПК|АПК|КоАП)\s*РТ\b"),
+    # Все кодексы, по которым ищет чат (см. CODE_SHORT в legal_rag): раньше
+    # маскировались только шесть, а «ЭПК РТ» или «КАТ РТ» NLLB превращала в «ТТ».
+    re.compile(r"\b(?:ТК|ГК|НК|СК|УК|ГПК|АПК|КоАПр|КоАП|ПКоАП|ЭПК|КАТ|ВдК|ВздК|ГрК|ЖК|КЗ|ЛК|УПК)\s*РТ\b"),
 ]
+
+# ---------------------------------------------------------------------------
+# Подготовка русского текста к переводу на таджикский и правка результата
+# ---------------------------------------------------------------------------
+# Всё ниже проверено замером на живых фразах ответов чата (NLLB-200, CPU):
+#
+# - «ст. 67» без раскрытия перевод иногда читал как «стр.» и выдавал
+#   «саҳифа 67» (страница), а «ч. 1 ст. 327» превращалось в «моддаи 1 327»,
+#   то есть часть статьи терялась. «статья 67» / «часть 1 статьи 327» NLLB
+#   переводит стабильно: «моддаи 67», «қисми 1 моддаи 327».
+# - Длинное тире переводчик выбрасывал вместе с логикой фразы: «срок — три
+#   года» выходило «мӯҳлат  се сол» с двойным пробелом. Дефис он сохраняет.
+# - «неустойка» без контекста теряется («ноустуворӣ» — «неустойчивость»,
+#   «бепарвоӣ» — «беспечность»). В самом ГК РТ она определена как «штраф, пеня»,
+#   а «штраф» NLLB даёт стабильно: «ҷарима».
+#
+# Всё это касается только направления ru -> tg; русский текст в истории диалога
+# и в промпте не меняется.
+
+_ABBREV_EXPANSIONS = (
+    (re.compile(r"\bч\.\s*(\d+)\s*ст\.\s*(\d+)"), r"часть \1 статьи \2"),
+    (re.compile(r"\bст\.\s*ст\.\s*(?=\d)"), "статьи "),
+    (re.compile(r"\bст\.\s*(?=\d)"), "статья "),
+    (re.compile(r"\bч\.\s*(?=\d)"), "часть "),
+    (re.compile(r"\bп\.\s*(?=\d)"), "пункт "),
+    (re.compile(r"\bгл\.\s*(?=\d)"), "глава "),
+)
+_PENALTY_RE = re.compile(r"\b[Нн]еустойк(?:а|у|и|е|ой|ою)\b|\b[Нн]еустоек\b")
+
+
+def prepare_for_tajik(text):
+    """Раскрывает сокращения ссылок и подменяет слова, которые NLLB теряет."""
+    for pattern, replacement in _ABBREV_EXPANSIONS:
+        text = pattern.sub(replacement, text)
+    text = text.replace(" \u2014 ", " - ")
+    return _PENALTY_RE.sub("штраф", text)
+
+
+_TG_LETTERS = "А-Яа-яЁёӢӣӮӯҚқҲҳҶҷҒғ"
+_TG_FIXES = (
+    # «Манбаъ: ТК РТ, саҳифа 67» — в ответе о законе страниц не бывает.
+    (re.compile(r"саҳифа(?:и)?\s*(?=\d)"), "моддаи "),
+    # Так называется кодекс в самом интерфейсе («Кодекси граждании ҶТ»).
+    (re.compile(r"Кодекси\s+шаҳрванд\w*"), "Кодекси граждании"),
+    # «РТ» без кодекса перед ним NLLB иногда пишет как «ТР» или «ТТ».
+    (re.compile(r"(?<![%s])(?:ТР|ТТ)(?![%s])" % (_TG_LETTERS, _TG_LETTERS)), "ҶТ"),
+    (re.compile(r"[ \t]{2,}"), " "),
+    (re.compile(r"[ \t]+([,.;:!?])"), r"\1"),
+)
+
+
+def polish_tajik(text):
+    """Исправляет повторяющиеся сбои перевода, которые видны без словаря."""
+    for pattern, replacement in _TG_FIXES:
+        text = pattern.sub(replacement, text)
+    return text.strip()
+
+
+# Название части документа, которое дописывает repair_numbers, должно быть
+# таджикским: «Глава 13, Статья 81» в таджикском тексте выглядит как сбой.
+_CONTEXT_WORDS = (
+    (re.compile(r"стат[а-яё]*|ст\.", re.I), "моддаи"),
+    (re.compile(r"глав[а-яё]*|гл\.", re.I), "боби"),
+    (re.compile(r"част[а-яё]*|ч\.", re.I), "қисми"),
+    (re.compile(r"пункт[а-яё]*|п\.", re.I), "банди"),
+)
+
+
+def localize_citation(text, lang):
+    if lang != "tg":
+        return text
+    for pattern, word in _CONTEXT_WORDS:
+        text = pattern.sub(word, text)
+    return text
+
 
 _NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)*")
 _CITATION_CONTEXT_RE = re.compile(
@@ -234,7 +311,7 @@ def lost_numbers(source, translated):
     return lost
 
 
-def repair_numbers(source, translated):
+def repair_numbers(source, translated, lang="ru"):
     """Дописывает реквизиты, которые переводчик потерял или переписал словами.
 
     Приписка в скобках выглядит грубее гладкой фразы, но ответ, где номер
@@ -251,7 +328,7 @@ def repair_numbers(source, translated):
 
     covered = " ".join(contexts)
     tail = [number for number in lost if number not in covered]
-    parts = contexts + tail
+    parts = [localize_citation(part, lang) for part in contexts + tail]
     if not parts:
         return translated
     return "%s (%s)" % (translated.rstrip(), ", ".join(parts))
@@ -428,9 +505,10 @@ class Translator:
 
         prepared = []
         stashes = []
+        to_tajik = src == "ru" and tgt == "tg"
         for text in texts:
             clean, saved = protect_citations(text or "")
-            prepared.append(clean)
+            prepared.append(prepare_for_tajik(clean) if to_tajik else clean)
             stashes.append(saved)
 
         try:
@@ -464,7 +542,9 @@ class Translator:
                 skip_special_tokens=True,
             )
             restored = repair_citations(restore_citations(decoded.strip(), saved), saved)
-            output.append(repair_numbers(source or "", restored))
+            if to_tajik:
+                restored = polish_tajik(restored)
+            output.append(repair_numbers(source or "", restored, tgt))
         return output
 
     def translate_text(self, text, src, tgt):
@@ -524,6 +604,9 @@ __all__ = [
     "has_lost_citations",
     "lost_numbers",
     "repair_numbers",
+    "prepare_for_tajik",
+    "polish_tajik",
+    "localize_citation",
     "normalize_search_query",
     "Translator",
     "translator",

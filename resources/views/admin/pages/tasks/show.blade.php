@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Конструктор Договоров PRO</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="{{ asset('vendor/marked.min.js') }}"></script>
     <style>
         /* Стили остались прежними, только добавили индикатор "PRO" */
         * { box-sizing: border-box; margin: 0; padding: 0; }

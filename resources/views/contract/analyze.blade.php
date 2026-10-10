@@ -11,26 +11,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://unpkg.com/docx@8.2.3/build/index.umd.js"></script>
+    <link rel="stylesheet" href="{{ asset('css/tw-analyze.css') }}?v={{ @filemtime(public_path('css/tw-analyze.css')) }}">
+    <script src="{{ asset('vendor/marked.min.js') }}"></script>
+    <script src="{{ asset('vendor/html2pdf.bundle.min.js') }}"></script>
+    <script src="{{ asset('vendor/docx-8.2.3.umd.js') }}"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace']
-                    }
-                }
-            }
-        }
-    </script>
 
     <style>
         * { box-sizing: border-box; }

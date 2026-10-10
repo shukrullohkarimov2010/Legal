@@ -17,61 +17,181 @@ class CabinetController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $tasks = Task::query()->latest()->limit(12)->get();
-        $sessions = $this->sessionsForUser((int) $user->id);
-        $documentHistory = $this->documentHistory((int) $user->id);
 
+        // Задачи — только свои: раньше сюда попадали задачи всех пользователей,
+        // а счётчики считались по всей таблице.
+        $tasks = Task::query()->where('user_id', $user->id)->latest()->limit(5)->get();
+        $sessions = $this->sessionsForUser((int) $user->id, $request->session()->getId());
+        $documentHistory = $this->documentHistory((int) $user->id);
+        $documents = $this->documents($documentHistory);
+
+        // Цифры считаются по тому же списку, что вкладка «Все»: генерация и её запись в
+        // реестре — один документ, а не два.
+        $visible = $documents->where('in_all', true);
+        $counts = $visible->countBy('kind');
         $stats = [
-            'tasks_total' => Task::query()->count(),
-            'tasks_completed' => Task::query()->where('status', Task::STATUS_COMPLETED)->count(),
-            'sessions_total' => $sessions->count(),
-            'history_total' => $documentHistory['total'],
+            'documents' => $visible->count(),
+            'analyses' => (int) ($counts['analysis'] ?? 0),
+            'comparisons' => (int) ($counts['comparison'] ?? 0),
+            'contracts_made' => (int) ($counts['generation'] ?? 0) + (int) ($counts['contract'] ?? 0),
+            'tasks_open' => Task::query()->where('user_id', $user->id)
+                ->where('status', '!=', Task::STATUS_COMPLETED)->count(),
         ];
 
-        $activity = collect()->push([
-            'title' => 'Регистрация аккаунта',
-            'description' => 'Пользователь создан в системе.',
-            'date' => $user->created_at,
-        ]);
-
-        if ($user->last_seen_at) {
-            $activity->push([
-                'title' => 'Последняя активность',
-                'description' => 'Пользователь был активен в приложении.',
-                'date' => $user->last_seen_at,
-            ]);
-        }
-
-        foreach ($tasks as $task) {
-            $activity->push([
-                'title' => $task->title,
-                'description' => $this->taskStatusLabel($task->status),
-                'date' => $task->updated_at ?? $task->created_at,
-            ]);
-        }
-
-        foreach ($documentHistory['activity_log'] as $item) {
-            $activity->push([
-                'title' => $item['action_type'] ?? 'Запись истории',
-                'description' => $item['details'] ?? 'Действие из истории документов.',
-                'date' => $this->parseDate($item['timestamp'] ?? null),
-            ]);
-        }
-
-        $activity = $activity
-            ->filter(fn (array $item) => $item['date'] instanceof Carbon)
-            ->sortByDesc('date')
-            ->values()
-            ->take(20);
+        $currentDevice = $this->describeDevice((string) $request->userAgent());
+        $currentDevice['ip'] = $request->ip();
 
         return view('cabinet.index', compact(
             'user',
             'tasks',
             'sessions',
-            'documentHistory',
+            'documents',
             'stats',
-            'activity'
+            'currentDevice'
         ));
+    }
+
+    /**
+     * Все документы пользователя одним списком, от новых к старым.
+     *
+     * История лежит в трёх массивах (действия, генерации, реестр договоров), и в
+     * кабинете они были тремя узкими колонками. Человеку нужен один список с
+     * фильтром по виду. Генерация пишет две записи (в генерации и в реестр) с одним
+     * временем и файлом: в общем списке остаётся одна, договор показывается на
+     * своей вкладке.
+     */
+    private function documents(array $history): \Illuminate\Support\Collection
+    {
+        $items = collect();
+
+        foreach ($history['activity_log'] as $index => $record) {
+            $title = (string) ($record['action_type'] ?? 'Действие');
+            $isComparison = mb_stripos($title, 'сравнен') !== false;
+            $summary = (string) ($record['summary'] ?? '');
+            $result = $this->stringify($record['result'] ?? $record['response'] ?? $record['ai_response'] ?? '');
+            $file = (string) ($record['file_name'] ?? '');
+
+            $items->push([
+                'kind' => $isComparison ? 'comparison' : 'analysis',
+                'delete_type' => 'activity',
+                'id' => (string) ($record['timestamp'] ?? $record['id'] ?? $index),
+                'title' => $file !== '' ? $file : $title,
+                'label' => $title,
+                'details' => (string) ($record['details'] ?? ''),
+                'summary' => $summary,
+                'result' => $result,
+                'status' => '',
+                'risk' => $this->parseRisk($summary . ' ' . ($record['details'] ?? '')),
+                'compat' => $this->parseCompatibility($result),
+                'date' => $this->parseDate($record['timestamp'] ?? null),
+                'in_all' => true,
+            ]);
+        }
+
+        $generationKeys = [];
+        foreach ($history['generation_history'] as $index => $record) {
+            $created = (string) ($record['created_at'] ?? '');
+            $file = (string) ($record['file_name'] ?? '');
+            $generationKeys[$created . '|' . $file] = true;
+            $prompt = (string) ($record['input_prompt'] ?? '');
+
+            $items->push([
+                'kind' => 'generation',
+                'delete_type' => 'generation',
+                'id' => (string) ($record['generation_id'] ?? $record['id'] ?? $index),
+                'title' => $file !== '' ? $file : ($prompt !== '' ? \Illuminate\Support\Str::limit($prompt, 70) : 'Генерация договора'),
+                'label' => 'Генерация договора',
+                'details' => $prompt,
+                'summary' => (string) ($record['summary'] ?? ''),
+                'result' => $this->stringify($record['result'] ?? ''),
+                'status' => (string) ($record['status'] ?? ''),
+                'risk' => null,
+                'compat' => null,
+                'date' => $this->parseDate($record['created_at'] ?? null),
+                'in_all' => true,
+            ]);
+        }
+
+        foreach ($history['contract_registry'] as $index => $record) {
+            $created = (string) ($record['created_at'] ?? '');
+            $file = (string) ($record['file_name'] ?? '');
+            $type = (string) ($record['contract_type'] ?? 'Договор');
+
+            $items->push([
+                'kind' => 'contract',
+                'delete_type' => 'contract',
+                'id' => (string) ($record['contract_id'] ?? $record['id'] ?? $index),
+                'title' => $file !== '' ? $file : $type,
+                'label' => $type,
+                'details' => '',
+                'summary' => (string) ($record['summary'] ?? ''),
+                'result' => $this->stringify($record['result'] ?? ''),
+                'status' => (string) ($record['status'] ?? ''),
+                'risk' => null,
+                'compat' => null,
+                'date' => $this->parseDate($record['created_at'] ?? null),
+                'in_all' => !isset($generationKeys[$created . '|' . $file]),
+            ]);
+        }
+
+        return $items
+            ->filter(fn (array $item) => $item['date'] instanceof Carbon)
+            ->sortByDesc('date')
+            ->values();
+    }
+
+    private function stringify(mixed $value): string
+    {
+        if (is_array($value) || is_object($value)) {
+            return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?: '';
+        }
+
+        return (string) ($value ?? '');
+    }
+
+    /** «Средний риск (43/100)» -> ['level' => 'medium', 'label' => 'Средний риск', 'score' => 43]. */
+    private function parseRisk(string $text): ?array
+    {
+        if (!preg_match('/(Низкий|Средний|Высокий)\s+риск[^()]{0,20}\((\d{1,3})\s*\/\s*100\)/iu', $text, $m)) {
+            return null;
+        }
+
+        $level = match (mb_strtolower($m[1])) {
+            'низкий' => 'low',
+            'высокий' => 'high',
+            default => 'medium',
+        };
+
+        return ['level' => $level, 'label' => mb_convert_case($m[1], MB_CASE_TITLE) . ' риск', 'score' => min(100, (int) $m[2])];
+    }
+
+    private function parseCompatibility(string $text): ?int
+    {
+        return preg_match('/Совместимость[:\s]+(\d{1,3})\s*%/iu', $text, $m) ? min(100, (int) $m[1]) : null;
+    }
+
+    /** Браузер и система по User-Agent: «Chrome · Windows» вместо строки в 150 символов. */
+    private function describeDevice(string $userAgent): array
+    {
+        $browser = match (true) {
+            str_contains($userAgent, 'Edg/') => 'Edge',
+            str_contains($userAgent, 'OPR/') || str_contains($userAgent, 'Opera') => 'Opera',
+            str_contains($userAgent, 'YaBrowser') => 'Яндекс Браузер',
+            str_contains($userAgent, 'Firefox/') => 'Firefox',
+            str_contains($userAgent, 'Chrome/') => 'Chrome',
+            str_contains($userAgent, 'Safari/') => 'Safari',
+            default => 'Браузер',
+        };
+        $system = match (true) {
+            str_contains($userAgent, 'Android') => 'Android',
+            str_contains($userAgent, 'iPhone') || str_contains($userAgent, 'iPad') => 'iOS',
+            str_contains($userAgent, 'Windows') => 'Windows',
+            str_contains($userAgent, 'Mac OS') => 'macOS',
+            str_contains($userAgent, 'Linux') => 'Linux',
+            default => 'неизвестная система',
+        };
+
+        return ['browser' => $browser, 'system' => $system, 'mobile' => in_array($system, ['Android', 'iOS'], true)];
     }
 
     public function storeActivity(Request $request)
@@ -196,7 +316,7 @@ class CabinetController extends Controller
         return back()->with('status', 'Запись удалена.');
     }
 
-    private function sessionsForUser(int $userId)
+    private function sessionsForUser(int $userId, string $currentId = '')
     {
         if (!Schema::hasTable('sessions')) {
             return collect();
@@ -207,8 +327,10 @@ class CabinetController extends Controller
             ->orderByDesc('last_activity')
             ->limit(10)
             ->get()
-            ->map(function ($session) {
+            ->map(function ($session) use ($currentId) {
                 $session->last_activity_at = Carbon::createFromTimestamp((int) $session->last_activity);
+                $session->device = $this->describeDevice((string) ($session->user_agent ?? ''));
+                $session->is_current = $currentId !== '' && ($session->id ?? '') === $currentId;
 
                 return $session;
             });

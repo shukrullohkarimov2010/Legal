@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LegalAI Pro - Анализ договора</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ asset('css/tw-default.css') }}?v={{ @filemtime(public_path('css/tw-default.css')) }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --ink: #0f172a;
@@ -22,7 +22,7 @@
         }
 
         body {
-            font-family: 'Manrope', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             color: var(--ink);
             min-height: 100vh;
             background:
@@ -195,7 +195,7 @@
 
                 @if ($report)
                     <div class="mt-6 rounded-3xl bg-slate-950 p-5 text-white">
-                        <div class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Последний отчет</div>
+                        <div class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{{ __('Последний отчет') }}</div>
                         <div class="mt-2 text-lg font-bold">{{ $report['file']['original_name'] }}</div>
                         <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
                             <span class="rounded-full bg-white/10 px-3 py-1">{{ $report['file']['extension'] ?: 'FILE' }}</span>
@@ -212,32 +212,32 @@
                 <div class="glass rounded-[32px] p-8">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                            <div class="text-sm font-semibold uppercase tracking-[0.24em] text-teal-700">Общий итог</div>
-                            <h2 class="mt-2 text-3xl font-extrabold text-slate-950">Отчет по договору</h2>
+                            <div class="text-sm font-semibold uppercase tracking-[0.24em] text-teal-700">{{ __('Общий итог') }}</div>
+                            <h2 class="mt-2 text-3xl font-extrabold text-slate-950">{{ __('Отчет по договору') }}</h2>
                             <p class="mt-3 text-sm leading-6 text-slate-500">
-                                Краткая оценка документа, типа договора и уровня потенциальных рисков.
+                                {{ __('Краткая оценка документа, типа договора и уровня потенциальных рисков.') }}
                             </p>
                         </div>
                         <span class="rounded-full px-4 py-2 text-sm font-bold {{ $riskLabelMap[$report['risk_label']] ?? $riskLabelMap['Низкий'] }}">
-                            {{ $report['risk_label'] }} риск
+                            {{ __($report['risk_label']) }} {{ __('риск') }}
                         </span>
                     </div>
 
                     <div class="mt-6 grid gap-4 sm:grid-cols-2">
                         <div class="rounded-3xl bg-slate-950 p-5 text-white">
-                            <div class="text-sm text-slate-300">Риск документа</div>
+                            <div class="text-sm text-slate-300">{{ __('Риск документа') }}</div>
                             <div class="mt-2 text-4xl font-extrabold">{{ $report['risk_score'] }}%</div>
                         </div>
                         <div class="metric-card rounded-3xl p-5">
-                            <div class="text-sm text-slate-500">Предполагаемый тип</div>
+                            <div class="text-sm text-slate-500">{{ __('Предполагаемый тип') }}</div>
                             <div class="mt-2 text-2xl font-bold text-slate-950">{{ $report['contract_type'] }}</div>
                         </div>
                     </div>
 
                     <div class="mt-6">
                         <div class="mb-2 flex items-center justify-between text-sm font-medium text-slate-600">
-                            <span>Шкала риска</span>
-                            <span>{{ $report['risk_label'] }}</span>
+                            <span>{{ __('Шкала риска') }}</span>
+                            <span>{{ __($report['risk_label']) }}</span>
                         </div>
                         <div class="h-3 overflow-hidden rounded-full bg-slate-200">
                             <span class="block h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500" style="width: {{ $riskWidth }}%;"></span>
@@ -245,7 +245,7 @@
                     </div>
 
                     <div class="mt-8 rounded-[28px] bg-white p-6 ring-1 ring-slate-200">
-                        <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">Резюме</div>
+                        <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">{{ __('Резюме') }}</div>
                         <p class="mt-3 text-base leading-8 text-slate-700">{{ $report['summary'] }}</p>
                     </div>
                 </div>
@@ -253,32 +253,32 @@
                 <div class="glass rounded-[32px] p-8">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">Метрики</div>
-                            <h3 class="mt-2 text-2xl font-extrabold text-slate-950">Ключевые показатели</h3>
+                            <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">{{ __('Метрики') }}</div>
+                            <h3 class="mt-2 text-2xl font-extrabold text-slate-950">{{ __('Ключевые показатели') }}</h3>
                         </div>
                         <div class="rounded-full bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700">
-                            На основе серверного анализа
+                            {{ __('На основе серверного анализа') }}
                         </div>
                     </div>
 
                     <div class="mt-6 grid gap-4 sm:grid-cols-3">
                         <div class="metric-card rounded-3xl p-5">
-                            <div class="text-xs uppercase tracking-[0.18em] text-slate-400">Символов</div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-slate-400">{{ __('Символов') }}</div>
                             <div class="mt-3 text-3xl font-extrabold text-slate-950">{{ number_format($report['char_count'], 0, '.', ' ') }}</div>
                         </div>
                         <div class="metric-card rounded-3xl p-5">
-                            <div class="text-xs uppercase tracking-[0.18em] text-slate-400">Слов</div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-slate-400">{{ __('Слов') }}</div>
                             <div class="mt-3 text-3xl font-extrabold text-slate-950">{{ number_format($report['word_count'], 0, '.', ' ') }}</div>
                         </div>
                         <div class="metric-card rounded-3xl p-5">
-                            <div class="text-xs uppercase tracking-[0.18em] text-slate-400">Проблемных зон</div>
+                            <div class="text-xs uppercase tracking-[0.18em] text-slate-400">{{ __('Проблемных зон') }}</div>
                             <div class="mt-3 text-3xl font-extrabold text-slate-950">{{ $report['issues_count'] }}</div>
                         </div>
                     </div>
 
                     <div class="mt-6 grid gap-4 sm:grid-cols-2">
                         <div class="rounded-3xl bg-slate-950 p-6 text-white">
-                            <div class="text-sm uppercase tracking-[0.18em] text-slate-300">Статус проверки</div>
+                            <div class="text-sm uppercase tracking-[0.18em] text-slate-300">{{ __('Статус проверки') }}</div>
                             <div class="mt-3 text-xl font-bold">{{ $report['analysis_status'] }}</div>
                             <p class="mt-2 text-sm leading-6 text-slate-300">{{ $report['analysis_note'] }}</p>
                         </div>
@@ -287,7 +287,7 @@
                             <div class="mt-3 text-lg font-bold text-slate-950">{{ $report['file']['original_name'] }}</div>
                             <div class="mt-3 text-sm leading-6 text-slate-500">
                                 MIME: {{ $report['file']['mime_type'] }}<br>
-                                Путь: {{ $report['file']['stored_path'] }}
+                                {{ __('Путь') }}: {{ $report['file']['stored_path'] }}
                             </div>
                         </div>
                     </div>
@@ -296,8 +296,8 @@
 
             <section class="grid gap-6 lg:grid-cols-3">
                 <div class="glass rounded-[32px] p-8">
-                    <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">Риски</div>
-                    <h3 class="mt-2 text-2xl font-extrabold text-slate-950">Найденные проблемные пункты</h3>
+                    <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">{{ __('Риски') }}</div>
+                    <h3 class="mt-2 text-2xl font-extrabold text-slate-950">{{ __('Найденные проблемные пункты') }}</h3>
                     <div class="mt-6 space-y-4">
                         @foreach ($report['risks'] as $index => $risk)
                             @php
@@ -306,10 +306,10 @@
                             <article class="section-card {{ $palette['wrapper'] }} rounded-[26px] p-5">
                                 <div class="flex items-center justify-between gap-4">
                                     <div class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                        Риск {{ $index + 1 }}
+                                        {{ __('Риск') }} {{ $index + 1 }}
                                     </div>
                                     <span class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] {{ $palette['badge'] }}">
-                                        {{ $palette['title'] }}
+                                        {{ __($palette['title']) }}
                                     </span>
                                 </div>
                                 <p class="mt-3 text-sm leading-7 text-slate-700">{{ $risk['label'] }}</p>
@@ -319,12 +319,12 @@
                 </div>
 
                 <div class="glass rounded-[32px] p-8">
-                    <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">Рекомендации</div>
-                    <h3 class="mt-2 text-2xl font-extrabold text-slate-950">Что улучшить</h3>
+                    <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">{{ __('Рекомендации') }}</div>
+                    <h3 class="mt-2 text-2xl font-extrabold text-slate-950">{{ __('Что улучшить') }}</h3>
                     <div class="mt-6 space-y-4">
                         @foreach ($report['recommendations'] as $index => $recommendation)
                             <article class="section-card rounded-[26px] p-5">
-                                <div class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Шаг {{ $index + 1 }}</div>
+                                <div class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">{{ __('Шаг') }} {{ $index + 1 }}</div>
                                 <p class="mt-3 text-sm leading-7 text-slate-700">{{ $recommendation }}</p>
                             </article>
                         @endforeach
@@ -332,8 +332,8 @@
                 </div>
 
                 <div class="glass rounded-[32px] p-8">
-                    <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">Обзор</div>
-                    <h3 class="mt-2 text-2xl font-extrabold text-slate-950">Ключевые данные</h3>
+                    <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">{{ __('Обзор') }}</div>
+                    <h3 class="mt-2 text-2xl font-extrabold text-slate-950">{{ __('Ключевые данные') }}</h3>
                     <dl class="mt-6 space-y-4">
                         @foreach ($report['facts'] as $fact)
                             <div class="section-card rounded-[26px] p-4">
@@ -348,11 +348,11 @@
             <section class="glass rounded-[32px] p-8">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">Текст документа</div>
-                        <h3 class="mt-2 text-2xl font-extrabold text-slate-950">Извлеченный фрагмент</h3>
+                        <div class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">{{ __('Текст документа') }}</div>
+                        <h3 class="mt-2 text-2xl font-extrabold text-slate-950">{{ __('Извлеченный фрагмент') }}</h3>
                     </div>
                     <div class="rounded-full px-4 py-2 text-sm font-semibold {{ $report['has_text_preview'] ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                        {{ $report['has_text_preview'] ? 'Текст извлечен' : 'Нужен парсер для полного текста' }}
+                        {{ $report['has_text_preview'] ? __('Текст извлечен') : __('Нужен парсер для полного текста') }}
                     </div>
                 </div>
 

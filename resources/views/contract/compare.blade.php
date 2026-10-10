@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>LegalAI Compare — Premium Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="stylesheet" href="{{ asset('css/tw-default.css') }}?v={{ @filemtime(public_path('css/tw-default.css')) }}">
+    <script src="{{ asset('vendor/marked.min.js') }}"></script>
+    <script src="{{ asset('vendor/html2pdf.bundle.min.js') }}"></script>
+    <script src="{{ asset('vendor/jszip.min.js') }}"></script>
+    <script src="{{ asset('vendor/pdf.min.js') }}"></script>
     <script>
         if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '{{ asset('vendor/pdf.worker.min.js') }}';
         }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1792,7 +1792,9 @@ ${tr(T.diffs_and_recs, { diffs: entry.result?.findings?.length || 0, recs: entry
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             state.backendReady = true;
-            state.backendLabel = data.model || data.llm_provider || 'AI';
+            // Внутреннее имя модели (напр. "openai:gpt-5-nano") — служебная деталь
+            // бэкенда, пользователю в бейдже/отчёте показываем нейтральную марку.
+            state.backendLabel = 'LegalAI AI';
             badge.className = 'status-badge connected';
             badge.innerHTML = `<span class="dot pulse-dot"></span><span>${state.backendLabel}</span>`;
             infoBox.classList.remove('hidden');

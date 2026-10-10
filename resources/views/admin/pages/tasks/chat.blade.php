@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LegalAI11 Assistant — Умный юридический бот</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <title>LegalAI Assistant — Умный юридический бот</title>
+    <link rel="stylesheet" href="{{ asset('css/tw-default.css') }}?v={{ @filemtime(public_path('css/tw-default.css')) }}">
+    <script src="{{ asset('vendor/marked.min.js') }}"></script>
     <link href="https://cdn.jsdelivr.net/fontsource/fonts/inter:latin@400,500,600,700&display.css" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
@@ -279,6 +279,80 @@
 
         .model-selector { transition: all 0.3s ease; cursor: pointer; }
         .model-selector.active { border-color: var(--accent) !important; background: var(--accent-active); }
+
+        /* Поле ввода: одна карточка, внутри текст, снизу панель с инструментами и отправкой.
+           Подложки нет: карточка лежит прямо на фоне страницы, как и сообщения. */
+        .composer-wrap { background: transparent; padding: 4px 16px 14px; }
+        .composer {
+            background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 20px;
+            padding: 6px 8px 8px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-hover); }
+        .composer #messageInput {
+            display: block; background: transparent; border: 0; box-shadow: none; outline: none;
+            border-radius: 12px; padding: 10px 12px 6px; line-height: 1.5;
+        }
+        .composer-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 2px; }
+        .composer-tools, .composer-actions { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .composer-count { font-size: 12px; color: var(--text-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .composer-hint { margin-top: 8px; padding: 0 6px; font-size: 12px; color: var(--text-faint); }
+
+        .composer-icon-btn {
+            width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 50%; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: transparent; color: var(--text-muted);
+            transition: background .15s ease, color .15s ease;
+        }
+        .composer-icon-btn:hover { background: var(--accent-hover); color: var(--text-primary); }
+        .composer-icon-btn:focus-visible, .think-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        /* Кнопка «Размышление»: включает точный и подробный режим ответа. */
+        .think-pill {
+            display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; height: 36px;
+            padding: 0 14px 0 12px; border-radius: 999px; font-size: 13.5px; line-height: 1; cursor: pointer;
+            background: transparent; color: var(--text-muted); border: 1px solid var(--surface-3);
+            transition: background .15s ease, color .15s ease, border-color .15s ease;
+        }
+        .think-pill:hover:not(:disabled) { background: var(--accent-hover); color: var(--text-primary); }
+        .think-pill[aria-pressed="true"] {
+            background: var(--accent-active); color: var(--accent); border-color: var(--accent); font-weight: 600;
+        }
+        .think-pill:disabled { opacity: .55; cursor: default; }
+
+        .composer-send {
+            width: 40px; height: 40px; flex-shrink: 0; padding: 0; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        @media (max-width: 640px) {
+            .think-pill .think-label { display: none; }
+            .think-pill { width: 36px; padding: 0; justify-content: center; }
+            .composer-hint { display: none; }
+        }
+
+        /* Карточка уточнения: чат переспрашивает и предлагает варианты ответа. */
+        .clarify-card { display: flex; flex-direction: column; gap: 10px; min-width: min(420px, 100%); }
+        .clarify-question { font-weight: 600; color: var(--text-primary); line-height: 1.45; }
+        .clarify-hint { font-size: 12px; color: var(--text-faint); }
+        .clarify-options { display: flex; flex-direction: column; gap: 8px; }
+        .clarify-option {
+            display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+            padding: 10px 14px; border-radius: 12px; cursor: pointer;
+            color: var(--text-primary); background: transparent;
+            border: 1px solid var(--surface-3);
+            transition: border-color .15s, background .15s, transform .15s;
+        }
+        .clarify-option:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-hover); transform: translateX(2px); }
+        .clarify-option:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .clarify-option .clarify-num {
+            flex: none; width: 22px; height: 22px; border-radius: 999px; font-size: 12px; font-weight: 600;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--accent); background: var(--accent-hover);
+        }
+        .clarify-option.other { border-style: dashed; color: var(--text-muted); }
+        .clarify-card.answered .clarify-option { cursor: default; opacity: .55; }
+        .clarify-card.answered .clarify-option.chosen { opacity: 1; border-color: var(--accent); background: var(--accent-active); }
+        .clarify-card.answered .clarify-hint { display: none; }
 
         .chat-message { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn {
@@ -667,32 +741,32 @@
                         </div>
                         <p class="text-sm text-slate-400">Проверка договоров на юридические риски</p>
                     </div>
-                    <div class="p-4 card-gradient rounded-xl border cursor-pointer hover:border-blue-500 transition" onclick="sendQuickQuestion('Какие пункты должны быть в договоре аренды?')">
+                    <div class="p-4 card-gradient rounded-xl border cursor-pointer hover:border-blue-500 transition" onclick="sendQuickQuestion('Составь договор аренды квартиры на 11 месяцев')">
                         <div class="flex items-center space-x-3 mb-2">
                             <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                             </svg>
                             <span class="font-medium" style="color: var(--text-primary);">Шаблон договора</span>
                         </div>
-                        <p class="text-sm text-slate-400">Создание и проверка шаблонов</p>
+                        <p class="text-sm text-slate-400">Составление договоров, заявлений и исков</p>
                     </div>
-                    <div class="p-4 card-gradient rounded-xl border cursor-pointer hover:border-blue-500 transition" onclick="sendQuickQuestion('Какая ответственность за нарушение договора по ГК Республики Таджикистан?')">
+                    <div class="p-4 card-gradient rounded-xl border cursor-pointer hover:border-blue-500 transition" onclick="sendQuickQuestion('Барои вайрон кардани шартнома тибқи Кодекси граждании Ҷумҳурии Тоҷикистон чӣ гуна масъулият пешбинӣ шудааст?')">
                         <div class="flex items-center space-x-3 mb-2">
                             <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
                             </svg>
-                            <span class="font-medium" style="color: var(--text-primary);">Консультация по ГК РТ</span>
+                            <span class="font-medium" style="color: var(--text-primary);">Машварати ҳуқуқӣ</span>
                         </div>
-                        <p class="text-sm text-slate-400">Ответы на юридические вопросы</p>
+                        <p class="text-sm text-slate-400">Ҷавоб ба саволҳо тибқи Кодекси граждании ҶТ</p>
                     </div>
-                    <div class="p-4 card-gradient rounded-xl border cursor-pointer hover:border-blue-500 transition" onclick="sendQuickQuestion('Как защитить интеллектуальную собственность в договоре?')">
+                    <div class="p-4 card-gradient rounded-xl border cursor-pointer hover:border-blue-500 transition" onclick="sendQuickQuestion('Дар шартнома моликияти зеҳниро чӣ гуна ҳифз кардан мумкин аст?')">
                         <div class="flex items-center space-x-3 mb-2">
                             <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                             </svg>
-                            <span class="font-medium" style="color: var(--text-primary);">Защита прав</span>
+                            <span class="font-medium" style="color: var(--text-primary);">Ҳимояи ҳуқуқ</span>
                         </div>
-                        <p class="text-sm text-slate-400">Интеллектуальная собственность</p>
+                        <p class="text-sm text-slate-400">Моликияти зеҳнӣ</p>
                     </div>
                 </div>
             </div>
@@ -701,7 +775,7 @@
         </div>
 
         <!-- Input Area -->
-        <div class="card-gradient border-t p-4" style="border-color: var(--card-border);">
+        <div class="composer-wrap">
             <div class="max-w-3xl mx-auto">
                 <div id="fileBadgeContainer" class="hidden mb-3">
                     <span id="fileBadge" class="file-attachment-badge">
@@ -712,40 +786,47 @@
                         <button onclick="removeFile()" class="ml-2 hover:text-white">✕</button>
                     </span>
                 </div>
-                <div class="flex items-end space-x-3">
-                    <button onclick="attachFile()" class="p-3 rounded-xl border hover:border-blue-500 transition flex-shrink-0" style="border-color: var(--surface-3); color: var(--text-muted);" title="Прикрепить файл">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-                        </svg>
-                    </button>
-                    <input type="file" id="fileAttachment" class="hidden" accept=".pdf,.docx,.txt,.jpg,.png,.doc">
-                    <div class="flex-1 relative">
-                        <textarea
-                            id="messageInput"
-                            rows="1"
-                            placeholder="Задайте вопрос или загрузите договор для анализа..."
-                            class="w-full rounded-xl px-4 py-3 pr-12 focus:outline-none resize-none"
-                            onkeydown="handleKeyDown(event)"
-                        ></textarea>
+                <div class="composer">
+                    <textarea
+                        id="messageInput"
+                        rows="1"
+                        placeholder="Задайте вопрос или загрузите договор для анализа..."
+                        class="w-full resize-none"
+                        onkeydown="handleKeyDown(event)"
+                    ></textarea>
+                    <div class="composer-bar">
+                        <div class="composer-tools">
+                            <button type="button" onclick="attachFile()" class="composer-icon-btn" title="Прикрепить файл" aria-label="Прикрепить файл">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                </svg>
+                            </button>
+                            <input type="file" id="fileAttachment" class="hidden" accept=".pdf,.docx,.txt,.jpg,.png,.doc">
+                            <button type="button" id="thinkBtn" class="think-pill" aria-pressed="false"
+                                    onclick="toggleThinking()"
+                                    title="Размышление: ответ точнее и подробнее (больше статей, анализ, риски), но приходит дольше">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
+                                <span class="think-label">Размышление</span>
+                            </button>
+                        </div>
+                        <div class="composer-actions">
+                            <span id="charCount" class="composer-count">0 / 4000</span>
+                            <button type="button" onclick="sendMessage()" id="sendBtn" class="btn-primary btn-send composer-send" title="Отправить (Enter)" aria-label="Отправить">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-6 6m6-6l6 6"/>
+                                </svg>
+                            </button>
+                            <button type="button" onclick="stopGeneration()" id="stopBtn" class="btn-stop composer-send hidden-btn" title="Остановить генерацию" aria-label="Остановить генерацию">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <rect x="5" y="5" width="14" height="14" rx="2"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <button onclick="sendMessage()" id="sendBtn" class="p-3 btn-primary rounded-xl flex-shrink-0 btn-send" title="Отправить">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                        </svg>
-                    </button>
-                    <button onclick="stopGeneration()" id="stopBtn" class="p-3 btn-stop rounded-xl flex-shrink-0 btn-stop hidden-btn" title="Остановить генерацию">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <rect x="6" y="6" width="12" height="12" rx="2"/>
-                        </svg>
-                    </button>
                 </div>
-                <div class="flex items-center justify-between mt-3 text-xs" style="color: var(--text-faint);">
-                    <div class="flex items-center space-x-4">
-                        <span>Enter — отправить</span>
-                        <span>Shift+Enter — новая строка</span>
-                    </div>
-                    <span id="charCount">0 / 4000</span>
-                </div>
+                <div class="composer-hint">Enter — отправить · Shift+Enter — новая строка</div>
             </div>
         </div>
     </main>
@@ -815,6 +896,32 @@
                         <input type="text" id="ollamaUrl" value="http://localhost:11434" class="w-full rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500" style="background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary);">
                     </div>
                     <button onclick="testConnection()" class="w-full btn-primary py-3 rounded-lg font-medium">Проверить подключение</button>
+                </div>
+            </div>
+
+            <!-- Assistant Role -->
+            <div class="mb-8">
+                <h4 class="font-semibold mb-4 flex items-center space-x-2" style="color: var(--text-primary);">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+                    </svg>
+                    <span>Роль ассистента</span>
+                </h4>
+                <div class="space-y-3" role="radiogroup" aria-label="Роль ассистента">
+                    <label class="flex items-start space-x-3 p-3 rounded-lg cursor-pointer" style="background: var(--accent-hover);">
+                        <input type="radio" name="chatRole" value="lawyer" checked class="w-4 h-4 mt-1" onchange="setRole(this.value)">
+                        <span>
+                            <span class="block" style="color: var(--text-primary);">Юрист</span>
+                            <span class="block text-xs" style="color: var(--text-faint);">Объективная оценка: нормы, позиции сторон, риски</span>
+                        </span>
+                    </label>
+                    <label class="flex items-start space-x-3 p-3 rounded-lg cursor-pointer" style="background: var(--accent-hover);">
+                        <input type="radio" name="chatRole" value="advocate" class="w-4 h-4 mt-1" onchange="setRole(this.value)">
+                        <span>
+                            <span class="block" style="color: var(--text-primary);">Адвокат</span>
+                            <span class="block text-xs" style="color: var(--text-faint);">Позиция защиты: аргументы, доказательства, ответы на доводы другой стороны</span>
+                        </span>
+                    </label>
                 </div>
             </div>
 
@@ -973,12 +1080,59 @@
         isProcessing: false,
         attachedFile: null,
         abortController: null,
-        deleteCallback: null
+        deleteCallback: null,
+        // true, пока последним сообщением чата была карточка уточнения: следующая
+        // реплика пользователя — ответ на неё, и сервер не должен переспрашивать
+        // повторно (иначе диалог зациклится).
+        pendingClarify: false,
+        // Диалог перед составлением документа («какой договор», «с кем»): состояние
+        // приходит с карточкой вопроса и возвращается сервером вместе с ответом.
+        docState: null,
+        // Роль (юрист / адвокат) задаётся в настройках и запоминается. Глубина —
+        // кнопка «Размышление»: чат каждый раз открывается в режиме «Скорость».
+        chatRole: 'lawyer',
+        chatDepth: 'fast',
+        // Ожидание ответа: если первого текста нет дольше stageNoteAfterMs,
+        // под индикатором показывается этап, на котором сейчас чат.
+        stageNoteAfterMs: 25000,
+        stageLabel: '',
+        waitStartedAt: 0,
+        stageTimer: null
     };
+
+    const ROLE_KEY = 'legalai_chat_role';
+
+    function loadChatRole() {
+        try {
+            const saved = localStorage.getItem(ROLE_KEY);
+            if (saved === 'lawyer' || saved === 'advocate') state.chatRole = saved;
+        } catch (e) { /* хранилище недоступно: остаётся «юрист» */ }
+        const radio = document.querySelector(`input[name="chatRole"][value="${state.chatRole}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    function setRole(value) {
+        if (value !== 'lawyer' && value !== 'advocate') return;
+        state.chatRole = value;
+        try { localStorage.setItem(ROLE_KEY, value); } catch (e) { /* не критично */ }
+    }
+
+    function toggleThinking() {
+        if (state.isProcessing) return;
+        state.chatDepth = state.chatDepth === 'deep' ? 'fast' : 'deep';
+        renderThinking();
+    }
+
+    function renderThinking() {
+        const button = document.getElementById('thinkBtn');
+        if (button) button.setAttribute('aria-pressed', state.chatDepth === 'deep' ? 'true' : 'false');
+    }
 
     // Initialization
     document.addEventListener('DOMContentLoaded', () => {
         loadConversations();
+        loadChatRole();
+        renderThinking();
         setupTextarea();
         setupTemperatureSlider();
         checkChatRagStatus();
@@ -1005,7 +1159,11 @@
             const response = await fetch(`${PYTHON_API}/api/rag/status`, { headers: { 'Accept': 'application/json' } });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const status = await response.json();
-            const suffix = status.ready ? ` + RAG ${status.chunks}` : ' + RAG off';
+            // Чат ищет по общему индексу всех кодексов, а не по одному ГК.
+            const chat = status.chat_index;
+            const suffix = chat?.ready
+                ? ` + RAG ${chat.codes} кодексов`
+                : (status.ready ? ` + RAG ${status.chunks}` : ' + RAG off');
             // Переводчик показывается отдельно: без него таджикский вопрос
             // получит русский ответ, и знать об этом надо до, а не после.
             const langs = status.translation?.enabled ? ' + RU/TJ' : ' + RU';
@@ -1033,6 +1191,8 @@
     }
 
     function toggleButtons(isProcessing) {
+        const thinkBtn = document.getElementById('thinkBtn');
+        if (thinkBtn) thinkBtn.disabled = isProcessing;
         const sendBtn = document.getElementById('sendBtn');
         const stopBtn = document.getElementById('stopBtn');
         if (isProcessing) {
@@ -1076,6 +1236,7 @@
         state.abortController = new AbortController();
         state.isProcessing = true;
         toggleButtons(true);
+        closeClarifyCards();
 
         document.getElementById('welcomeMessage').classList.add('hidden');
         document.getElementById('messagesContainer').classList.remove('hidden');
@@ -1128,6 +1289,9 @@
             concise: 'Вы краткий юридический эксперт. Давайте точные ответы без лишних деталей, только суть.'
         };
 
+        const clarified = state.pendingClarify;
+        state.pendingClarify = false;
+
         const response = await fetch(`${PYTHON_API}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1137,8 +1301,12 @@
                 message,
                 history: state.chatHistory.slice(-8),
                 personality,
+                role: state.chatRole,
+                depth: state.chatDepth,
                 temperature,
-                lang: PAGE_LOCALE
+                lang: PAGE_LOCALE,
+                clarified,
+                doc_state: state.docState || undefined
             }),
             signal: state.abortController.signal
         });
@@ -1146,21 +1314,27 @@
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         if (!response.body) throw new Error('Stream не поддерживается');
 
-        hideTypingIndicator();
-
+        // Индикатор ожидания остаётся, пока нет первого текста: этапы приходят
+        // раньше ответа, и пустой пузырь без индикатора выглядел бы как зависание.
         const container = document.getElementById('messagesContainer');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'chat-message flex justify-start';
+        let streamTarget = null;
+        function ensureBubble() {
+            if (streamTarget) return streamTarget;
+            hideTypingIndicator();
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message flex justify-start';
 
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'max-w-[80%] message-ai rounded-2xl p-4';
-        contentDiv.innerHTML = `
-            <div class="markdown-content" id="streamingContent"></div>
-            <div class="text-xs mt-2" style="color: var(--text-faint);">${new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>`;
-        msgDiv.appendChild(contentDiv);
-        container.appendChild(msgDiv);
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'max-w-[80%] message-ai rounded-2xl p-4';
+            contentDiv.innerHTML = `
+                <div class="markdown-content" id="streamingContent"></div>
+                <div class="text-xs mt-2" style="color: var(--text-faint);">${new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>`;
+            msgDiv.appendChild(contentDiv);
+            container.appendChild(msgDiv);
+            streamTarget = contentDiv.querySelector('#streamingContent');
+            return streamTarget;
+        }
 
-        const streamTarget = contentDiv.querySelector('#streamingContent');
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
@@ -1168,6 +1342,10 @@
         // Таджикский ответ приходит переводом, а в историю должен лечь русский
         // оригинал: промпт следующего хода собирается по-русски.
         let sourceResponse = '';
+        // Карточка уточнения приходит одним событием вместо текста ответа.
+        let clarifyData = null;
+        let clarifyLang = PAGE_LOCALE;
+        let docState = null;
 
         while (true) {
             const { done, value } = await reader.read();
@@ -1181,18 +1359,119 @@
                 if (!line.trim()) continue;
                 try {
                     const json = JSON.parse(line);
+                    if (json.stage) {
+                        state.stageLabel = json.label || '';
+                        updateStageNote();
+                        continue;
+                    }
                     if (json.response) {
+                        ensureBubble();
                         fullResponse += json.response;
                         streamTarget.innerHTML = marked.parse(fullResponse);
                         scrollToBottom();
                     }
                     if (json.source_response) sourceResponse = json.source_response;
+                    if (json.clarify) { clarifyData = json.clarify; clarifyLang = json.lang || clarifyLang; }
+                    if (json.doc_state) docState = json.doc_state;
                     if (json.done) break;
                 } catch (e) { continue; }
             }
         }
 
+        ensureBubble();
+        // Диалог о документе идёт, пока сервер присылает карточки с состоянием;
+        // готовый документ или любой обычный ответ его завершает.
+        state.docState = clarifyData ? docState : null;
+        if (clarifyData) {
+            renderClarifyCard(streamTarget, clarifyData, clarifyLang);
+            state.pendingClarify = true;
+            scrollToBottom();
+            state.chatHistory.push({
+                role: 'ai',
+                content: sourceResponse || clarifyData.question,
+                display: clarifyToMarkdown(clarifyData),
+                timestamp: new Date().toISOString()
+            });
+            return;
+        }
+
         state.chatHistory.push({ role: 'ai', content: sourceResponse || fullResponse, timestamp: new Date().toISOString() });
+    }
+
+    const CLARIFY_TEXT = {
+        ru: { other: 'Другое…', hint: 'Выберите вариант или напишите свой ответ ниже' },
+        tg: { other: 'Дигар…', hint: 'Вариантро интихоб кунед ё ҷавоби худро дар поён нависед' }
+    };
+
+    // Тот же вопрос текстом: так карточка выглядит после перезагрузки страницы,
+    // когда кнопки уже не нужны.
+    function clarifyToMarkdown(data) {
+        return `**${data.question}**\n\n` + data.options.map(o => `- ${o}`).join('\n');
+    }
+
+    function renderClarifyCard(target, data, lang) {
+        const text = CLARIFY_TEXT[lang] || CLARIFY_TEXT.ru;
+        const card = document.createElement('div');
+        card.className = 'clarify-card';
+
+        const question = document.createElement('div');
+        question.className = 'clarify-question';
+        question.textContent = data.question;
+        card.appendChild(question);
+
+        const list = document.createElement('div');
+        list.className = 'clarify-options';
+        data.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'clarify-option';
+            const num = document.createElement('span');
+            num.className = 'clarify-num';
+            num.textContent = String(index + 1);
+            const label = document.createElement('span');
+            label.textContent = option;
+            button.append(num, label);
+            button.addEventListener('click', () => answerClarify(card, button, option));
+            list.appendChild(button);
+        });
+
+        const other = document.createElement('button');
+        other.type = 'button';
+        other.className = 'clarify-option other';
+        const dots = document.createElement('span');
+        dots.className = 'clarify-num';
+        dots.textContent = '✎';
+        const otherLabel = document.createElement('span');
+        otherLabel.textContent = text.other;
+        other.append(dots, otherLabel);
+        other.addEventListener('click', () => {
+            if (!card.classList.contains('answered')) document.getElementById('messageInput').focus();
+        });
+        list.appendChild(other);
+        card.appendChild(list);
+
+        const hint = document.createElement('div');
+        hint.className = 'clarify-hint';
+        hint.textContent = text.hint;
+        card.appendChild(hint);
+
+        target.replaceChildren(card);
+    }
+
+    function answerClarify(card, button, option) {
+        if (state.isProcessing || card.classList.contains('answered')) return;
+        button.classList.add('chosen');
+        document.getElementById('messageInput').value = option;
+        sendMessage();
+    }
+
+    // Любая отправленная реплика закрывает открытые карточки: вариант либо
+    // выбран, либо пользователь ответил своими словами.
+    function closeClarifyCards() {
+        document.querySelectorAll('.clarify-card:not(.answered)').forEach(card => {
+            card.classList.add('answered');
+            card.querySelectorAll('.clarify-option').forEach(b => { b.disabled = true; });
+        });
     }
 
     function sendQuickQuestion(question) {
@@ -1202,7 +1481,7 @@
         sendMessage();
     }
 
-    function addMessage(role, content) {
+    function addMessage(role, content, extra = {}) {
         const container = document.getElementById('messagesContainer');
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
@@ -1211,7 +1490,7 @@
         messageContent.className = `max-w-[80%] rounded-2xl p-4 ${role === 'user' ? 'message-user' : 'message-ai'}`;
 
         if (role === 'ai') {
-            messageContent.innerHTML = `<div class="markdown-content">${marked.parse(content)}</div>`;
+            messageContent.innerHTML = `<div class="markdown-content">${marked.parse(extra.display || content)}</div>`;
         } else {
             if (content.includes('[Прикреплённый файл:')) {
                 const parts = content.split('\n\n[Прикреплённый файл: ');
@@ -1240,7 +1519,9 @@
         container.appendChild(messageDiv);
 
         scrollToBottom();
-        state.chatHistory.push({ role, content, timestamp: new Date().toISOString() });
+        const entry = { role, content, timestamp: extra.timestamp || new Date().toISOString() };
+        if (extra.display) entry.display = extra.display;
+        state.chatHistory.push(entry);
     }
 
     function scrollToBottom() {
@@ -1260,14 +1541,42 @@
                     <span class="w-2 h-2 rounded-full"></span>
                     <span class="w-2 h-2 rounded-full"></span>
                 </div>
+                <div id="typingStage" class="hidden text-xs mt-3" style="color: var(--text-muted);" aria-live="polite"></div>
             </div>`;
         container.appendChild(indicator);
         scrollToBottom();
+
+        state.waitStartedAt = Date.now();
+        state.stageLabel = '';
+        clearInterval(state.stageTimer);
+        state.stageTimer = setInterval(updateStageNote, 1000);
     }
 
     function hideTypingIndicator() {
+        clearInterval(state.stageTimer);
+        state.stageTimer = null;
         const indicator = document.getElementById('typingIndicator');
         if (indicator) indicator.remove();
+    }
+
+    const STAGE_TEXT = {
+        ru: { stage: 'Этап', sec: 'с', wait: 'Обрабатываю запрос' },
+        tg: { stage: 'Марҳала', sec: 'сония', wait: 'Дархостро коркард мекунам' }
+    };
+
+    // Этап показывается только тогда, когда ответа нет уже долго: быстрый ответ
+    // не мигает служебным текстом.
+    function updateStageNote() {
+        const note = document.getElementById('typingStage');
+        if (!note) return;
+        const elapsed = Date.now() - state.waitStartedAt;
+        if (elapsed < state.stageNoteAfterMs) {
+            note.classList.add('hidden');
+            return;
+        }
+        const t = STAGE_TEXT[PAGE_LOCALE] || STAGE_TEXT.ru;
+        note.textContent = `${t.stage}: ${state.stageLabel || t.wait} · ${Math.floor(elapsed / 1000)} ${t.sec}`;
+        note.classList.remove('hidden');
     }
 
     function selectModel(model, element) {
@@ -1375,7 +1684,7 @@
     function newChat() {
         if (state.isProcessing) stopGeneration();
         if (state.chatHistory.length > 0) saveConversation();
-        state.chatHistory = [];
+        state.chatHistory = []; state.pendingClarify = false; state.docState = null;
         state.currentConversationId = null;
         document.getElementById('welcomeMessage').classList.remove('hidden');
         document.getElementById('messagesContainer').classList.add('hidden');
@@ -1505,7 +1814,7 @@
         if (!conv) return;
 
         state.currentConversationId = conv.id;
-        state.chatHistory = [];
+        state.chatHistory = []; state.pendingClarify = false; state.docState = null;
 
         document.getElementById('welcomeMessage').classList.add('hidden');
         document.getElementById('messagesContainer').classList.remove('hidden');
@@ -1518,10 +1827,9 @@
         document.getElementById('messagesContainer').innerHTML = '';
 
         if (conv.messages && Array.isArray(conv.messages)) {
-            conv.messages.forEach(msg => {
-                state.chatHistory.push({ role: msg.role, content: msg.content, timestamp: msg.timestamp });
-                addMessage(msg.role, msg.content);
-            });
+            // addMessage сам кладёт реплику в chatHistory: явный push перед ним
+            // дублировал каждое сообщение в истории, которая уходит на сервер.
+            conv.messages.forEach(msg => addMessage(msg.role, msg.content, { display: msg.display, timestamp: msg.timestamp }));
         }
 
         const convIndex = state.conversations.findIndex(c => c.id === id);
@@ -1607,7 +1915,7 @@
             if (option === 'delete' && state.currentConversationId) {
                 deleteConversation(state.currentConversationId);
             } else {
-                state.chatHistory = [];
+                state.chatHistory = []; state.pendingClarify = false; state.docState = null;
                 document.getElementById('welcomeMessage').classList.remove('hidden');
                 document.getElementById('messagesContainer').classList.add('hidden');
                 document.getElementById('messagesContainer').innerHTML = '';
@@ -1634,7 +1942,7 @@
 
     function deleteAllConversations() {
         state.conversations = [];
-        state.chatHistory = [];
+        state.chatHistory = []; state.pendingClarify = false; state.docState = null;
         state.currentConversationId = null;
         localStorage.removeItem('legalai_conversations');
         document.getElementById('welcomeMessage').classList.remove('hidden');

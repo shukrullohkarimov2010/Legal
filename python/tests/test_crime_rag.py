@@ -69,7 +69,7 @@ def _load_from_app(*names):
     unverified,
 ) = _load_from_app(
     "_crime_description", "_allowed_article_numbers", "_unverified_article_numbers",
-    "_ARTICLE_REF_RE",
+    "_ARTICLE_REF_RE", "_crime_text_to_russian", "_crime_llm_translate_to_russian",
 )[:3]
 
 

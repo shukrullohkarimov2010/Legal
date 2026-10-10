@@ -135,7 +135,7 @@ class TaskController extends Controller
         $charCount = $text !== '' ? mb_strlen($text) : max(500, (int) round($file->getSize() * 1.4));
         $criticalCount = count(array_filter($risks, fn (array $risk) => $risk['severity'] === 'high'));
 
-        return [
+        return $this->localizeReport([
             'file' => [
                 'original_name' => $file->getClientOriginalName(),
                 'extension' => Str::upper($file->getClientOriginalExtension()),
@@ -145,13 +145,13 @@ class TaskController extends Controller
             ],
             'summary' => $hasTextPreview
                 ? sprintf(
-                    'Документ классифицирован как "%s". Обнаружено %d зон для ручной проверки. Основной фокус: ответственность сторон, финансовые условия и порядок расторжения.',
-                    $contractType,
+                    __('Документ классифицирован как "%s". Обнаружено %d зон для ручной проверки. Основной фокус: ответственность сторон, финансовые условия и порядок расторжения.'),
+                    __($contractType),
                     count($risks)
                 )
                 : sprintf(
-                    'Документ классифицирован как "%s". Текст не был извлечен на сервере для этого формата, поэтому показан ориентировочный отчет по метаданным файла и типу договора.',
-                    $contractType
+                    __('Документ классифицирован как "%s". Текст не был извлечен на сервере для этого формата, поэтому показан ориентировочный отчет по метаданным файла и типу договора.'),
+                    __($contractType)
                 ),
             'risk_score' => $riskScore,
             'risk_label' => $this->resolveRiskLabel($riskScore),
@@ -178,7 +178,37 @@ class TaskController extends Controller
             'preview_text' => $hasTextPreview && $text !== ''
                 ? Str::limit($text, 2200, '...')
                 : 'Для этого формата сервер пока не извлекает содержимое. Следующий шаг - подключить backend-парсер PDF/DOCX или OCR и строить отчет уже по полному тексту.',
-        ];
+        ]);
+    }
+
+    /**
+     * Отчёт строится по русским шаблонам (по ним же работают проверки типа договора и тяжести),
+     * а на таджикском интерфейсе выводимые тексты переводятся по словарю lang/tg.json.
+     */
+    private function localizeReport(array $report): array
+    {
+        if (app()->getLocale() !== 'tg') {
+            return $report;
+        }
+
+        $tr = fn (?string $text) => $text === null || $text === '' ? $text : __($text);
+        $risk = fn (array $item) => array_merge($item, ['label' => $tr($item['label'] ?? '')]);
+
+        // risk_label остаётся русским ключом: по нему вьюха выбирает цвет и сама переводит подпись
+        foreach (['contract_type', 'analysis_status', 'analysis_note'] as $key) {
+            $report[$key] = $tr($report[$key]);
+        }
+        $report['risks'] = array_map($risk, $report['risks']);
+        $report['recommendations'] = array_map($tr, $report['recommendations']);
+        $report['facts'] = array_map(
+            fn (array $fact) => ['label' => $tr($fact['label']), 'value' => $tr($fact['value'])],
+            $report['facts']
+        );
+        if (! $report['has_text_preview']) {
+            $report['preview_text'] = $tr($report['preview_text']);
+        }
+
+        return $report;
     }
 
     private function detectContractType(string $text, string $fileName): string
@@ -186,12 +216,12 @@ class TaskController extends Controller
         $source = Str::lower($text.' '.$fileName);
 
         return match (true) {
-            Str::contains($source, 'поставк') => 'Договор поставки',
-            Str::contains($source, 'подряд') => 'Договор подряда',
-            Str::contains($source, 'трудов') => 'Трудовой договор',
-            Str::contains($source, 'nda') || Str::contains($source, 'конфиденциаль') => 'NDA / Конфиденциальность',
-            Str::contains($source, 'услуг') => 'Договор услуг',
-            Str::contains($source, 'лиценз') => 'Лицензионный договор',
+            Str::contains($source, ['поставк', 'таъминот']) => 'Договор поставки',
+            Str::contains($source, ['подряд', 'пудрат']) => 'Договор подряда',
+            Str::contains($source, ['трудов', 'меҳнат']) => 'Трудовой договор',
+            Str::contains($source, ['nda', 'конфиденциаль', 'махфият']) => 'NDA / Конфиденциальность',
+            Str::contains($source, ['услуг', 'хизматрасон']) => 'Договор услуг',
+            Str::contains($source, ['лиценз', 'иҷозатнома']) => 'Лицензионный договор',
             default => 'Общий гражданско-правовой договор',
         };
     }
@@ -199,16 +229,16 @@ class TaskController extends Controller
     private function findRisks(string $text, string $contractType): array
     {
         $riskMap = [
-            ['term' => 'штраф', 'label' => 'Штрафные санкции требуют проверки на соразмерность и порядок применения.', 'severity' => 'high'],
-            ['term' => 'неустойка', 'label' => 'Проверьте расчет неустойки и верхний предел ответственности.', 'severity' => 'medium'],
-            ['term' => 'одностороннем порядке', 'label' => 'Есть условие об одностороннем изменении или прекращении обязательств.', 'severity' => 'high'],
-            ['term' => 'конфиденциаль', 'label' => 'Нужна ручная проверка блока конфиденциальности и исключений.', 'severity' => 'medium'],
-            ['term' => 'персональн', 'label' => 'Обнаружена обработка персональных данных, стоит добавить комплаенс-положения.', 'severity' => 'medium'],
-            ['term' => 'форс-мажор', 'label' => 'Уточните порядок уведомления и подтверждения форс-мажора.', 'severity' => 'low'],
-            ['term' => 'подсуд', 'label' => 'Проверьте подсудность и применимое право.', 'severity' => 'medium'],
-            ['term' => 'ответственност', 'label' => 'Нужно отдельно проверить ограничения ответственности сторон.', 'severity' => 'high'],
-            ['term' => 'расторжен', 'label' => 'Условия расторжения должны быть симметричными и определенными.', 'severity' => 'medium'],
-            ['term' => 'оплат', 'label' => 'Финансовые условия требуют проверки сроков, актов и оснований оплаты.', 'severity' => 'low'],
+            ['term' => 'штраф', 'alt' => ['ҷарима', 'штраф'], 'label' => 'Штрафные санкции требуют проверки на соразмерность и порядок применения.', 'severity' => 'high'],
+            ['term' => 'неустойка', 'alt' => ['неустойка', 'ноустойка', 'пеня'], 'label' => 'Проверьте расчет неустойки и верхний предел ответственности.', 'severity' => 'medium'],
+            ['term' => 'одностороннем порядке', 'alt' => ['яктарафа'], 'label' => 'Есть условие об одностороннем изменении или прекращении обязательств.', 'severity' => 'high'],
+            ['term' => 'конфиденциаль', 'alt' => ['махфият', 'конфиденсиал'], 'label' => 'Нужна ручная проверка блока конфиденциальности и исключений.', 'severity' => 'medium'],
+            ['term' => 'персональн', 'alt' => ['маълумоти шахсӣ', 'маълумоти шахсии'], 'label' => 'Обнаружена обработка персональных данных, стоит добавить комплаенс-положения.', 'severity' => 'medium'],
+            ['term' => 'форс-мажор', 'alt' => ['форс-мажор', 'қувваи қоҳира'], 'label' => 'Уточните порядок уведомления и подтверждения форс-мажора.', 'severity' => 'low'],
+            ['term' => 'подсуд', 'alt' => ['тобеияти суд', 'суди маҳалл'], 'label' => 'Проверьте подсудность и применимое право.', 'severity' => 'medium'],
+            ['term' => 'ответственност', 'alt' => ['ҷавобгарӣ', 'масъулият'], 'label' => 'Нужно отдельно проверить ограничения ответственности сторон.', 'severity' => 'high'],
+            ['term' => 'расторжен', 'alt' => ['бекор'], 'label' => 'Условия расторжения должны быть симметричными и определенными.', 'severity' => 'medium'],
+            ['term' => 'оплат', 'alt' => ['пардохт'], 'label' => 'Финансовые условия требуют проверки сроков, актов и оснований оплаты.', 'severity' => 'low'],
         ];
 
         if ($text === '') {
@@ -217,7 +247,7 @@ class TaskController extends Controller
 
         $found = [];
         foreach ($riskMap as $risk) {
-            if (Str::contains($text, $risk['term'])) {
+            if (Str::contains($text, array_merge([$risk['term']], $risk['alt'] ?? []))) {
                 $found[] = $risk;
             }
         }

@@ -204,6 +204,63 @@ def test_sentence_split_keeps_content():
         check(any(word in part for part in parts), "потеряно предложение с %s" % word)
 
 
+def test_citation_abbreviations_are_expanded_for_tajik():
+    """«ст. 67» переводчик читал как страницу, «ч. 1 ст. 327» терял часть."""
+    out = ls.prepare_for_tajik("Срок подачи жалобы (ч. 1 ст. 327 ГПК РТ), ст. 81, п. 3, гл. 13, ст. ст. 5, 6.")
+    check("часть 1 статьи 327" in out, "не раскрыто «ч. 1 ст. 327»: %s" % out)
+    check("статья 81" in out and "пункт 3" in out and "глава 13" in out, "не раскрыты ст./п./гл.: %s" % out)
+    check("статьи 5" in out, "не раскрыто «ст. ст.»: %s" % out)
+    check("ст." not in out and "ч." not in out, "остались сокращения: %s" % out)
+    check("ГПК РТ" in out, "аббревиатура кодекса пропала: %s" % out)
+    check(ls.prepare_for_tajik("Стоимость 5 ст. рублей") == "Стоимость 5 ст. рублей",
+          "сокращение без номера трогать нельзя")
+
+
+def test_dash_and_penalty_term_are_prepared_for_tajik():
+    out = ls.prepare_for_tajik("Срок \u2014 три года. Суд вправе уменьшить неустойку.")
+    check(" - " in out and "\u2014" not in out, "тире не заменено: %s" % out)
+    for form in ("неустойка", "неустойку", "неустойки", "неустойке", "неустойкой", "Неустойкой", "неустоек"):
+        check("неустой" not in ls.prepare_for_tajik("Взыскана %s за просрочку." % form)
+              and "неусто" not in ls.prepare_for_tajik("Взыскана %s за просрочку." % form),
+              "не заменена форма: " + form)
+    check("штраф" in ls.prepare_for_tajik("Взыскана неустойка"), "нет замены на «штраф»")
+    check(ls.prepare_for_tajik("Обычный текст без терминов.") == "Обычный текст без терминов.",
+          "обычный текст изменён")
+    check(ls.prepare_for_tajik("Договор \u2014 письменный") == "Договор - письменный", "тире внутри фразы")
+
+
+def test_known_translation_glitches_are_polished():
+    check(ls.polish_tajik("Манбаъ: ТК РТ, саҳифа 67.") == "Манбаъ: ТК РТ, моддаи 67.",
+          "«страница» вместо статьи не исправлена")
+    check("Кодекси граждании Ҷумҳурии" in ls.polish_tajik("Кодекси шаҳрвандии Ҷумҳурии Тоҷикистон"),
+          "название ГК не исправлено")
+    check(ls.polish_tajik("Мурофиаи шаҳрвандӣ") == "Мурофиаи шаҳрвандӣ", "чужое «шаҳрвандӣ» не должно меняться")
+    check(ls.polish_tajik("меъёрҳои ТТ ва ТР.") == "меъёрҳои ҶТ ва ҶТ.", "«ТТ»/«ТР» не заменены")
+    check(ls.polish_tajik("ТК РТ, ТРАНС") == "ТК РТ, ТРАНС", "слова с «ТР» внутри трогать нельзя")
+    check(ls.polish_tajik("Мӯҳлат  се сол  .") == "Мӯҳлат се сол.", "пробелы не приведены в порядок")
+    check(ls.polish_tajik("Ҷавоб: 40 соат") == "Ҷавоб: 40 соат", "нормальный текст изменён")
+
+
+def test_appended_citation_context_is_tajik():
+    check(ls.localize_citation("Статья 81, Глава 13, ч. 2, п. 3", "tg") == "моддаи 81, боби 13, қисми 2, банди 3",
+          "части ссылки не переведены")
+    check(ls.localize_citation("ст. 214", "ru") == "ст. 214", "русский текст менять нельзя")
+    repaired = ls.repair_numbers("Согласно статье 41 срок 14 дней", "Мувофиқи меъёр мӯҳлат.", "tg")
+    check("моддаи 41" in repaired and "Статья" not in repaired and "статье" not in repaired,
+          "приписка потерянного номера осталась по-русски: %s" % repaired)
+    check(ls.repair_numbers("Согласно статье 41", "Мувофиқи меъёр.", "ru").endswith("(статье 41)"),
+          "для русского приписка не должна меняться")
+
+
+def test_all_chat_codes_are_masked_from_the_translator():
+    masked, saved = ls.protect_citations(
+        "ЭПК РТ, КАТ РТ, ПКоАП РТ, КоАПр РТ, УПК РТ, ГК РТ, ЖК РТ, ЛК РТ, ВдК РТ, ВздК РТ, ГрК РТ, КЗ РТ.")
+    check(len(saved) == 12, "замаскированы не все кодексы: %d из 12 (%s)" % (len(saved), saved))
+    check("РТ" not in masked, "аббревиатуры остались в тексте для перевода: %s" % masked)
+    masked, saved = ls.protect_citations("Закон РТ и нормы РТ остаются обычным текстом.")
+    check(saved == [], "«Закон РТ» не аббревиатура кодекса: %s" % saved)
+
+
 def test_translator_degrades_gracefully():
     """Отсутствующая модель отключает перевод, а не роняет чат."""
     translator = ls.Translator(model_dir=os.path.join("не", "существует"))

@@ -34,7 +34,38 @@ MIN_ARTICLES = {
     "трудовой кодекс.docx": 250,
     "семейный кодекс.docx": 120,
     "автомабильный кодекс.docx": 80,
+    "КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРОЦЕДУРАХ.docx": 100,
+    "ЭКОНОМИЧЕСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": 250,
+    "ГРАЖДАНСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": 350,
+    "УГОЛОВНО - ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": 450,
+    "ПРОЦЕССУАЛЬНЫЙ КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРАВОНАРУШЕНИЯХ.docx": 200,
 }
+
+
+def fix_flattened_superscripts(name: str, chunks: list[dict]) -> None:
+    """Статьи вида 397¹…397¹² в ГПК при чтении .docx теряют надстрочный знак и
+    превращаются в «3971»…«39712» — ссылка указывала бы на несуществующую статью.
+    Возвращаем привычную запись «397.1». Действует только там, где номер из
+    четырёх-пяти цифр начинается с номера предыдущей статьи и в десять с лишним
+    раз больше него (обычная нумерация так не прыгает)."""
+    if name != "ГРАЖДАНСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx":
+        return
+    import re as _re
+    base = None
+    for chunk in chunks:
+        article = str(chunk.get("article") or "")
+        if not article.isdigit():
+            continue
+        if base and len(article) > len(base) and article.startswith(base) and int(article) >= int(base) * 10:
+            fixed = f"{base}.{article[len(base):]}"
+            for key in ("article", "title", "article_title", "citation"):
+                if isinstance(chunk.get(key), str):
+                    chunk[key] = chunk[key].replace(article, fixed, 1)
+            text = chunk.get("text")
+            if isinstance(text, str):
+                chunk["text"] = _re.sub(r"^(Статья\s+)" + article, r"\g<1>" + fixed, text, count=1)
+        else:
+            base = article
 
 
 def build_source_chunks(name: str) -> list[dict]:
@@ -44,6 +75,7 @@ def build_source_chunks(name: str) -> list[dict]:
     text = legal_app.extract_text_for_rag(path)
     label = legal_app.RAG_CODE_LABELS.get(name, name)
     chunks = legal_rag.build_article_chunks(text, name, label)
+    fix_flattened_superscripts(name, chunks)
     articles = len({chunk["article"] for chunk in chunks})
     required = MIN_ARTICLES.get(name, 1)
     if articles < required:

@@ -6,7 +6,7 @@
     <title>{{ __('ui.app_name') }} — {{ __('ui.dashboard_title') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@4.5.15/index.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="{{ asset('vendor/chart.min.js') }}"></script>
     <style>
         * {
             font-family: 'Inter', sans-serif;
