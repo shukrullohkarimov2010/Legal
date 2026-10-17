@@ -76,7 +76,8 @@ def test_prompts():
         check("no-invention rule %s" % (key,), "не выдумывай" in block)
     check("advocate deep has counterarguments", "Доводы другой стороны" in blocks[("advocate", "deep")])
     check("lawyer deep has analysis", "Анализ" in blocks[("lawyer", "deep")])
-    check("fast is short", len(blocks[("lawyer", "fast")]) < len(blocks[("lawyer", "deep")]))
+    # быстрый формат стал полноценной консультацией: он по-прежнему короче глубокого по числу разделов
+    check("fast has fewer sections", blocks[("lawyer", "fast")].count("**") < blocks[("lawyer", "deep")].count("**"))
     check("length rule differs", cm.length_rule("fast") != cm.length_rule("deep"))
     check("disclaimer mentions lawyer", "юриста или адвоката" in cm.DISCLAIMER)
 

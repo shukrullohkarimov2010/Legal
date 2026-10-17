@@ -29,6 +29,7 @@ class TaskController extends Controller
         ]);
 
         $data['status'] = Task::STATUS_PENDING;
+        $data['user_id'] = $request->user()?->id;
 
         Task::create($data);
 

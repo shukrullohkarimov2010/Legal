@@ -275,6 +275,18 @@ LEGAL_SYNONYMS: dict[str, tuple[str, ...]] = {
     "алименты": ("содержание детей", "взыскание алиментов"),
     "давность": ("исковая давность",),
     "штраф": ("неустойка", "пеня", "штраф"),
+    # Бытовые слова о нарушениях ПДД и общественного порядка -> язык КоАП РТ (справочник штрафов)
+    "встречка": ("полоса встречного движения", "выезд на полосу встречного движения"),
+    "встречная": ("полоса встречного движения", "выезд на полосу встречного движения"),
+    "парковка": ("остановка и стоянка транспортных средств",),
+    "припарковаться": ("остановка и стоянка транспортных средств",),
+    "ремень": ("ремни безопасности", "пристегнуться ремнём безопасности"),
+    "светофор": ("запрещающий сигнал светофора", "сигналы светофора"),
+    "пьяный": ("состояние опьянения", "управление транспортным средством в состоянии опьянения"),
+    "пьяным": ("состояние опьянения", "управление транспортным средством в состоянии опьянения"),
+    "скорость": ("превышение установленной скорости движения",),
+    "пешеход": ("правила дорожного движения для пешеходов", "переход проезжей части"),
+    "тонировка": ("тонирование стёкол", "затемнение стёкол транспортного средства"),
     "пеня": ("неустойка",),
     "аренда": ("аренда", "имущественный наём"),
     "снять": ("аренда",),
@@ -387,11 +399,16 @@ _CIVIL_CONTEXT_RE = re.compile(r"договор\w*|контракт\w*|обяз�
 def expand_query(query: str) -> str:
     """Дописывает к запросу формулировки, которыми оперирует сам кодекс."""
     additions: list[str] = []
+    text = query or ""
+    civil = bool(_CIVIL_CONTEXT_RE.search(text))
     for stem in tokenize(query):
         expansions = _SYNONYM_STEMS.get(stem)
         if expansions:
+            # «Штраф» без договора и обязательства — не неустойка: «какой штраф за выезд на встречную полосу» вместо
+            # статей КоАП приносил ГК РТ ст. 381–384 о неустойке. Синонимы гражданского смысла нужны только рядом со словами о договоре.
+            if stem == "штраф" and not civil:
+                expansions = ("штраф",)
             additions.extend(expansions)
-    text = query or ""
     if (_PENALTY_WORDS_RE.search(text) and _CIVIL_CONTEXT_RE.search(text)
             and "неустойк" not in text.lower()):
         additions.extend(["неустойка", "неустойка"])
@@ -428,6 +445,12 @@ CODE_SHORT = {
     "ГРАЖДАНСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": "ГПК РТ",
     "УГОЛОВНО - ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": "УПК РТ",
     # Процессуальный, а не материальный: размеры штрафов в нём отсутствуют.
+    # Материальная часть: размеры штрафов. Не путать с процессуальным кодексом ниже.
+    "КоАП РТ — размеры штрафов.docx": "КоАП РТ",
+    "Конституция РТ (машинный перевод).docx": "Конституция РТ",
+    "Земельный кодекс (машинный перевод).docx": "ЗмК РТ",
+    "Уголовно-исполнительный кодекс (машинный перевод).docx": "УИК РТ",
+    "Таможенный кодекс (машинный перевод).docx": "ТмК РТ",
     "ПРОЦЕССУАЛЬНЫЙ КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРАВОНАРУШЕНИЯХ.docx": "ПКоАП РТ",
 }
 
@@ -502,6 +525,31 @@ CODE_HINTS: dict[str, tuple[str, ...]] = {
         "защитник", "адвокат", "допрос", "обыск", "потерпевший", "прокурор",
         "задержание подозреваемого", "уголовный процесс", "уголовно процессуальный",
         "возбуждение уголовного дела", "подсудимый",
+    ),
+    "Конституция РТ (машинный перевод).docx": (
+        "конституция", "основной закон", "права и свободы человека", "права человека", "президент республики",
+        "гражданство", "референдум", "государственный язык", "неприкосновенность личности", "свобода слова",
+        "конституционный суд", "разделение властей", "основы конституционного строя",
+    ),
+    "Земельный кодекс (машинный перевод).docx": (
+        "земельный участок", "земля", "землепользование", "землепользователь", "приусадебный участок",
+        "дехканское хозяйство", "земельный кодекс", "право пользования землёй", "изъятие земельного участка",
+        "сельскохозяйственные земли", "аренда земли", "категории земель",
+    ),
+    "Уголовно-исполнительный кодекс (машинный перевод).docx": (
+        "исполнение наказания", "колония", "осуждённый", "осужденный", "исправительное учреждение", "отбывание наказания",
+        "условно-досрочное освобождение", "исправительные работы", "свидание с осуждённым", "лишение свободы отбывание",
+        "уголовно-исполнительный кодекс", "режим в колонии",
+    ),
+    "Таможенный кодекс (машинный перевод).docx": (
+        "таможня", "таможенная пошлина", "таможенное оформление", "таможенный контроль", "таможенная декларация",
+        "ввоз товаров", "вывоз товаров", "импорт", "экспорт", "таможенный кодекс", "растаможка", "таможенный брокер",
+        "таможенная стоимость", "таможенные платежи",
+    ),
+    "КоАП РТ — размеры штрафов.docx": (
+        "размер штрафа", "сколько штраф", "штраф за", "административный штраф", "административное правонарушение",
+        "кодекс об административных правонарушениях", "коап", "показатель для расчетов", "показатель для расчётов",
+        "правила дорожного движения", "превышение скорости", "парковка", "без прав", "гаи", "нарушение пдд",
     ),
     "ПРОЦЕССУАЛЬНЫЙ КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРАВОНАРУШЕНИЯХ.docx": (
         "административное правонарушение", "административная ответственность",
@@ -982,11 +1030,87 @@ class EmbeddingProvider:
         return vectors if len(vectors) == len(texts) else None
 
 
+class OpenAIEmbeddingProvider:
+    """Эмбеддинги OpenAI (text-embedding-3-small): поиск по смыслу без локальной Ollama.
+
+    Тот же интерфейс, что у EmbeddingProvider: available(), embed(), model, reason. При сбое сети или ключа слой
+    отключается на RETRY_AFTER_SECONDS, и поиск работает лексически, как раньше.
+    """
+
+    RETRY_AFTER_SECONDS = 600
+    URL = os.environ.get("RAG_OPENAI_EMBED_URL", "https://api.openai.com/v1/embeddings")
+    BATCH = int(os.environ.get("RAG_OPENAI_EMBED_BATCH", "64"))
+    MAX_CHARS = 6000
+
+    def __init__(self, model: str | None = None):
+        self.model = model or os.environ.get("RAG_OPENAI_EMBED_MODEL", "text-embedding-3-small")
+        self._disabled_at = 0.0
+        self._reason = ""
+
+    @property
+    def reason(self) -> str:
+        return self._reason
+
+    def _key(self) -> str:
+        return (os.environ.get("OPENAI_API_KEY") or "").strip()
+
+    def available(self) -> bool:
+        import time
+        if not self._key():
+            self._reason = "OPENAI_API_KEY не задан"
+            return False
+        return not (self._disabled_at and time.time() - self._disabled_at < self.RETRY_AFTER_SECONDS)
+
+    def embed(self, texts: list[str]) -> list[list[float]] | None:
+        import time
+        if not self.available():
+            return None
+        import requests
+        vectors: list[list[float]] = []
+        for start in range(0, len(texts), self.BATCH):
+            batch = [(t or " ")[: self.MAX_CHARS] for t in texts[start:start + self.BATCH]]
+            for attempt in (1, 2, 3, 4, 5):
+                try:
+                    response = requests.post(
+                        self.URL,
+                        headers={"Authorization": "Bearer " + self._key(), "Content-Type": "application/json"},
+                        json={"model": self.model, "input": batch},
+                        timeout=EMBED_TIMEOUT,
+                    )
+                    if response.status_code == 429 or response.status_code >= 500:
+                        self._reason = "HTTP %s: %s" % (response.status_code, response.text[:160])
+                        time.sleep(6 * attempt)
+                        continue
+                    response.raise_for_status()
+                    data = sorted(response.json()["data"], key=lambda item: item["index"])
+                    vectors.extend(item["embedding"] for item in data)
+                    break
+                except Exception as error:  # noqa: BLE001
+                    self._reason = str(error)
+                    if attempt == 5:
+                        self._disabled_at = time.time()
+                        return None
+                    time.sleep(1)
+            else:
+                self._disabled_at = time.time()
+                return None
+        return vectors if len(vectors) == len(texts) else None
+
+
+def make_embedding_provider():
+    """RAG_EMBED_PROVIDER=openai|ollama|auto. По умолчанию (auto): OpenAI, если задан ключ и LLM_PROVIDER=openai, иначе Ollama."""
+    choice = (os.environ.get("RAG_EMBED_PROVIDER") or "auto").strip().lower()
+    if choice == "auto":
+        cloud = (os.environ.get("LLM_PROVIDER") or "").strip().lower() == "openai" and bool((os.environ.get("OPENAI_API_KEY") or "").strip())
+        choice = "openai" if cloud else "ollama"
+    return OpenAIEmbeddingProvider() if choice == "openai" else EmbeddingProvider()
+
+
 def embeddings_path(index_path: str) -> str:
     return os.path.splitext(index_path)[0] + ".emb.npz"
 
 
-def save_embeddings(index_path: str, ids: list[str], vectors) -> str:
+def save_embeddings(index_path: str, ids: list[str], vectors, model: str | None = None) -> str:
     """Векторы хранятся отдельно во float16: JSON раздул бы индекс в разы."""
     import numpy as np
     matrix = np.asarray(vectors, dtype="float32")
@@ -997,7 +1121,7 @@ def save_embeddings(index_path: str, ids: list[str], vectors) -> str:
         path,
         ids=np.array(ids, dtype=object),
         vectors=matrix.astype("float16"),
-        model=np.array([EMBED_MODEL], dtype=object),
+        model=np.array([model or EMBED_MODEL], dtype=object),
     )
     return path
 
@@ -1028,6 +1152,9 @@ def vector_search(store: dict, provider: EmbeddingProvider, query: str, limit: i
         return None
     import numpy as np
     q = np.asarray(vectors[0], dtype="float32")
+    # Векторы индекса построены другой моделью (другая размерность): сравнивать нельзя, слой молча отключается.
+    if q.shape[0] != store["vectors"].shape[1]:
+        return None
     norm = float(np.linalg.norm(q))
     if norm < 1e-9:
         return None
@@ -1045,7 +1172,34 @@ RRF_K = 60
 # Порог косинуса, ниже которого чисто семантическое совпадение в выдачу
 # не пускается. Подобран так, чтобы отсекать «тематически похожие», но
 # юридически посторонние статьи.
-VECTOR_ONLY_MIN_SCORE = 0.62
+VECTOR_ONLY_MIN_SCORE = 0.62   # по умолчанию (nomic); для других моделей задаётся RAG_VECTOR_MIN_SCORE в .env
+
+
+def _vector_min_score() -> float:
+    """Читается при каждом поиске: .env загружается позже, чем импортируется этот модуль."""
+    raw = os.environ.get("RAG_VECTOR_MIN_SCORE")
+    try:
+        return float(raw) if raw else VECTOR_ONLY_MIN_SCORE
+    except ValueError:
+        return VECTOR_ONLY_MIN_SCORE
+
+
+def _lexical_protect() -> int:
+    """Сколько лучших лексических результатов гарантированно остаётся в выдаче при включённых векторах."""
+    try:
+        return max(int(os.environ.get("RAG_LEXICAL_PROTECT", "5")), 0)
+    except ValueError:
+        return 5
+
+
+def _vector_weight() -> float:
+    """Вес векторного ранга в слиянии (1.0 — как у лексического). Меньше единицы: векторы в основном добирают то, что
+    BM25 не нашёл, а не переставляют уже найденное (при равных весах два вопроса выпадали из топ-5)."""
+    raw = os.environ.get("RAG_VECTOR_WEIGHT")
+    try:
+        return float(raw) if raw else 1.0
+    except ValueError:
+        return 1.0
 
 
 def fuse(lexical: list[tuple[float, dict]], vector, top_k: int, resolve=None) -> list[dict]:
@@ -1074,17 +1228,37 @@ def fuse(lexical: list[tuple[float, dict]], vector, top_k: int, resolve=None) ->
                 # Семантическое попадание без лексического пересечения.
                 # Пускаем его в выдачу только при уверенном косинусе:
                 # для юридического поиска ложная норма дороже пропуска.
-                if resolve is None or score < VECTOR_ONLY_MIN_SCORE:
+                if resolve is None or score < _vector_min_score():
                     continue
                 chunk = resolve(chunk_id)
                 if chunk is None:
                     continue
                 payload[chunk_id] = dict(chunk)
                 ranks[chunk_id] = 0.0
-            ranks[chunk_id] += 1.0 / (RRF_K + position)
+            ranks[chunk_id] += _vector_weight() / (RRF_K + position)
             payload[chunk_id]["vector_score"] = round(score, 4)
 
     ordered = sorted(ranks.items(), key=lambda item: item[1], reverse=True)
+    # Векторы добирают пропущенное, но не вытесняют лучшие лексические попадания: первые N результатов BM25 остаются
+    # в выдаче (иначе вопросы о НДС и коллективном договоре выпадали из топ-5 после включения векторов).
+    protect = min(_lexical_protect(), top_k // 2)   # не больше половины выдачи, иначе векторам не остаётся места
+    if vector and protect:
+        keep = [chunk.get("id") for _, chunk in lexical[:protect]]
+        head = [item for item in ordered[:top_k]]
+        present = {chunk_id for chunk_id, _ in head}
+        missing = [chunk_id for chunk_id in keep if chunk_id not in present]
+        if missing:
+            guarded = set(keep)
+            kept = []
+            drop = len(missing)
+            for chunk_id, rank_score in reversed(head):
+                if drop and chunk_id not in guarded:
+                    drop -= 1
+                    continue
+                kept.append((chunk_id, rank_score))
+            kept.reverse()
+            kept.extend((chunk_id, ranks[chunk_id]) for chunk_id in missing)
+            ordered = sorted(kept, key=lambda item: item[1], reverse=True)
     results = []
     for chunk_id, rank_score in ordered[:top_k]:
         item = payload[chunk_id]

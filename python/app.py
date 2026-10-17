@@ -148,6 +148,13 @@ CHAT_RAG_SOURCE_NAMES = [
     "ЭКОНОМИЧЕСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
     "ГРАЖДАНСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
     "УГОЛОВНО - ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
+    # Размеры штрафов КоАП РТ: справочник, собранный из официального текста (python/tools/build_koap_docx.py).
+    "КоАП РТ — размеры штрафов.docx",
+    # Официальные тексты с base.mmk.tj на таджикском, переведённые машинно (python/tools/translate_official_code.py).
+    "Конституция РТ (машинный перевод).docx",
+    "Земельный кодекс (машинный перевод).docx",
+    "Уголовно-исполнительный кодекс (машинный перевод).docx",
+    "Таможенный кодекс (машинный перевод).docx",
     # Процессуальный кодекс: порядок производства по делам, без размеров
     # штрафов. Материальной части (санкций КоАП) в базе по-прежнему нет.
     "ПРОЦЕССУАЛЬНЫЙ КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРАВОНАРУШЕНИЯХ.docx",
@@ -169,6 +176,11 @@ RAG_CODE_LABELS = {
     "ЭКОНОМИЧЕСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": "Экономический процессуальный кодекс Республики Таджикистан",
     "ГРАЖДАНСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": "Гражданский процессуальный кодекс Республики Таджикистан",
     "УГОЛОВНО - ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx": "Уголовно-процессуальный кодекс Республики Таджикистан",
+    "КоАП РТ — размеры штрафов.docx": "Кодекс Республики Таджикистан об административных правонарушениях (размеры штрафов)",
+    "Конституция РТ (машинный перевод).docx": "Конституция Республики Таджикистан (машинный перевод официального текста)",
+    "Земельный кодекс (машинный перевод).docx": "Земельный кодекс Республики Таджикистан (машинный перевод официального текста)",
+    "Уголовно-исполнительный кодекс (машинный перевод).docx": "Уголовно-исполнительный кодекс Республики Таджикистан (машинный перевод официального текста)",
+    "Таможенный кодекс (машинный перевод).docx": "Таможенный кодекс Республики Таджикистан (машинный перевод официального текста)",
     "ПРОЦЕССУАЛЬНЫЙ КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРАВОНАРУШЕНИЯХ.docx": "Процессуальный кодекс Республики Таджикистан об административных правонарушениях",
 }
 
@@ -184,6 +196,8 @@ RAG_IGNORED_FILES = {
 # возмещении вреда) они не попадают.
 RELATED_EXCLUDED_SOURCES = {
     "574_ru.doc",
+    "КоАП РТ — размеры штрафов.docx",   # страница УК остаётся строго уголовной
+    "Уголовно-исполнительный кодекс (машинный перевод).docx",
     "КОДЕКС ОБ АДМИНИСТРАТИВНЫХ ПРОЦЕДУРАХ.docx",
     "ЭКОНОМИЧЕСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
     "ГРАЖДАНСКИЙ ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx",
@@ -208,13 +222,15 @@ CRIME_RAG_MIN_SCORE = float(os.environ.get("CRIME_RAG_MIN_SCORE", "8.0"))
 # кодекса. Три статьи вместо восьми покрывают квалификацию не хуже: по
 # контрольным описаниям профильная норма приходит первой с отрывом втрое,
 # а ссылалась модель всё равно на одну-две. Поиску выдача не режется.
+CRIME_RAG_USE_VECTORS = os.environ.get("CRIME_RAG_USE_VECTORS", "0").strip().lower() in {"1", "true", "yes", "on"}
 CRIME_QUALIFY_TOP_K = int(os.environ.get("CRIME_QUALIFY_TOP_K", "3"))
 CRIME_MAX_TOKENS = int(os.environ.get("CRIME_MAX_TOKENS", "700"))
 # Краткая квалификация: статья, наказание и пара предложений — вчетверо короче полной.
 CRIME_MAX_TOKENS_SHORT = int(os.environ.get("CRIME_MAX_TOKENS_SHORT", "650"))
 # Полная квалификация: «что делать» плюс шесть разделов разбора. В 700 токенов
 # такой ответ не помещается, поэтому у режима свой, больший бюджет.
-CRIME_MAX_TOKENS_FULL = int(os.environ.get("CRIME_MAX_TOKENS_FULL", "1500"))
+# У облачной модели (gpt-6-luna) часть бюджета уходит на рассуждение, поэтому лимит выше.
+CRIME_MAX_TOKENS_FULL = int(os.environ.get("CRIME_MAX_TOKENS_FULL", "4000" if LLM_PROVIDER == "openai" else "1500"))
 # Контекст под промпт разбора, а не объявленные моделью 16k: на CPU лишний
 # контекст оплачивается памятью и скоростью разбора запроса.
 CRIME_NUM_CTX = int(os.environ.get("CRIME_NUM_CTX", "6144"))
@@ -223,7 +239,13 @@ CRIME_KEEP_ALIVE = os.environ.get("CRIME_KEEP_ALIVE", "30m")
 # обрывается клиентом раньше, чем приходит первый токен.
 CRIME_HEARTBEAT_SECONDS = float(os.environ.get("CRIME_HEARTBEAT_SECONDS", "5"))
 CRIME_MODEL = os.environ.get("CRIME_MODEL", MODEL_NAME)
-CRIME_RAG_MAX_CHARS = int(os.environ.get("CRIME_RAG_MAX_CHARS", "2600"))
+# 2600 символов на три статьи (по ~670 на статью) годятся для медленной локальной модели, но режут
+# санкции и части статей: модель видела обрубок ст. 245 и выбирала часть 1 для хищения на 400 000 сомони.
+# Облачной модели контекст не дорог, поэтому она получает статьи целиком.
+CRIME_RAG_MAX_CHARS = int(os.environ.get("CRIME_RAG_MAX_CHARS", "15000" if LLM_PROVIDER == "openai" else "2600"))
+# Действующий «показатель для расчётов» в сомони: значительный, крупный и особо крупный размер в УК РТ
+# определяются кратно ему. Значение меняется законом о бюджете, поэтому задаётся в .env, а не зашито в код.
+CRIME_CALC_INDICATOR = (os.environ.get("CRIME_CALC_INDICATOR") or "").strip()
 CRIME_NOT_FOUND_MESSAGE = (
     "В Уголовном кодексе Республики Таджикистан не найдено норм, "
     "относящихся к этому описанию. Опишите событие подробнее: что именно "
@@ -257,7 +279,7 @@ rag_citations_cache = None
 multi_rag_citations_cache = {}
 rag_embeddings = None
 chat_rag_embeddings = None
-embedding_provider = legal_rag.EmbeddingProvider()
+embedding_provider = legal_rag.make_embedding_provider()
 
 def _active_model_tag(requested_model=None):
     """Effective model id for the active provider.
@@ -1030,9 +1052,19 @@ def load_chat_rag_index(force=False):
         chat_rag_index = hydrate_rag_index(index)
         chat_rag_index["embeddings"] = legal_rag.load_embeddings(CHAT_RAG_INDEX_FILE)
         try:
-            cacheable = dict(index)
-            with open(CHAT_RAG_INDEX_FILE, "w", encoding="utf-8") as file:
-                json.dump(cacheable, file, ensure_ascii=False)
+            # Векторы и служебная карта id лежат в том же словаре, что и индекс (hydrate_rag_index правит его на месте), но в JSON
+            # они не нужны и не сериализуются: numpy-массив обрывал запись посередине файла, и кэш получался битым.
+            cacheable = {key: value for key, value in index.items() if key not in ("embeddings", "_by_id")}
+            # Атомарная запись: во временный файл и переименование. Иначе два процесса (сервер, тесты, инструменты),
+            # собирающих индекс одновременно, перемешивали записи, и файл оказывался битым на середине.
+            tmp_path = "%s.%d.tmp" % (CHAT_RAG_INDEX_FILE, os.getpid())
+            try:
+                with open(tmp_path, "w", encoding="utf-8") as file:
+                    json.dump(cacheable, file, ensure_ascii=False)
+                os.replace(tmp_path, CHAT_RAG_INDEX_FILE)
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
         except Exception as error:
             print(f"Chat RAG cache save error: {error}")
         return chat_rag_index
@@ -1082,7 +1114,9 @@ def load_crime_rag_index(force=False):
         crime_rag_index = hydrate_rag_index(index)
         # Векторы общие для всех кодексов: идентификаторы чужих источников
         # просто не разрешатся в этом подындексе и в выдачу не попадут.
-        crime_rag_index["embeddings"] = chat_index.get("embeddings")
+        # Страница УК настроена на лексический поиск: с общими векторами топ-3 смещался (ст. 110 уходила на 4-е место при
+        # избиении с тяжким вредом), и квалификация портилась. Включить: CRIME_RAG_USE_VECTORS=1.
+        crime_rag_index["embeddings"] = chat_index.get("embeddings") if CRIME_RAG_USE_VECTORS else None
         return crime_rag_index
 
 
@@ -1330,7 +1364,7 @@ def rag_status_payload():
         "chat_sources": chat_sources,
         "embeddings": {
             "enabled": bool(index.get("embeddings")),
-            "model": legal_rag.EMBED_MODEL,
+            "model": getattr(embedding_provider, "model", legal_rag.EMBED_MODEL),
             "reason": embedding_provider.reason or None,
         },
         # Статус переводчика виден в шапке чата: без него таджикские вопросы
@@ -1604,19 +1638,102 @@ def extract_rag_articles(article_numbers, source_name=None):
                 "code": None,
             })
     return articles
-def retrieve_rag(query, top_k=None, index=None):
-    """Гибридный поиск: BM25 по статье и названию + опциональные эмбеддинги."""
+FINES_SOURCE_NAME = "КоАП РТ — размеры штрафов.docx"
+# Вопрос о штрафе: слово «штраф» в общем индексе тянет статьи УК/УПК с названием «Штраф» и неустойку ГК, а справочник
+# КоАП тонет. Для таких вопросов справочник ищется отдельно (своя статистика BM25 и свои векторы), и его лучшие
+# статьи ставятся в начало выдачи. Рядом со словами о договоре («штраф по договору») полоса не включается.
+_FINE_INTENT_RE = re.compile(
+    r"штраф|оштраф|сколько\s+(?:платить|заплатить|платят|взыскива\w+)|административн\w+\s+(?:ответственност|наказани|нарушени|правонарушени)",
+    re.IGNORECASE)
+_FINE_CIVIL_RE = re.compile(r"договор\w*|контракт\w*|обязательств\w*|неустойк\w*|пен[яиюей]\b|арендодател\w*|арендатор\w*|заказчик\w*|исполнител\w*", re.IGNORECASE)
+_lane_indexes = {}
+
+# Вопрос прямо называет кодекс: «что говорит Конституция…», «по Земельному кодексу…». Такой кодекс ищется отдельно, и его лучшие
+# статьи идут в начало. Иначе статьи без названий (Конституция) или короткие кодексы тонут среди сильных по BM25 статей ГК и КЗ.
+_NAMED_CODE_LANES = (
+    (re.compile(r"конституци", re.IGNORECASE), "Конституция РТ (машинный перевод).docx"),
+    (re.compile(r"земельн\w+\s+кодекс|по\s+земельному|земельного\s+кодекса", re.IGNORECASE), "Земельный кодекс (машинный перевод).docx"),
+    (re.compile(r"таможенн\w+\s+кодекс|таможенного\s+кодекса|по\s+таможенному", re.IGNORECASE), "Таможенный кодекс (машинный перевод).docx"),
+    (re.compile(r"уголовно-исполнительн", re.IGNORECASE), "Уголовно-исполнительный кодекс (машинный перевод).docx"),
+)
+
+
+def _lane_index(chat_index, source_name):
+    """Подындекс одного источника (своя статистика BM25) + подмножество векторов; None, если источника нет."""
+    built = chat_index.get("built_at")
+    cached = _lane_indexes.get(source_name)
+    if cached is not None and cached.get("built_from") == built:
+        return cached if cached.get("chunks") else None
+    chunks = [c for c in chat_index.get("chunks", []) if c.get("source") == source_name]
+    if not chunks:
+        _lane_indexes[source_name] = {"built_from": built, "chunks": []}
+        return None
+    index = hydrate_rag_index({"source": source_name, "built_from": built,
+                               "index_version": chat_index.get("index_version"), "chunks": chunks})
+    store = chat_index.get("embeddings")
+    if store:
+        ids = set(c["id"] for c in chunks)
+        keep = [i for i, chunk_id in enumerate(store["ids"]) if chunk_id in ids]
+        if keep:
+            index["embeddings"] = {"ids": [store["ids"][i] for i in keep], "vectors": store["vectors"][keep],
+                                   "model": store.get("model")}
+    _lane_indexes[source_name] = index
+    return index
+
+
+def is_fine_question(query):
+    text = query or ""
+    return bool(_FINE_INTENT_RE.search(text)) and not _FINE_CIVIL_RE.search(text)
+
+
+def retrieve_lane(query, source_name, top_k=3, index=None):
+    """Лучшие статьи одного источника по запросу (пусто, если источника нет в индексе)."""
+    chat_index = index or load_chat_rag_index(force=False)
+    if not chat_index.get("ready"):
+        return []
+    lane = _lane_index(chat_index, source_name)
+    if not lane:
+        return []
+    store = lane.get("embeddings")
+    return legal_rag.search(lane, query, top_k=top_k, store=store, provider=embedding_provider if store else None)
+
+
+def retrieve_fines(query, top_k=3, index=None):
+    return retrieve_lane(query, FINES_SOURCE_NAME, top_k=top_k, index=index)
+
+
+def _lane_sources(query):
+    """Источники, которые нужно искать отдельно: названные в вопросе кодексы и справочник штрафов для вопроса о штрафе."""
+    sources = [source for pattern, source in _NAMED_CODE_LANES if pattern.search(query or "")]
+    if is_fine_question(query):
+        sources.append(FINES_SOURCE_NAME)
+    return sources
+
+
+def retrieve_rag(query, top_k=None, index=None, fines_lane=False):
+    """Гибридный поиск: BM25 по статье и названию + опциональные эмбеддинги.
+
+    fines_lane=True (чат): названные в вопросе кодексы и справочник штрафов дополнительно ищутся отдельно и идут в начало выдачи."""
     index = index or load_rag_index(force=False)
     if not index.get("ready"):
         return []
     store = index.get("embeddings")
-    return legal_rag.search(
+    limit = top_k or RAG_TOP_K
+    results = legal_rag.search(
         index,
         query,
-        top_k=top_k or RAG_TOP_K,
+        top_k=limit,
         store=store,
         provider=embedding_provider if store else None,
     )
+    if fines_lane:
+        front = []
+        for source in _lane_sources(query):
+            front.extend(retrieve_lane(query, source, top_k=3, index=index))
+        if front:
+            seen = {item.get("id") for item in front}
+            results = (front + [item for item in results if item.get("id") not in seen])[:limit]
+    return results
 
 def format_rag_context(results, max_chars=12000):
     if not results:
@@ -2147,7 +2264,7 @@ def _build_contract_type_guidance(contract_type):
 def _contract_code_filter(labor):
     """Какие кодексы допустимы как основание условий договора: уголовные и административные — нет;
     трудовой — только для трудового договора."""
-    excluded = ("УК", "УПК", "КоАП")
+    excluded = ("УК", "УПК", "КоАП", "УИК")
 
     def allowed(item):
         code = str(item.get("code_short") or "")
@@ -2321,11 +2438,25 @@ def _analyze_chunk_variant(args, variant=0):
             "освобождение от ответственности в одном пункте — два риска). По пунктам без риска ничего не выводи. "
             "Формат и правила доказательности прежние."
         )
+    if variant == 2:
+        prompt += (
+            "\n\nРЕЖИМ ОБРАТНОЙ СВЕРКИ «НОРМА → ПУНКТ» (третий проход: он ловит то, что общий и попунктный разборы "
+            "пропускают). Идёт в обратную сторону: возьми по очереди нормы из списка выше, особенно первые, подобранные "
+            "под условия фрагмента, и для каждой найди в тексте пункт, который с ней расходится: хуже нормы для стороны, "
+            "противоречит императивному правилу, оставляет вопрос на усмотрение одной стороны, лишает права, денег или "
+            "судебной защиты, нарушает требуемую форму, валюту, срок, порядок расчётов либо подсудность. "
+            "Если расхождение есть — это риск: цитата пункта и эта норма. Если пункта нет — ничего не выводи. "
+            "Один пункт может расходиться с несколькими нормами; тогда выбери ту, что точнее. Формат и правила "
+            "доказательности прежние."
+        )
     send_to_ollama(prompt, stream_callback=collect, num_predict=2400, temperature=0.25 if variant else 0.15)
     return {"idx": i, "content": normalize_legal_terms("".join(result))}
 
 
 CONTRACT_SECOND_PASS = os.environ.get("CONTRACT_SECOND_PASS", "1") != "0"
+# Третий проход идёт от нормы к пункту. По контрольному набору из 10 договоров с заложенными рисками он поднимает полноту
+# и сглаживает разброс между запусками; CONTRACT_THIRD_PASS=0 возвращает два прохода (быстрее и дешевле).
+CONTRACT_THIRD_PASS = os.environ.get("CONTRACT_THIRD_PASS", "1") != "0"
 
 
 def analyze_chunk(args):
@@ -2336,17 +2467,17 @@ def analyze_chunk(args):
     """
     if not CONTRACT_SECOND_PASS:
         return _analyze_chunk_variant(args, 0)
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        first = pool.submit(_analyze_chunk_variant, args, 0)
-        second = pool.submit(_analyze_chunk_variant, args, 1)
+    variants = (0, 1, 2) if CONTRACT_THIRD_PASS else (0, 1)
+    with ThreadPoolExecutor(max_workers=len(variants)) as pool:
+        futures = [pool.submit(_analyze_chunk_variant, args, v) for v in variants]
         parts = []
-        for future in (first, second):
+        for future in futures:
             try:
                 parts.append(future.result()["content"])
             except Exception as error:  # noqa: BLE001
                 print(f"  ⚠️ Проход по фрагменту {args[0] + 1} не удался: {error}")
         if not parts:
-            raise RuntimeError("оба прохода анализа фрагмента завершились ошибкой")
+            raise RuntimeError("все проходы анализа фрагмента завершились ошибкой")
     return {"idx": args[0], "content": "\n\n".join(parts)}
 
 def _calculate_finding_quality(finding):
@@ -4662,7 +4793,7 @@ def crime_search():
 CRIME_PROCEDURE_SOURCE = "УГОЛОВНО - ПРОЦЕССУАЛЬНЫЙ КОДЕКС.docx"
 CRIME_PROCEDURE_TOP = int(os.environ.get("CRIME_PROCEDURE_TOP", "3"))
 CRIME_PROCEDURE_MIN_SCORE = float(os.environ.get("CRIME_PROCEDURE_MIN_SCORE", "12.0"))
-CRIME_PROCEDURE_MAX_CHARS = int(os.environ.get("CRIME_PROCEDURE_MAX_CHARS", "2400"))
+CRIME_PROCEDURE_MAX_CHARS = int(os.environ.get("CRIME_PROCEDURE_MAX_CHARS", "5000" if LLM_PROVIDER == "openai" else "2400"))
 # Слова, которые поднимают процессуальные статьи (заявление о преступлении,
 # права потерпевшего, доказательства), а не статьи о самом составе: «что делать»
 # человеку нужно из УПК, а не из УК. Без них поиск по описанию события
@@ -4724,6 +4855,85 @@ def _crime_todo_rules(procedure_numbers, detailed):
     )
 
 
+_RU_THOUSANDS = {"одну": 1, "один": 1, "две": 2, "два": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "семь": 7,
+                 "восемь": 8, "девять": 9, "десять": 10}
+
+
+def _crime_size_calculation(note_text, description):
+    """Готовый расчёт порогов из примечания к главе и суммы из описания.
+
+    Модель путалась в арифметике: 400 000 сомони при показателе 78 — это 5128 показателей, то есть особо крупный размер
+    (порог 2000), а она называла крупный. Пороги берутся из текста примечания («в одну тысячу раз», «в две тысячи раз»),
+    показатель — из CRIME_CALC_INDICATOR; считаем кодом, модели отдаём результат.
+    """
+    if not CRIME_CALC_INDICATOR:
+        return ""
+    try:
+        indicator = float(CRIME_CALC_INDICATOR.replace(",", "."))
+    except ValueError:
+        return ""
+    multiples = []
+    for m in re.finditer(r"в\s+([а-яё]+)\s+тысяч\w*\s+раз", note_text.lower()):
+        value = _RU_THOUSANDS.get(m.group(1))
+        if value:
+            multiples.append(value * 1000)
+    amounts = []
+    for m in re.finditer(r"(\d{1,3}(?:[ \u00a0]\d{3})+|\d{4,})\s*(?:сомони|сомон|сом\b)", description or ""):
+        amounts.append(int(re.sub(r"\D", "", m.group(1))))
+    if len(multiples) < 2 or not amounts:
+        return ""
+    big, huge = multiples[0], multiples[1]
+    lines = ["РАСЧЁТ РАЗМЕРА (сделан кодом, используй его без пересчёта; показатель для расчётов %s сомони): "
+             "крупный размер — от %d показателей (%s сомони), особо крупный — от %d показателей (%s сомони)." % (
+                 CRIME_CALC_INDICATOR, big, f"{big * indicator:,.0f}".replace(",", " "), huge, f"{huge * indicator:,.0f}".replace(",", " "))]
+    for amount in amounts[:3]:
+        units = amount / indicator
+        kind = "особо крупный размер" if units >= huge else ("крупный размер" if units >= big else "ниже порога крупного размера")
+        lines.append("Сумма %s сомони = %.0f показателей — %s." % (f"{amount:,}".replace(",", " "), units, kind))
+    return "\n".join(lines)
+
+
+CRIME_CHAPTER_NOTE_MAX = 1200
+
+
+def _crime_chapter_notes(rag_results, description=""):
+    """Примечания к главе УК, которые задают размеры («крупный», «особо крупный», «значительный ущерб»).
+
+    Такое примечание стоит под первой статьёй главы и действует на всю главу («в статьях настоящей главы»),
+    но поиск не приносит его вместе с нужной статьёй: для присвоения на 400 000 сомони модель видела ст. 245
+    без порога и выбирала часть 1. Возвращает (текст блока, номера статей, в которых лежат примечания).
+    """
+    index = load_crime_rag_index()
+    chunks = index.get("chunks") or []
+    seen, blocks, article_numbers = set(), [], []
+    wanted = {(r.get("chapter"), r.get("source")) for r in rag_results if r.get("chapter")}
+    for chunk in chunks:
+        if (chunk.get("chapter"), chunk.get("source")) not in wanted:
+            continue
+        text = re.sub(r"\s+", " ", chunk.get("text") or "")   # жёсткие переносы строк старых .doc рвут фразы
+        if "настоящей главы" not in text or "показател" not in text:
+            continue
+        start = text.find("Примечание")
+        if start < 0:
+            continue
+        key = (chunk.get("chapter"), chunk.get("article"))
+        if key in seen:
+            continue
+        seen.add(key)
+        note = re.sub(r"\s+", " ", text[start:start + CRIME_CHAPTER_NOTE_MAX]).strip()
+        blocks.append("[Примечание к главе %s, лежит под статьёй %s УК РТ] %s" % (
+            chunk.get("chapter"), chunk.get("article"), note))
+        article_numbers.append(str(chunk.get("article")))
+    if not blocks:
+        return "", []
+    computed = _crime_size_calculation(" ".join(blocks), description)
+    if computed:
+        blocks.append(computed)
+    header = ("\n\nПРИМЕЧАНИЯ К ГЛАВЕ (они определяют значительный, крупный и особо крупный размер для статей этой главы — "
+              "применяй их к сумме из описания, ссылаться можно как «примечание к статье N»):\n")
+    return header + "\n".join(blocks), article_numbers
+
+
 def _crime_procedure_block(procedure):
     if not procedure:
         return ""
@@ -4731,11 +4941,17 @@ def _crime_procedure_block(procedure):
             + format_rag_context(procedure, max_chars=CRIME_PROCEDURE_MAX_CHARS))
 
 
-def _crime_qualify_prompt(description, rag_results, allowed, procedure=None, procedure_numbers=None):
+def _crime_qualify_prompt(description, rag_results, allowed, procedure=None, procedure_numbers=None, notes=""):
     """Промпт полного разбора. Ответ обязан целиком помещаться в границы выдачи поиска."""
     rag_context = format_rag_context(rag_results, max_chars=CRIME_RAG_MAX_CHARS)
     allowed_line = ", ".join(allowed)
     todo_rules = _crime_todo_rules(procedure_numbers or [], detailed=True)
+    calc_rule = (
+        "Действующий показатель для расчётов: %s сомони. Посчитай пороги явно (кратность × показатель) и примени нужную часть."
+        % CRIME_CALC_INDICATOR if CRIME_CALC_INDICATOR else
+        "Значение показателя в справке не дано, не выдумывай его. В «Не хватает фактов» напиши, "
+        "с каким порогом (в показателях для расчётов) надо сверить сумму, и укажи часть статьи, "
+        "которая применяется, если порог превышен.")
     return f"""Ты — юрист по уголовному праву Республики Таджикистан.
 
 ЗАДАЧА: подробно квалифицировать деяние по УК РТ, опираясь ТОЛЬКО на приведённые ниже статьи, и подсказать пострадавшему, что делать.
@@ -4744,7 +4960,7 @@ def _crime_qualify_prompt(description, rag_results, allowed, procedure=None, pro
 {description}
 
 СТАТЬИ УК РТ, НАЙДЕННЫЕ ПОИСКОМ (единственный допустимый источник для квалификации):
-{rag_context}{_crime_procedure_block(procedure)}
+{rag_context}{notes}{_crime_procedure_block(procedure)}
 
 ЖЁСТКИЕ ПРАВИЛА (нарушение любого делает ответ негодным):
 - Для квалификации разрешено ссылаться только на статьи УК РТ: {allowed_line}
@@ -4758,6 +4974,12 @@ def _crime_qualify_prompt(description, rag_results, allowed, procedure=None, pro
   статью назвать нельзя. Если основная статья названа, эту фразу не пиши:
   недостающие детали (часть, пункт, размер ущерба) укажи в «ФАКТЫ» одной
   строкой «Не хватает фактов: ...»
+- Выбирай ЧАСТЬ и ПУНКТ статьи по всем названным в описании признакам: способ,
+  размер, группа лиц, место, последствия, должностное положение. Берёшь часть 1,
+  только если ни один квалифицирующий признак из частей 2–4 не подтверждён описанием.
+- Размер ущерба: если в «Примечании» к статье значительный, крупный или особо крупный размер
+  определён кратно показателю для расчётов, сопоставь с ним сумму из описания и назови порог.
+  {calc_rule}
 Правила раздела «ЧТО ДЕЛАТЬ»:
 {todo_rules}
 
@@ -4790,7 +5012,7 @@ def _crime_qualify_prompt(description, rag_results, allowed, procedure=None, pro
    • Наказание по статье: [диапазон из текста статьи]"""
 
 
-def _crime_qualify_prompt_short(description, rag_results, allowed, procedure=None, procedure_numbers=None):
+def _crime_qualify_prompt_short(description, rag_results, allowed, procedure=None, procedure_numbers=None, notes=""):
     """Краткий режим: что делать, что грозит нарушителю и какие законы нарушены.
 
     Заголовки разделов разбирает страница (ЧТО ДЕЛАТЬ / ЧТО ГРОЗИТ / КАКИЕ ЗАКОНЫ),
@@ -4807,7 +5029,7 @@ def _crime_qualify_prompt_short(description, rag_results, allowed, procedure=Non
 {description}
 
 СТАТЬИ УК РТ, НАЙДЕННЫЕ ПОИСКОМ (единственный допустимый источник для квалификации):
-{rag_context}{_crime_procedure_block(procedure)}
+{rag_context}{notes}{_crime_procedure_block(procedure)}
 
 ЖЁСТКИЕ ПРАВИЛА:
 - Для квалификации разрешено ссылаться только на статьи УК РТ: {allowed_line}
@@ -4945,10 +5167,12 @@ def crime_qualify():
     short = str(data.get("mode") or "").strip().lower() == "short"
     procedure = retrieve_crime_procedure(description)
     procedure_numbers = _allowed_article_numbers(procedure)
+    notes, note_articles = _crime_chapter_notes(rag_results, description)
     prompt = (_crime_qualify_prompt_short if short else _crime_qualify_prompt)(
-        description, rag_results, allowed, procedure, procedure_numbers)
-    # Ссылки в ответе проверяются по обоим кодексам: УК для квалификации, УПК для совета.
+        description, rag_results, allowed, procedure, procedure_numbers, notes)
+    # Ссылки в ответе проверяются по обоим кодексам: УК для квалификации, УПК для совета; примечание к главе можно цитировать.
     checkable = list(allowed) + [n for n in procedure_numbers if n not in allowed]
+    checkable += [n for n in note_articles if n not in checkable]
     max_tokens = CRIME_MAX_TOKENS_SHORT if short else CRIME_MAX_TOKENS_FULL
     meta = {
         "grounded": True,
@@ -5091,6 +5315,131 @@ def _questions_to_russian(texts):
     return lang_service.translator.translate(texts, "tg", "ru")
 
 
+# Таджикский ответ идёт как у ChatGPT: русский текст рождается потоком, и каждый готовый абзац сразу
+# переводится моделью тоже потоком, токен за токеном. Раньше ждали весь русский ответ, переводили его целиком
+# и отдавали одним куском — пользователь 15 секунд видел пустоту. Первый абзац уходит в перевод рано
+# (чтобы текст появился быстро), следующие укрупняются: на каждый вызов перевода тратится около секунды.
+CHAT_TG_FIRST_BLOCK = 120
+CHAT_TG_NEXT_BLOCK = 260
+CHAT_TG_MAX_BLOCK = 1400
+_SENTENCE_END_RE = re.compile(r"[.!?;:][)»*]*\s+")
+
+
+# Конец предложения, за которым видна заглавная буква: «ст. 214» посреди фразы так не режется.
+_FIRST_CUT_RE = re.compile(r"(?:[.!?;:]\s+(?=[А-ЯЁA-Z*«\d])|[;,]\s+)")
+CHAT_TG_FIRST_SENTENCE = 60
+
+
+def _next_tg_block(buffer, first, final):
+    """Следующий готовый к переводу блок русского текста: (блок, остаток, чем склеить со следующим) или None.
+
+    Первый блок отдаётся уже по концу первого предложения: текст должен появиться как можно раньше.
+    """
+    need = CHAT_TG_FIRST_BLOCK if first else CHAT_TG_NEXT_BLOCK
+    idx = buffer.find("\n\n", need)
+    if first:
+        cut = next((m for m in _FIRST_CUT_RE.finditer(buffer) if m.end() >= CHAT_TG_FIRST_SENTENCE), None)
+        if cut and (idx == -1 or cut.end() < idx):
+            return buffer[:cut.end()].rstrip(), buffer[cut.end():], " "
+    if idx != -1:
+        return buffer[:idx], buffer[idx + 2:], "\n\n"
+    line = buffer.find("\n", need)   # пункты списка тоже границы: длинный список не ждёт конца целиком
+    if line != -1:
+        return buffer[:line], buffer[line + 1:], "\n"
+    if len(buffer) > CHAT_TG_MAX_BLOCK:
+        # длинный абзац без разрывов — режем по последнему концу предложения
+        last = None
+        for match in _SENTENCE_END_RE.finditer(buffer, 0, CHAT_TG_MAX_BLOCK):
+            last = match
+        if last:
+            return buffer[:last.end()].rstrip(), buffer[last.end():], " "
+        return buffer[:CHAT_TG_MAX_BLOCK], buffer[CHAT_TG_MAX_BLOCK:], " "
+    if final and buffer.strip():
+        return buffer, "", "\n\n"
+    return None
+
+
+# Метка «ПЕРЕВОД:» в конце блока: промпт заканчивается ею, и модель иногда повторяет её после текста.
+_TG_TAIL_LABEL_RE = re.compile(r"\s*(?:ПЕРЕВОД|ТАРҶУМА|Перевод|Тарҷума)\s*:?\s*$")
+CHAT_TG_HOLD = 16   # последние символы потока придерживаются, пока не станет ясно, что это не метка
+
+
+def _stream_tg_block(block, separator):
+    """Перевод одного блока потоком: отдаёт строки NDJSON с кусками таджикского текста по мере их появления."""
+    raw, sent, started = "", 0, False
+    prompt = doc_lang._prompt(block, "ru", "tg", "ответ юридического помощника", CHAT_TG_RULES)
+
+    def _line(text):
+        nonlocal sent
+        return json.dumps({"response": (separator if sent == 0 else "") + text, "done": False},
+                          ensure_ascii=False) + "\n"
+
+    emitted = 0
+    try:
+        for obj in llm_stream(MODEL_NAME, prompt, temperature=0.0, num_predict=max(900, int(len(block) * 1.4)),
+                              openai_model=ANALYSIS_GPT_MODEL, reasoning_effort="minimal"):
+            piece = obj.get("response") or ""
+            if not piece:
+                continue
+            raw += piece
+            if not started:
+                if len(raw) < CHAT_TG_HOLD:
+                    continue
+                raw, started = doc_lang._LABEL_RE.sub("", raw.lstrip()), True
+            safe = len(raw) - CHAT_TG_HOLD
+            if safe > sent:
+                yield _line(raw[sent:safe])
+                emitted += safe - sent
+                sent = safe
+    except Exception as error:  # noqa: BLE001
+        print("  [TG] потоковый перевод блока не удался (%s)" % type(error).__name__)
+    if not started:
+        raw = doc_lang._LABEL_RE.sub("", raw.lstrip())
+    raw = _TG_TAIL_LABEL_RE.sub("", raw).rstrip()
+    rest = raw[sent:]
+    if rest:
+        yield _line(rest)
+        emitted += len(rest)
+        sent += len(rest)
+    if emitted:
+        return   # часть текста пользователь уже видит, повторять блок другим переводчиком нельзя
+    fallback = lang_service.translator.translate_block(block, "ru", "tg")
+    yield _line(block if fallback is None else fallback)
+
+
+def _translate_chat_stream_llm(chunks, src, tgt):
+    """Русский поток -> таджикский поток: абзац за абзацем, без ожидания конца ответа."""
+    buffer, last, russian = "", None, []
+    first, joiner = True, ""
+
+    def _drain(final):
+        nonlocal buffer, first, joiner
+        while True:
+            found = _next_tg_block(buffer, first, final)
+            if not found:
+                return
+            block, buffer, next_joiner = found
+            if block.strip():
+                yield from _stream_tg_block(block, "" if first else joiner)
+                first = False
+                joiner = next_joiner
+
+    for obj in chunks:
+        if obj.get("done"):
+            last = obj
+        piece = obj.get("response") or ""
+        russian.append(piece)
+        buffer += piece
+        yield from _drain(bool(obj.get("done")))
+    yield from _drain(True)
+    done = dict(last or {})
+    done["done"] = True
+    done["response"] = ""
+    done["source_response"] = "".join(russian)
+    done["lang"] = tgt
+    yield json.dumps(done, ensure_ascii=False) + "\n"
+
+
 def _translate_chat_stream(chunks, src, tgt):
     """Оборачивает поток Ollama переводом на язык пользователя."""
     buffer = ""
@@ -5098,32 +5447,7 @@ def _translate_chat_stream(chunks, src, tgt):
     use_llm = tgt == "tg" and src == "ru" and _llm_tajik_available()
 
     if use_llm:
-        # Блоки по очереди растягивали глубокий ответ до минуты: на каждый уходила своя секунда ожидания.
-        # Весь русский ответ готов раньше, чем его начнут переводить, поэтому куски идут параллельно.
-        full, last = [], None
-        for obj in chunks:
-            if obj.get("done"):
-                last = obj
-            full.append(obj.get("response") or "")
-        russian = "".join(full)
-        parts = doc_lang.split_paragraphs(russian, 3200) if russian.strip() else []
-
-        def _one(part):
-            done_part = _tg_block_via_llm(part)
-            if done_part is None:
-                done_part = lang_service.translator.translate_block(part, src, tgt)
-            return part if done_part is None else done_part
-
-        with ThreadPoolExecutor(max(1, min(4, len(parts) or 1))) as pool:
-            translated_parts = list(pool.map(_one, parts))
-        for piece in translated_parts:
-            yield json.dumps({"response": piece + "\n\n", "done": False}, ensure_ascii=False) + "\n"
-        done = dict(last or {})
-        done["done"] = True
-        done["response"] = ""
-        done["source_response"] = russian
-        done["lang"] = tgt
-        yield json.dumps(done, ensure_ascii=False) + "\n"
+        yield from _translate_chat_stream_llm(chunks, src, tgt)
         return
     # Русский оригинал уходит фронту вместе с последним куском и ложится в
     # историю диалога вместо перевода: на следующем ходу промпт должен остаться
@@ -5515,9 +5839,8 @@ def _no_basis_note(question):
     note = "\n\nВ подключённой базе кодексов РТ подходящей нормы для этого вопроса не нашлось."
     if re.search(r"штраф|размер\w*\s+наказан|административн", question or "", re.I):
         note += (
-            " Размеры административных штрафов устанавливает материальная часть Кодекса об "
-            "административных правонарушениях, а в базе есть только процессуальный кодекс "
-            "(порядок производства по делам), без сумм. Точный размер штрафа назвать не могу: "
+            " В нашем справочнике штрафов КоАП (редакция кодекса до 2019 года) такого случая не нашлось: "
+            "норма могла появиться позже или сформулирована иначе. Точный размер штрафа назвать не могу: "
             "проверьте его в действующей редакции Кодекса об административных правонарушениях Республики Таджикистан."
         )
     else:
@@ -5536,7 +5859,7 @@ def _retrieve_chat_merged(queries, top_k):
     BM25-запроса, а не обращения к модели.
     """
     index = load_chat_rag_index()
-    lists = [retrieve_rag(query, top_k=top_k, index=index) for query in queries if query]
+    lists = [retrieve_rag(query, top_k=top_k, index=index, fines_lane=True) for query in queries if query]
     merged, seen = [], set()
     for rank in range(top_k):
         for results in lists:
@@ -5873,12 +6196,19 @@ def stream_chat_response(payload):
         )
     else:
         no_ref_rule = "- Если такой строки нет, напиши: «Точная статья в нашей базе законов не найдена»"
-        no_basis_block = """ЕСЛИ ОТВЕТА НА ВОПРОС В ФРАГМЕНТАХ НИЖЕ НЕТ (нужного кодекса нет в подключённой
-базе или фрагменты относятся к другой теме) — НЕ пытайся угадать и не рассуждай
-абстрактно. Прямо и одной-двумя фразами скажи, какого именно закона или кодекса РТ
-не хватает в базе и что поэтому точный ответ назвать не можешь. Это честный и
-полезный ответ — он лучше, чем расплывчатые рассуждения. Отвечай только на тот
-вопрос, который задан: не подставляй темы, о которых пользователь не спрашивал."""
+        no_basis_block = """ЕСЛИ ОТВЕТА НА ВОПРОС В ФРАГМЕНТАХ НИЖЕ НЕТ ИЛИ ОНИ ОТВЕЧАЮТ ЛИШЬ ЧАСТИЧНО (нужной статьи, размера,
+срока или процедуры нет в подключённой базе) — не ограничивайся отказом и не угадывай норму.
+1. Сначала скажи по-человечески, как юрист, что подтверждено нашей базой, а чего в ней нет
+   (например: «этот вопрос регулирует …, но точной нормы в нашей базе нет, поэтому цифру не называю»).
+2. Затем добавь отдельный раздел **Из общих знаний (в нашей базе этого нет):** — 2–5 коротких пунктов о том, что обычно
+   действует по праву Республики Таджикистан по этому вопросу: какой вид ответственности или процедура, какой орган
+   занимается, порядок обращения или обжалования, на что обратить внимание, что сделать прямо сейчас.
+   Правила раздела: (а) пиши только то, в чём уверен; (б) номера статей, точные суммы и сроки называй, только если
+   уверен, и помечай их «по общим сведениям, проверьте по действующей редакции закона»; если не уверен — опиши порядок
+   без цифр; (в) никогда не выдавай эти сведения за подтверждённые нашей базой и не ссылайся на «фрагменты»;
+   (г) право других государств не используй.
+3. Раздел «Из общих знаний» нужен, только если база не дала полного ответа; если подтверждённого достаточно, его не пиши.
+Отвечай только на тот вопрос, который задан: не подставляй темы, о которых пользователь не спрашивал."""
 
     if smalltalk:
         # Правила цитирования здесь только мешают: на «салом» модель начинала

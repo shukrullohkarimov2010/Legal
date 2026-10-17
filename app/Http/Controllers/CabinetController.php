@@ -52,6 +52,30 @@ class CabinetController extends Controller
     }
 
     /**
+     * Данные для рабочего стола: те же цифры и тот же список документов, что в кабинете,
+     * но коротко — счётчики, пять последних документов и открытые задачи.
+     */
+    public function dashboardSummary(int $userId, int $taskLimit = 4): array
+    {
+        $visible = $this->documents($this->documentHistory($userId))->where('in_all', true);
+        $counts = $visible->countBy('kind');
+
+        $openTasks = Task::query()->where('user_id', $userId)
+            ->where('status', '!=', Task::STATUS_COMPLETED);
+
+        return [
+            'stats' => [
+                'documents' => $visible->count(),
+                'analyses' => (int) ($counts['analysis'] ?? 0),
+                'contracts' => (int) ($counts['generation'] ?? 0) + (int) ($counts['contract'] ?? 0),
+                'tasks' => (clone $openTasks)->count(),
+            ],
+            'recent' => $visible->take(5)->values(),
+            'tasks' => $openTasks->orderByRaw('deadline is null')->orderBy('deadline')->orderBy('priority')->limit($taskLimit)->get(),
+        ];
+    }
+
+    /**
      * Все документы пользователя одним списком, от новых к старым.
      *
      * История лежит в трёх массивах (действия, генерации, реестр договоров), и в

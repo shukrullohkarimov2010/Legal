@@ -1995,6 +1995,15 @@
         });
     });
 
+    // Вопрос, заданный с рабочего стола: /tasks/chat?q=...  Отправляем один раз и убираем параметр из адреса,
+    // чтобы при перезагрузке страницы вопрос не ушёл повторно.
+    document.addEventListener('DOMContentLoaded', () => {
+        const q = new URLSearchParams(window.location.search).get('q');
+        if (!q || !q.trim()) return;
+        history.replaceState(null, '', window.location.pathname);
+        setTimeout(() => sendQuickQuestion(q.trim().slice(0, 2000)), 300);
+    });
+
     function removeFile() {
         state.attachedFile = null;
         document.getElementById('fileAttachment').value = '';

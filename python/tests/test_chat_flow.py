@@ -53,7 +53,7 @@ def _fake_once(model, prompt, num_predict, **kwargs):
                        "ask": "", "choices": []}, ensure_ascii=False)
 
 
-def _fake_retrieve(query, top_k=None, index=None):
+def _fake_retrieve(query, top_k=None, index=None, fines_lane=False):
     QUERIES.append((query, top_k))
     return [{
         "source": "1918_ru_1.docx", "code": "Гражданский кодекс Республики Таджикистан",
@@ -86,7 +86,7 @@ def test_defaults_keep_old_behaviour():
     check("fast tokens from env", kwargs.get("num_predict") == app.CHAT_MAX_TOKENS, repr(kwargs))
     check("fast no reasoning override", kwargs.get("reasoning_effort") is None)
     check("fast no model override", kwargs.get("openai_model") is None)
-    check("lawyer fast format", "юрист-консультант, кратко" in prompt)
+    check("lawyer fast format", "консультация юриста" in prompt)
     check("no disclaimer on short answer", chat_modes.DISCLAIMER.strip() not in text)
     check("one understanding call, no subqueries",
           len(onces) == 1 and "Выдели до четырёх РАЗНЫХ" not in onces[0][1], repr([c[1][:40] for c in onces]))
@@ -94,7 +94,7 @@ def test_defaults_keep_old_behaviour():
 
     text2, prompt2, _, _ = run({"message": "Какой срок исковой давности по договору займа?",
                                 "role": "судья", "depth": "???"})
-    check("junk modes fall back", "юрист-консультант, кратко" in prompt2)
+    check("junk modes fall back", "консультация юриста" in prompt2)
 
 
 def test_advocate_deep():

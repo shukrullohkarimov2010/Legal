@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CabinetController;
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
@@ -14,9 +15,14 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-Route::get( 'dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified', EnsureFaceVerified::class])->name('dashboard');
+Route::get('dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified', EnsureFaceVerified::class])->name('dashboard');
+
+// Быстрые задачи на рабочем столе (только свои)
+Route::middleware(['auth', 'verified', EnsureFaceVerified::class])->prefix('dashboard/tasks')->name('dashboard.tasks.')->group(function () {
+    Route::post('/', [DashboardController::class, 'storeTask'])->name('store');
+    Route::patch('{task}/complete', [DashboardController::class, 'completeTask'])->name('complete');
+    Route::delete('{task}', [DashboardController::class, 'destroyTask'])->name('destroy');
+});
 
 // Старая ссылка переключателя на странице входа (/lang/tg). Она писала язык в ключ
 // app_locale, который SetLocale не читает, поэтому выбор языка там не действовал.

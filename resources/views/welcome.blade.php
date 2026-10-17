@@ -68,7 +68,7 @@ $L = match (app()->getLocale()) {
         'stat1' => 'Вақти миёнаи таҳлил', 'stat2' => 'Дақиқии муайянкунӣ',
     ],
     'ticker' => ['Кодекси гражданӣ', 'Кодекси меҳнат', 'Кодекси андоз', 'Кодекси ҷиноят', 'КҲМ ҶТ', 'Қонун дар бораи ҶДММ', 'Иҷора', 'Мерос', 'NDA', 'Таҳвил'],
-    'stats' => [['v' => 20000, 's' => '+', 'l' => 'санад дар база'], ['v' => 98.7, 'd' => 1, 's' => '%', 'l' => 'дақиқӣ'], ['v' => 60, 's' => '', 'l' => 'сония таҳлил'], ['v' => 8, 's' => '', 'l' => 'абзори AI']],
+    'stats' => [['k' => 'accuracy', 'l' => 'дақиқӣ', 'd' => 1, 's' => '%'], ['k' => 'codes', 'l' => 'кодекс ва қонуни ҶТ'], ['k' => 'processed', 'l' => 'ҳуҷҷати коркардшуда'], ['k' => 'tools', 'l' => 'абзори AI']],
     'showcase' => [
         'eyebrow' => 'Дар амал',
         'title' => 'Се абзор, ки ҳуқуқшиносии шуморо',
@@ -224,7 +224,7 @@ $L = match (app()->getLocale()) {
         'stat1' => 'Average analysis time', 'stat2' => 'Detection accuracy',
     ],
     'ticker' => ['Civil Code', 'Labor Code', 'Tax Code', 'Criminal Code', 'CAO of RT', 'LLC Law', 'Lease', 'Inheritance', 'NDA', 'Supply'],
-    'stats' => [['v' => 20000, 's' => '+', 'l' => 'acts in the base'], ['v' => 98.7, 'd' => 1, 's' => '%', 'l' => 'accuracy'], ['v' => 60, 's' => '', 'l' => 'sec per analysis'], ['v' => 8, 's' => '', 'l' => 'AI tools']],
+    'stats' => [['k' => 'accuracy', 'l' => 'accuracy', 'd' => 1, 's' => '%'], ['k' => 'codes', 'l' => 'codes and laws of RT'], ['k' => 'processed', 'l' => 'documents processed'], ['k' => 'tools', 'l' => 'AI tools']],
     'showcase' => [
         'eyebrow' => 'In practice',
         'title' => 'Three tools that take your legal work',
@@ -380,7 +380,7 @@ default => [
         'stat1' => 'Среднее время анализа', 'stat2' => 'Точность выявления',
     ],
     'ticker' => ['Гражданский кодекс', 'Трудовой кодекс', 'Налоговый кодекс', 'Уголовный кодекс', 'КоАП РТ', 'Закон об ООО', 'Аренда', 'Наследство', 'NDA', 'Поставка'],
-    'stats' => [['v' => 20000, 's' => '+', 'l' => 'актов в базе'], ['v' => 98.7, 'd' => 1, 's' => '%', 'l' => 'точность'], ['v' => 60, 's' => '', 'l' => 'секунд анализ'], ['v' => 8, 's' => '', 'l' => 'AI-инструментов']],
+    'stats' => [['k' => 'accuracy', 'l' => 'точность', 'd' => 1, 's' => '%'], ['k' => 'codes', 'l' => 'кодексов и законов РТ'], ['k' => 'processed', 'l' => 'документов обработано'], ['k' => 'tools', 'l' => 'AI-инструментов']],
     'showcase' => [
         'eyebrow' => 'На практике',
         'title' => 'Три инструмента, которые выводят вашу юридическую работу',
@@ -543,8 +543,15 @@ default => [
 <meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1A" media="(prefers-color-scheme: dark)">
 
+<link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+<link rel="alternate icon" href="{{ asset('favicon.ico') }}">
+{{-- Главная картинка героя — LCP-элемент: грузим сразу и с высоким приоритетом --}}
+<link rel="preload" as="image" fetchpriority="high"
+      href="{{ asset('images/hero-legal-ai-1024.webp') }}"
+      imagesrcset="{{ asset('images/hero-legal-ai-640.webp') }} 640w, {{ asset('images/hero-legal-ai-1024.webp') }} 1024w"
+      imagesizes="(min-width: 1024px) 594px, 100vw">
+
 <link rel="stylesheet" href="{{ asset('css/tw-default.css') }}?v={{ @filemtime(public_path('css/tw-default.css')) }}">
-<script src="{{ asset('vendor/chart.min.js') }}"></script>
 <script defer src="{{ asset('vendor/alpine.min.js') }}"></script>
 
 <style>
@@ -563,7 +570,7 @@ default => [
     --card-hover-border: rgba(37, 99, 235, 0.28);
     --text-primary: #0B1220;
     --text-secondary: #475569;
-    --text-muted: #8A99AD;
+    --text-muted: #5B6B82;   /* 5,4:1 на белом (было 2,9:1) */
     --accent-primary: #2563EB;
     --accent-strong: #1D4ED8;
     --accent-gradient: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
@@ -601,7 +608,7 @@ body.dark-theme {
     --card-hover-border: rgba(96, 165, 250, 0.40);
     --text-primary: #F1F5F9;
     --text-secondary: #9FB0C6;
-    --text-muted: #6B7C93;
+    --text-muted: #8FA1B8;   /* 6,6:1 на тёмном (было 4,1:1) */
     --accent-primary: #60A5FA;
     --accent-strong: #93C5FD;
     --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #6366F1 100%);
@@ -934,11 +941,11 @@ nav.scrolled {
     position: absolute;
     top: 0;
     right: 0;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     background: var(--error);
     border-radius: 50%;
-    font-size: 10px;
+    font-size: .75rem;
     color: #fff;
     display: flex;
     align-items: center;
@@ -1232,12 +1239,54 @@ body.dark-theme .icon-tile {
 /* ================================================================
    9. HERO: свечение, tilt, плавающие карточки
    ================================================================ */
+/* Ноутбуки: заголовок героя не занимает пять строк */
+@media (min-width: 1280px) and (max-width: 1599px) { h1.hero-h1 { font-size: 3rem; } }
+
 .hero-glow {
     position: absolute;
     inset: -10%;
     z-index: 0;
     background: radial-gradient(55% 55% at 62% 38%, var(--accent-glow), transparent 72%);
     filter: blur(38px);
+}
+
+/* ================================================================
+   Первый экран на компьютерах: прежний крупный вид, но на 10–15% меньше и с запасом по высоте окна.
+   Размеры берутся от высоты окна (svh) с верхним пределом чуть ниже исходных, поэтому на высоких
+   экранах всё выглядит просторно, а на ноутбуках по-прежнему помещается без прокрутки.
+   ================================================================ */
+@media (min-width: 1024px) {
+    .hero-fit {
+        min-height: 100vh;
+        min-height: 100svh;
+        display: flex;
+        align-items: center;
+        padding-top: 6.25rem;
+        padding-bottom: 2.5rem;
+    }
+    .hero-fit > div { width: 100%; gap: clamp(2rem, 4.5vw, 3.75rem); }
+    .hero-fit .badge-pill { margin-bottom: clamp(.75rem, 2svh, 1.5rem); }
+    .hero-fit h1.hero-h1 {
+        font-size: clamp(2.25rem, calc(1.4rem + 3.6svh), 3.25rem);
+        line-height: 1.12;
+        margin-bottom: clamp(.5rem, 1.2svh, .9rem);
+    }
+    .hero-fit p.text-lg { margin-bottom: clamp(.75rem, 2svh, 1.4rem); }
+    .hero-fit p.leading-relaxed { margin-bottom: clamp(1rem, 3svh, 2rem); }
+    .hero-fit .hero-actions { margin-bottom: clamp(1rem, 3svh, 2rem); }
+    .hero-fit .hero-frame {
+        /* квадратная картинка + рамка + плашки сверху и снизу укладываются в высоту окна */
+        width: min(100%, calc(100svh - 13rem));
+        margin-inline: auto;
+    }
+}
+/* Узкие ноутбуки и планшеты в альбомной ориентации: две колонки тесные, поэтому крупность чуть меньше */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .hero-fit h1.hero-h1 { font-size: clamp(2rem, calc(1.1rem + 3svh), 2.6rem); }
+
+}
+@media (min-width: 1024px) and (max-height: 640px) {
+    .hero-fit .hero-trust { display: none; }
 }
 
 /* Оправа-«окно приложения» вокруг визуала — читается как продуктовый скриншот */
@@ -1268,7 +1317,7 @@ body.dark-theme .icon-tile {
 
 .hero-frame-bar span {
     margin-left: auto;
-    font-size: .6875rem;
+    font-size: .75rem;
     font-weight: 600;
     letter-spacing: .04em;
     color: var(--text-muted);
@@ -1276,6 +1325,8 @@ body.dark-theme .icon-tile {
 
 .hero-img {
     display: block;
+    height: auto;
+    aspect-ratio: 1 / 1;
     border-radius: calc(var(--radius-xl) - 10px);
     position: relative;
     z-index: 1;
@@ -1301,111 +1352,56 @@ body.dark-theme .icon-tile {
 }
 
 /* ================================================================
-   9b. STARBURST — фирменный лучевой визуал (hero / stats)
+   9b. ПАНЕЛЬ ЦИФР — чистая карточка и «одометр»: цифры прокручиваются колонками
    ================================================================ */
-.starburst-wrap {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--card-border);
-    background: var(--card-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: var(--shadow-card);
-    min-height: 340px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 3.25rem;
-}
-
-.starburst-parallax {
-    position: absolute;
-    inset: -6%;
-    z-index: 0;
-    /* Плавное растворение к краям, чтобы луч не «обрубался» о рамку */
-    mask-image: radial-gradient(120% 95% at 50% 105%, black 45%, transparent 100%);
-    -webkit-mask-image: radial-gradient(120% 95% at 50% 105%, black 45%, transparent 100%);
-    animation: parallaxDrift 14s ease-in-out infinite;
-}
-
-@keyframes parallaxDrift {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(0, -10px) scale(1.015); }
-}
-
-.starburst-svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-.starburst-svg line,
-.starburst-svg circle {
-    transition: stroke-opacity var(--t-slow), fill-opacity var(--t-slow);
-}
-
-.starburst-content {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    padding: 0 1.5rem 2.75rem;
-}
-
-@keyframes starburstDrift {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-4px) scale(1.008); }
-}
-
-.starburst-svg {
-    animation: starburstDrift 10s ease-in-out infinite;
-}
-
-@keyframes twinkle {
-    0%, 100% { opacity: 1; }
-    50% { opacity: .32; }
-}
-
-.starburst-svg circle {
-    animation: twinkle 3.2s ease-in-out infinite;
-    transform-origin: center;
-}
-
-.starburst-svg circle:nth-of-type(3n) { animation-delay: .4s; animation-duration: 3.8s; }
-.starburst-svg circle:nth-of-type(5n) { animation-delay: 1.1s; animation-duration: 2.6s; }
-.starburst-svg circle:nth-of-type(7n) { animation-delay: 1.8s; animation-duration: 4.4s; }
-
-/* Мягкая дышащая подсветка в основании луча — фон живёт сам по себе, без наведения */
-.starburst-wrap::before {
-    content: '';
-    position: absolute;
-    left: 50%;
-    bottom: -10%;
-    width: 60%;
-    aspect-ratio: 1;
-    transform: translateX(-50%);
-    background: radial-gradient(circle, var(--accent-glow), transparent 70%);
-    filter: blur(30px);
-    z-index: 0;
-    pointer-events: none;
-    animation: burstPulse 4.5s ease-in-out infinite;
-}
-
-@keyframes burstPulse {
+@keyframes burstPulse {   /* нужен свечению глобуса в блоке инструментов */
     0%, 100% { opacity: .55; transform: translateX(-50%) scale(1); }
     50% { opacity: 1; transform: translateX(-50%) scale(1.12); }
 }
 
-@media (max-width: 640px) {
-    .starburst-wrap { min-height: 280px; padding-top: 2.25rem; }
+.stats-band {
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    box-shadow: var(--shadow-card);
+    padding: 2rem 1rem;
 }
-
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); row-gap: 1.75rem; }
+.stat-item { text-align: center; padding: .25rem 1rem; }
+@media (min-width: 1024px) {
+    .stat-item + .stat-item { border-left: 1px solid var(--card-border); }
+}
+.odo {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    font-size: clamp(2.25rem, 4.2vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+    color: var(--accent-primary);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+.odo-d {                      /* окно высотой в одну цифру */
+    display: inline-block;
+    height: 1.1em;
+    overflow: hidden;
+    vertical-align: bottom;
+}
+.odo-col {                    /* колонка 0–9, 0–9: крутится вдвое дальше, чем нужно, и останавливается на цифре */
+    display: flex;
+    flex-direction: column;
+    transform: translateY(0);
+    transition: transform var(--odo-t, 1.6s) cubic-bezier(.16, .84, .24, 1);
+    will-change: transform;
+}
+.odo-col > span { display: block; height: 1.1em; line-height: 1.1; text-align: center; }
+.odo.odo-go .odo-col { transform: translateY(calc(var(--to) * -1.1em)); }
+.odo-sep { display: inline-block; line-height: 1.1; }
+.stat-label { margin-top: .5rem; font-size: .875rem; color: var(--text-secondary, inherit); }
 @media (prefers-reduced-motion: reduce) {
-    .starburst-svg { animation: none; }
-    .starburst-svg circle { animation: none; }
-    .starburst-parallax { animation: none; }
-    .starburst-wrap::before { animation: none; }
+    .odo-col { transition: none; }
 }
 
 /* ================================================================
@@ -1676,7 +1672,7 @@ body.dark-theme .mock-report::after {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-hover);
     padding: .85rem .9rem;
-    font-size: .72rem;
+    font-size: .75rem;
 }
 
 .mock-report + .mock-report { margin-top: -.6rem; }
@@ -1702,7 +1698,7 @@ body.dark-theme .mock-report::after {
 }
 
 .mock-badge {
-    font-size: .625rem;
+    font-size: .75rem;
     font-weight: 700;
     padding: .15rem .5rem;
     border-radius: 999px;
@@ -2091,7 +2087,7 @@ body.dark-theme .mock-report::after {
 
 .chip-cost {
     display: inline-block;
-    font-size: .72rem;
+    font-size: .75rem;
     font-weight: 700;
     padding: .2rem .6rem;
     border-radius: 8px;
@@ -2101,10 +2097,15 @@ body.dark-theme .mock-report::after {
    12. STEPS / ЛИНИЯ
    ================================================================ */
 .step-line {
+    /* позиция задана здесь, а не tailwind-классами: прежний position:relative перебивал absolute
+       и сдвигал линию на 18% вправо, из-за чего страница становилась шире окна */
+    position: absolute;
+    top: 58px;
+    left: 18%;
+    right: 18%;
     height: 2px;
     background: var(--accent-gradient);
     opacity: .35;
-    position: relative;
     overflow: hidden;
 }
 
@@ -2192,7 +2193,7 @@ body.dark-theme .mock-report::after {
     align-items: center;
     gap: .4rem;
     margin-top: .5rem;
-    font-size: .72rem;
+    font-size: .75rem;
     font-weight: 700;
     color: var(--accent-primary);
     background: rgba(59,130,246,.1);
@@ -2477,31 +2478,29 @@ body.dark-theme .mock-report::after {
    16. THEME TOGGLE / FAB / TOAST / MODAL / PALETTE
    ================================================================ */
 .theme-toggle {
-    position: fixed;
-    top: 96px;
-    right: 28px;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: var(--accent-gradient);
-    display: flex;
+    /* Кнопка темы живёт в навигации: раньше плавала над героем и закрывала бейдж «95%» */
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 10px 30px var(--accent-glow);
-    z-index: 9998;
-    transition: all .3s;
+    color: var(--text-secondary);
+    background: none;
     border: none;
+    transition: color var(--t-fast), background var(--t-fast);
 }
 
 .theme-toggle:hover {
-    transform: scale(1.1) rotate(15deg);
+    color: var(--text-primary);
+    background: var(--soft-blue);
 }
 
 .theme-toggle svg {
-    width: 22px;
-    height: 22px;
-    color: #fff;
+    width: 20px;
+    height: 20px;
 }
 
 .theme-toggle .sun { display: block; }
@@ -2635,7 +2634,7 @@ body.dark-theme .theme-toggle .moon { display: block; }
 }
 
 .command-item kbd {
-    font-size: .7rem;
+    font-size: .75rem;
     border: 1px solid var(--card-border);
     border-radius: 6px;
     padding: .1rem .45rem;
@@ -2699,7 +2698,7 @@ footer {
 }
 
 .foot-h {
-    font-size: .6875rem;
+    font-size: .75rem;
     font-weight: 700;
     letter-spacing: .12em;
     text-transform: uppercase;
@@ -2773,7 +2772,7 @@ footer {
     position: absolute;
     top: -11px;
     right: 1.5rem;
-    font-size: .6875rem;
+    font-size: .75rem;
     font-weight: 700;
     letter-spacing: .04em;
     text-transform: uppercase;
@@ -2812,7 +2811,7 @@ footer {
     display: flex;
     align-items: flex-start;
     gap: .4rem;
-    font-size: .6875rem;
+    font-size: .75rem;
     line-height: 1.5;
     margin-bottom: .75rem;
     padding-top: .5rem;
@@ -2840,11 +2839,19 @@ footer {
 }
 
 @media (max-width: 768px) {
-    .theme-toggle { top: 80px; right: 14px; width: 46px; height: 46px; }
     .fab { bottom: 18px; right: 18px; width: 52px; height: 52px; }
     #backToTop { bottom: 84px; right: 20px; }
     .toast { right: 14px; left: 14px; bottom: 84px; }
     .info-section { padding: 2rem 1.5rem; }
+}
+
+/* Сенсорные экраны: цели касания не меньше 44 px */
+@media (pointer: coarse), (max-width: 768px) {
+    nav button, nav .lang-btn, .bell-btn, .theme-toggle, .tool-cta, .foot-link, .lang-option,
+    .chip, .sidebar-btn, .faq-q, .btn-primary, .btn-white { min-height: 44px; }
+    .bell-btn, .theme-toggle { min-width: 44px; }
+    .tool-cta, .foot-link { display: inline-flex; align-items: center; }
+    .foot-link { padding-block: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2883,19 +2890,15 @@ footer {
 <div id="scrollProgress" aria-hidden="true"></div>
 <div class="bg-grid" aria-hidden="true"></div>
 
-<!-- Theme toggle -->
-<button class="theme-toggle" onclick="toggleTheme()" role="switch" aria-label="{{ app()->getLocale() === 'en' ? 'Toggle theme' : (app()->getLocale() === 'tg' ? 'Иваз кардани мавзӯъ' : 'Переключить тему') }}">
-    <svg class="sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['sun'] !!}</svg>
-    <svg class="moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['moon'] !!}</svg>
-</button>
 
 <!-- ==================== NAV ==================== -->
-<nav role="navigation" x-data="{ lang: false, bell: false, mobile: false }">
+<header>
+<nav role="navigation" aria-label="{{ app()->getLocale() === 'en' ? 'Main' : (app()->getLocale() === 'tg' ? 'Асосӣ' : 'Основная') }}" x-data="{ lang: false, bell: false, mobile: false }">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 gap-4">
             <button onclick="showSection('landing'); window.scrollTo({top:0,behavior:'smooth'})" class="flex items-center gap-2.5">
                 <svg class="w-8 h-8" style="color:var(--accent-primary)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">{!! $icons['shield'] !!}</svg>
-                <span class="text-xl font-extrabold tracking-tight c1">LegalAI Pro</span>
+                <span class="text-xl font-extrabold tracking-tight c1" style="white-space:nowrap">LegalAI Pro</span>
             </button>
 
             <div class="hidden lg:flex items-center gap-8">
@@ -2906,6 +2909,12 @@ footer {
             </div>
 
             <div class="flex items-center gap-2.5">
+                <!-- Theme -->
+                <button class="theme-toggle" type="button" onclick="toggleTheme()" aria-pressed="false" id="themeBtn" aria-label="{{ app()->getLocale() === 'en' ? 'Toggle theme' : (app()->getLocale() === 'tg' ? 'Иваз кардани мавзӯъ' : 'Переключить тему') }}">
+                    <svg class="sun" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">{!! $icons['sun'] !!}</svg>
+                    <svg class="moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">{!! $icons['moon'] !!}</svg>
+                </button>
+
                 <!-- Language -->
                 <div class="relative hidden sm:block">
                     <button x-on:click="lang = !lang" class="lang-btn" aria-haspopup="true" :aria-expanded="lang ? 'true' : 'false'">
@@ -2965,17 +2974,18 @@ footer {
         <a href="{{ route('login') }}" class="btn-primary w-full !py-2.5 text-sm">{{ $L['nav']['login'] }}</a>
     </div>
 </nav>
+</header>
 
 <main id="main-content">
 <!-- ==================== LANDING ==================== -->
 <div id="landingSection" class="active-section">
 
     <!-- HERO -->
-    <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+    <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 hero-fit" style="overflow-x:clip">
         <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
             <div class="reveal active">
                 <div class="badge-pill mb-7"><span class="dot" aria-hidden="true"></span>{{ $L['hero']['badge'] }}</div>
-                <h1 class="text-4xl md:text-5xl xl:text-[3.5rem] font-extrabold leading-[1.12] mb-4">
+                <h1 class="text-4xl md:text-5xl xl:text-[3.5rem] font-extrabold leading-[1.12] mb-4 hero-h1">
                     {{ $L['hero']['title1'] }}<br>
                     <span class="h-accent">{{ $L['hero']['title2'] }}</span>
                 </h1>
@@ -2984,7 +2994,7 @@ footer {
                 </p>
                 <p class="text-base md:text-lg leading-relaxed mb-9 max-w-xl c2">{{ $L['hero']['sub'] }}</p>
 
-                <div class="flex flex-wrap items-center gap-4 mb-9">
+                <div class="flex flex-wrap items-center gap-4 mb-9 hero-actions">
                     @auth
                         <a href="{{ route('dashboard') }}" class="btn-primary">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['upload'] !!}</svg>
@@ -3002,7 +3012,7 @@ footer {
                     </button>
                 </div>
 
-                <div class="flex flex-wrap gap-x-8 gap-y-3">
+                <div class="flex flex-wrap gap-x-8 gap-y-3 hero-trust">
                     @foreach($L['hero']['trust'] as $t)
                         <div class="flex items-center gap-2 text-sm c2">
                             <svg class="w-5 h-5" style="color:#10B981" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">{!! $icons['check'] !!}</svg>
@@ -3020,7 +3030,7 @@ footer {
                         <i></i><i></i><i></i>
                         <span>LEGALAI PRO</span>
                     </div>
-                    <img id="heroImg" src="https://image.qwenlm.ai/public_source/48f99b9f-6493-4401-a338-927a8c873e1a/1269011f0-818d-4497-9ee0-8c8efb1a3788.png" alt="Legal AI" class="hero-img w-full object-cover" loading="eager" onerror="this.closest('.hero-frame').classList.add('hero-frame-empty'); this.remove();">
+                    <img id="heroImg" src="{{ asset('images/hero-legal-ai-1024.webp') }}" srcset="{{ asset('images/hero-legal-ai-640.webp') }} 640w, {{ asset('images/hero-legal-ai-1024.webp') }} 1024w" sizes="(min-width: 1024px) 594px, 100vw" width="1024" height="1024" alt="" class="hero-img w-full object-cover" loading="eager" fetchpriority="high" decoding="async" onerror="this.closest('.hero-frame').classList.add('hero-frame-empty'); this.remove();">
                 </div>
                 <div class="stat-card stat-badge -bottom-5 -left-3 md:-left-6">
                     <span class="tint tint-success">
@@ -3058,232 +3068,25 @@ footer {
         </div>
     </div>
 
-       <!-- STATS BAND — фирменный «звёздный взрыв» под цифрами -->
-    <section class="pt-16 pb-4 px-4 sm:px-6 reveal reveal-3d">
+       <!-- STATS BAND — цифры-одометры -->
+    <section class="pt-16 pb-4 px-4 sm:px-6 reveal">
         <div class="max-w-7xl mx-auto">
-            <div class="starburst-wrap tilt-card" data-tilt-max="4">
-                <div class="starburst-parallax">
-                <svg class="starburst-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-<line x1="500" y1="470" x2="362.4" y2="464.5" stroke="var(--accent-primary)" stroke-opacity="0.32" stroke-width="0.87" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="160.9" y2="448.5" stroke="var(--accent-primary)" stroke-opacity="0.77" stroke-width="0.7" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="361.1" y2="460.2" stroke="var(--accent-primary)" stroke-opacity="0.28" stroke-width="1.21" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="308.9" y2="455.7" stroke="var(--accent-primary)" stroke-opacity="0.59" stroke-width="1.25" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="188.9" y2="438.3" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="0.61" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="157.1" y2="420.5" stroke="var(--accent-primary)" stroke-opacity="0.37" stroke-width="0.79" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="269.0" y2="430.7" stroke="var(--accent-primary)" stroke-opacity="0.19" stroke-width="0.72" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="188.2" y2="412.1" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="1.48" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="76.2" y2="388.1" stroke="var(--accent-primary)" stroke-opacity="0.4" stroke-width="1.26" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="186.1" y2="399.3" stroke="var(--accent-primary)" stroke-opacity="0.75" stroke-width="1.29" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="359.8" y2="436.3" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="0.95" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="303.2" y2="423.7" stroke="var(--accent-primary)" stroke-opacity="0.19" stroke-width="0.93" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="265.8" y2="404.7" stroke="var(--accent-primary)" stroke-opacity="0.39" stroke-width="0.85" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="95.7" y2="355.0" stroke="var(--accent-primary)" stroke-opacity="0.59" stroke-width="1.33" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="159.1" y2="367.3" stroke="var(--accent-primary)" stroke-opacity="0.24" stroke-width="1.06" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="190.8" y2="359.4" stroke="var(--accent-primary)" stroke-opacity="0.53" stroke-width="1.42" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="152.8" y2="340.4" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="0.64" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="300.4" y2="395.7" stroke="var(--accent-primary)" stroke-opacity="0.27" stroke-width="1.73" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="290.2" y2="382.0" stroke="var(--accent-primary)" stroke-opacity="0.6" stroke-width="1.07" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="251.2" y2="359.5" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="0.9" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="307.2" y2="383.1" stroke="var(--accent-primary)" stroke-opacity="0.55" stroke-width="1.68" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="320.6" y2="386.3" stroke="var(--accent-primary)" stroke-opacity="0.85" stroke-width="1.21" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="369.4" y2="407.9" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.35" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="269.9" y2="347.1" stroke="var(--accent-primary)" stroke-opacity="0.17" stroke-width="1.06" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="244.5" y2="324.5" stroke="var(--accent-primary)" stroke-opacity="0.83" stroke-width="1.63" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="189.7" y2="300.8" stroke="var(--accent-primary)" stroke-opacity="0.62" stroke-width="1.24" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="216.1" y2="304.3" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.12" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="138.2" y2="245.8" stroke="var(--accent-primary)" stroke-opacity="0.76" stroke-width="0.92" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="344.5" y2="369.0" stroke="var(--accent-primary)" stroke-opacity="0.79" stroke-width="1.64" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="226.9" y2="288.2" stroke="var(--accent-primary)" stroke-opacity="0.56" stroke-width="0.78" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="258.9" y2="296.2" stroke="var(--accent-primary)" stroke-opacity="0.69" stroke-width="1.24" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="311.7" y2="337.1" stroke="var(--accent-primary)" stroke-opacity="0.13" stroke-width="1.71" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="195.5" y2="229.9" stroke="var(--accent-primary)" stroke-opacity="0.34" stroke-width="0.67" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="172.5" y2="201.4" stroke="var(--accent-primary)" stroke-opacity="0.18" stroke-width="1.18" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="214.5" y2="241.4" stroke="var(--accent-primary)" stroke-opacity="0.68" stroke-width="0.75" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="272.2" y2="274.1" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="1.65" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="353.9" y2="339.9" stroke="var(--accent-primary)" stroke-opacity="0.51" stroke-width="1.48" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="332.4" y2="317.5" stroke="var(--accent-primary)" stroke-opacity="0.85" stroke-width="1.38" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="290.8" y2="268.5" stroke="var(--accent-primary)" stroke-opacity="0.21" stroke-width="0.87" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="278.4" y2="249.8" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="0.86" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="271.1" y2="238.4" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="1.69" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="398.7" y2="356.8" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="1.4" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="385.3" y2="343.2" stroke="var(--accent-primary)" stroke-opacity="0.8" stroke-width="1.29" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="257.8" y2="186.0" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="0.83" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="329.9" y2="268.6" stroke="var(--accent-primary)" stroke-opacity="0.43" stroke-width="1.16" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="292.9" y2="201.9" stroke="var(--accent-primary)" stroke-opacity="0.84" stroke-width="0.72" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="357.5" y2="282.9" stroke="var(--accent-primary)" stroke-opacity="0.75" stroke-width="0.9" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="339.4" y2="254.1" stroke="var(--accent-primary)" stroke-opacity="0.43" stroke-width="0.93" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="258.8" y2="130.8" stroke="var(--accent-primary)" stroke-opacity="0.44" stroke-width="1.63" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="419.3" y2="348.7" stroke="var(--accent-primary)" stroke-opacity="0.85" stroke-width="1.6" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="281.3" y2="114.8" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="0.8" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="397.2" y2="302.8" stroke="var(--accent-primary)" stroke-opacity="0.41" stroke-width="0.67" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="277.6" y2="95.6" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="1.54" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="371.7" y2="242.6" stroke="var(--accent-primary)" stroke-opacity="0.82" stroke-width="1.79" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="333.9" y2="158.9" stroke="var(--accent-primary)" stroke-opacity="0.23" stroke-width="0.96" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="363.9" y2="192.0" stroke="var(--accent-primary)" stroke-opacity="0.52" stroke-width="1.5" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="358.8" y2="192.8" stroke="var(--accent-primary)" stroke-opacity="0.49" stroke-width="1.62" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="314.7" y2="84.4" stroke="var(--accent-primary)" stroke-opacity="0.18" stroke-width="0.82" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="364.2" y2="159.0" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="0.74" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="423.3" y2="278.5" stroke="var(--accent-primary)" stroke-opacity="0.55" stroke-width="1.34" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="384.7" y2="181.2" stroke="var(--accent-primary)" stroke-opacity="0.5" stroke-width="1.72" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="373.1" y2="141.6" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="1.07" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="427.4" y2="259.1" stroke="var(--accent-primary)" stroke-opacity="0.35" stroke-width="1.5" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="410.5" y2="213.1" stroke="var(--accent-primary)" stroke-opacity="0.85" stroke-width="1.8" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="439.1" y2="283.6" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="1.72" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="394.4" y2="81.5" stroke="var(--accent-primary)" stroke-opacity="0.39" stroke-width="0.79" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="414.6" y2="132.6" stroke="var(--accent-primary)" stroke-opacity="0.57" stroke-width="1.78" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="469.1" y2="341.2" stroke="var(--accent-primary)" stroke-opacity="0.72" stroke-width="0.96" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="409.8" y2="58.7" stroke="var(--accent-primary)" stroke-opacity="0.22" stroke-width="0.74" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="434.8" y2="175.6" stroke="var(--accent-primary)" stroke-opacity="0.32" stroke-width="1.33" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="466.3" y2="279.8" stroke="var(--accent-primary)" stroke-opacity="0.58" stroke-width="0.92" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="432.7" y2="64.9" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="0.71" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="468.2" y2="256.6" stroke="var(--accent-primary)" stroke-opacity="0.12" stroke-width="1.53" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="474.7" y2="260.3" stroke="var(--accent-primary)" stroke-opacity="0.66" stroke-width="1.26" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="485.5" y2="337.8" stroke="var(--accent-primary)" stroke-opacity="0.17" stroke-width="1.66" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="478.7" y2="171.6" stroke="var(--accent-primary)" stroke-opacity="0.73" stroke-width="1.3" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="486.3" y2="301.0" stroke="var(--accent-primary)" stroke-opacity="0.35" stroke-width="1.68" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="485.3" y2="73.5" stroke="var(--accent-primary)" stroke-opacity="0.78" stroke-width="0.85" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="493.8" y2="308.3" stroke="var(--accent-primary)" stroke-opacity="0.69" stroke-width="1.66" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="495.7" y2="147.6" stroke="var(--accent-primary)" stroke-opacity="0.23" stroke-width="1.72" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="510.2" y2="37.5" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="1.66" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="503.8" y2="111.7" stroke="var(--accent-primary)" stroke-opacity="0.36" stroke-width="1.72" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="523.8" y2="72.9" stroke="var(--accent-primary)" stroke-opacity="0.71" stroke-width="0.92" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="512.8" y2="307.0" stroke="var(--accent-primary)" stroke-opacity="0.76" stroke-width="1.63" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="529.2" y2="88.0" stroke="var(--accent-primary)" stroke-opacity="0.46" stroke-width="0.97" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="523.5" y2="270.8" stroke="var(--accent-primary)" stroke-opacity="0.14" stroke-width="0.83" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="547.2" y2="74.9" stroke="var(--accent-primary)" stroke-opacity="0.83" stroke-width="0.93" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="538.0" y2="219.0" stroke="var(--accent-primary)" stroke-opacity="0.84" stroke-width="1.24" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="529.9" y2="307.0" stroke="var(--accent-primary)" stroke-opacity="0.83" stroke-width="0.81" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="542.4" y2="262.0" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.12" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="547.7" y2="247.8" stroke="var(--accent-primary)" stroke-opacity="0.56" stroke-width="1.21" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="566.7" y2="168.5" stroke="var(--accent-primary)" stroke-opacity="0.31" stroke-width="1.45" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="591.9" y2="63.3" stroke="var(--accent-primary)" stroke-opacity="0.51" stroke-width="1.46" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="590.2" y2="144.4" stroke="var(--accent-primary)" stroke-opacity="0.39" stroke-width="0.68" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="565.7" y2="247.1" stroke="var(--accent-primary)" stroke-opacity="0.35" stroke-width="1.62" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="567.6" y2="257.4" stroke="var(--accent-primary)" stroke-opacity="0.35" stroke-width="1.09" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="568.7" y2="259.3" stroke="var(--accent-primary)" stroke-opacity="0.21" stroke-width="1.1" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="618.2" y2="151.2" stroke="var(--accent-primary)" stroke-opacity="0.78" stroke-width="1.34" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="602.8" y2="188.3" stroke="var(--accent-primary)" stroke-opacity="0.12" stroke-width="0.94" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="613.2" y2="181.6" stroke="var(--accent-primary)" stroke-opacity="0.6" stroke-width="1.16" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="575.3" y2="288.8" stroke="var(--accent-primary)" stroke-opacity="0.47" stroke-width="1.68" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="575.6" y2="303.8" stroke="var(--accent-primary)" stroke-opacity="0.18" stroke-width="1.22" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="599.6" y2="258.4" stroke="var(--accent-primary)" stroke-opacity="0.72" stroke-width="1.5" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="588.7" y2="291.2" stroke="var(--accent-primary)" stroke-opacity="0.27" stroke-width="0.63" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="624.0" y2="222.0" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="0.69" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="652.9" y2="182.9" stroke="var(--accent-primary)" stroke-opacity="0.26" stroke-width="1.44" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="600.7" y2="290.7" stroke="var(--accent-primary)" stroke-opacity="0.6" stroke-width="0.61" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="689.9" y2="153.9" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.11" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="718.8" y2="103.4" stroke="var(--accent-primary)" stroke-opacity="0.5" stroke-width="0.66" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="708.8" y2="137.1" stroke="var(--accent-primary)" stroke-opacity="0.45" stroke-width="1.56" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="744.8" y2="108.9" stroke="var(--accent-primary)" stroke-opacity="0.55" stroke-width="1.74" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="686.8" y2="210.3" stroke="var(--accent-primary)" stroke-opacity="0.65" stroke-width="1.21" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="679.2" y2="229.6" stroke="var(--accent-primary)" stroke-opacity="0.77" stroke-width="1.49" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="626.7" y2="302.1" stroke="var(--accent-primary)" stroke-opacity="0.3" stroke-width="1.37" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="682.6" y2="242.7" stroke="var(--accent-primary)" stroke-opacity="0.58" stroke-width="0.93" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="635.7" y2="298.6" stroke="var(--accent-primary)" stroke-opacity="0.32" stroke-width="0.98" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="612.3" y2="338.5" stroke="var(--accent-primary)" stroke-opacity="0.29" stroke-width="1.43" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="600.2" y2="358.5" stroke="var(--accent-primary)" stroke-opacity="0.42" stroke-width="1.25" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="631.0" y2="326.7" stroke="var(--accent-primary)" stroke-opacity="0.43" stroke-width="1.69" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="739.7" y2="221.0" stroke="var(--accent-primary)" stroke-opacity="0.75" stroke-width="1.52" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="592.5" y2="376.1" stroke="var(--accent-primary)" stroke-opacity="0.38" stroke-width="1.5" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="809.8" y2="178.2" stroke="var(--accent-primary)" stroke-opacity="0.43" stroke-width="1.5" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="732.4" y2="254.4" stroke="var(--accent-primary)" stroke-opacity="0.28" stroke-width="0.86" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="603.3" y2="377.0" stroke="var(--accent-primary)" stroke-opacity="0.37" stroke-width="1.41" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="636.8" y2="351.3" stroke="var(--accent-primary)" stroke-opacity="0.46" stroke-width="0.75" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="607.0" y2="382.2" stroke="var(--accent-primary)" stroke-opacity="0.41" stroke-width="1.28" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="753.8" y2="260.3" stroke="var(--accent-primary)" stroke-opacity="0.22" stroke-width="1.15" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="694.0" y2="316.2" stroke="var(--accent-primary)" stroke-opacity="0.27" stroke-width="0.99" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="700.9" y2="325.4" stroke="var(--accent-primary)" stroke-opacity="0.67" stroke-width="1.6" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="626.1" y2="379.2" stroke="var(--accent-primary)" stroke-opacity="0.13" stroke-width="1.25" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="700.0" y2="340.1" stroke="var(--accent-primary)" stroke-opacity="0.59" stroke-width="1.54" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="806.3" y2="273.7" stroke="var(--accent-primary)" stroke-opacity="0.81" stroke-width="0.84" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="648.7" y2="373.6" stroke="var(--accent-primary)" stroke-opacity="0.21" stroke-width="1.4" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="670.0" y2="369.3" stroke="var(--accent-primary)" stroke-opacity="0.63" stroke-width="1.52" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="774.5" y2="308.9" stroke="var(--accent-primary)" stroke-opacity="0.67" stroke-width="0.74" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="879.3" y2="269.5" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="0.63" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="800.5" y2="311.1" stroke="var(--accent-primary)" stroke-opacity="0.82" stroke-width="1.08" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="638.2" y2="403.0" stroke="var(--accent-primary)" stroke-opacity="0.62" stroke-width="1.35" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="831.7" y2="307.3" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="1.32" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="894.3" y2="286.4" stroke="var(--accent-primary)" stroke-opacity="0.69" stroke-width="1.02" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="725.1" y2="373.6" stroke="var(--accent-primary)" stroke-opacity="0.49" stroke-width="1.01" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="859.0" y2="331.1" stroke="var(--accent-primary)" stroke-opacity="0.2" stroke-width="1.75" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="862.4" y2="334.4" stroke="var(--accent-primary)" stroke-opacity="0.64" stroke-width="1.12" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="905.4" y2="328.8" stroke="var(--accent-primary)" stroke-opacity="0.32" stroke-width="1.57" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="765.4" y2="381.1" stroke="var(--accent-primary)" stroke-opacity="0.44" stroke-width="1.48" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="874.7" y2="348.2" stroke="var(--accent-primary)" stroke-opacity="0.73" stroke-width="0.7" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="698.1" y2="414.9" stroke="var(--accent-primary)" stroke-opacity="0.46" stroke-width="1.33" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="633.8" y2="432.8" stroke="var(--accent-primary)" stroke-opacity="0.74" stroke-width="0.82" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="864.8" y2="373.6" stroke="var(--accent-primary)" stroke-opacity="0.37" stroke-width="1.66" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="710.4" y2="422.9" stroke="var(--accent-primary)" stroke-opacity="0.13" stroke-width="1.74" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="844.3" y2="391.3" stroke="var(--accent-primary)" stroke-opacity="0.48" stroke-width="1.51" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="824.8" y2="410.2" stroke="var(--accent-primary)" stroke-opacity="0.48" stroke-width="1.55" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="695.3" y2="433.3" stroke="var(--accent-primary)" stroke-opacity="0.63" stroke-width="0.97" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="773.7" y2="429.3" stroke="var(--accent-primary)" stroke-opacity="0.51" stroke-width="1.11" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="730.8" y2="441.7" stroke="var(--accent-primary)" stroke-opacity="0.63" stroke-width="0.93" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="666.2" y2="449.7" stroke="var(--accent-primary)" stroke-opacity="0.26" stroke-width="0.74" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="864.7" y2="436.5" stroke="var(--accent-primary)" stroke-opacity="0.26" stroke-width="0.86" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="853.6" y2="443.7" stroke="var(--accent-primary)" stroke-opacity="0.83" stroke-width="1.23" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="660.8" y2="459.9" stroke="var(--accent-primary)" stroke-opacity="0.26" stroke-width="0.87" stroke-linecap="round"/>
-<line x1="500" y1="470" x2="634.2" y2="463.7" stroke="var(--accent-primary)" stroke-opacity="0.51" stroke-width="0.93" stroke-linecap="round"/>
-<circle cx="308.9" cy="455.7" r="3.2" fill="var(--accent-primary)" fill-opacity="0.74"/>
-<circle cx="186.1" cy="399.3" r="1.7" fill="var(--accent-primary)" fill-opacity="0.9"/>
-<circle cx="159.1" cy="367.3" r="2.7" fill="var(--accent-primary)" fill-opacity="0.39"/>
-<circle cx="190.8" cy="359.4" r="1.9" fill="var(--accent-primary)" fill-opacity="0.68"/>
-<circle cx="300.4" cy="395.7" r="3.4" fill="var(--accent-primary)" fill-opacity="0.42000000000000004"/>
-<circle cx="290.2" cy="382.0" r="3.0" fill="var(--accent-primary)" fill-opacity="0.75"/>
-<circle cx="320.6" cy="386.3" r="2.5" fill="var(--accent-primary)" fill-opacity="1"/>
-<circle cx="216.1" cy="304.3" r="2.7" fill="var(--accent-primary)" fill-opacity="0.35"/>
-<circle cx="258.9" cy="296.2" r="2.0" fill="var(--accent-primary)" fill-opacity="0.84"/>
-<circle cx="195.5" cy="229.9" r="1.9" fill="var(--accent-primary)" fill-opacity="0.49"/>
-<circle cx="172.5" cy="201.4" r="1.6" fill="var(--accent-primary)" fill-opacity="0.32999999999999996"/>
-<circle cx="353.9" cy="339.9" r="2.0" fill="var(--accent-primary)" fill-opacity="0.66"/>
-<circle cx="397.2" cy="302.8" r="1.9" fill="var(--accent-primary)" fill-opacity="0.5599999999999999"/>
-<circle cx="277.6" cy="95.6" r="2.9" fill="var(--accent-primary)" fill-opacity="0.45999999999999996"/>
-<circle cx="333.9" cy="158.9" r="1.8" fill="var(--accent-primary)" fill-opacity="0.38"/>
-<circle cx="384.7" cy="181.2" r="1.7" fill="var(--accent-primary)" fill-opacity="0.65"/>
-<circle cx="427.4" cy="259.1" r="2.1" fill="var(--accent-primary)" fill-opacity="0.5"/>
-<circle cx="410.5" cy="213.1" r="3.3" fill="var(--accent-primary)" fill-opacity="1"/>
-<circle cx="434.8" cy="175.6" r="1.7" fill="var(--accent-primary)" fill-opacity="0.47"/>
-<circle cx="485.5" cy="337.8" r="2.7" fill="var(--accent-primary)" fill-opacity="0.32"/>
-<circle cx="485.3" cy="73.5" r="2.2" fill="var(--accent-primary)" fill-opacity="0.93"/>
-<circle cx="493.8" cy="308.3" r="2.8" fill="var(--accent-primary)" fill-opacity="0.84"/>
-<circle cx="510.2" cy="37.5" r="2.8" fill="var(--accent-primary)" fill-opacity="0.86"/>
-<circle cx="503.8" cy="111.7" r="3.3" fill="var(--accent-primary)" fill-opacity="0.51"/>
-<circle cx="523.5" cy="270.8" r="2.2" fill="var(--accent-primary)" fill-opacity="0.29000000000000004"/>
-<circle cx="590.2" cy="144.4" r="2.3" fill="var(--accent-primary)" fill-opacity="0.54"/>
-<circle cx="618.2" cy="151.2" r="2.6" fill="var(--accent-primary)" fill-opacity="0.93"/>
-<circle cx="575.6" cy="303.8" r="3.4" fill="var(--accent-primary)" fill-opacity="0.32999999999999996"/>
-<circle cx="588.7" cy="291.2" r="1.9" fill="var(--accent-primary)" fill-opacity="0.42000000000000004"/>
-<circle cx="600.7" cy="290.7" r="3.4" fill="var(--accent-primary)" fill-opacity="0.75"/>
-<circle cx="708.8" cy="137.1" r="3.1" fill="var(--accent-primary)" fill-opacity="0.6"/>
-<circle cx="626.7" cy="302.1" r="3.1" fill="var(--accent-primary)" fill-opacity="0.44999999999999996"/>
-<circle cx="635.7" cy="298.6" r="2.6" fill="var(--accent-primary)" fill-opacity="0.47"/>
-<circle cx="809.8" cy="178.2" r="3.0" fill="var(--accent-primary)" fill-opacity="0.58"/>
-<circle cx="753.8" cy="260.3" r="2.1" fill="var(--accent-primary)" fill-opacity="0.37"/>
-<circle cx="700.0" cy="340.1" r="2.6" fill="var(--accent-primary)" fill-opacity="0.74"/>
-<circle cx="806.3" cy="273.7" r="2.6" fill="var(--accent-primary)" fill-opacity="0.9600000000000001"/>
-<circle cx="774.5" cy="308.9" r="1.9" fill="var(--accent-primary)" fill-opacity="0.8200000000000001"/>
-<circle cx="638.2" cy="403.0" r="3.0" fill="var(--accent-primary)" fill-opacity="0.77"/>
-<circle cx="831.7" cy="307.3" r="2.9" fill="var(--accent-primary)" fill-opacity="0.89"/>
-<circle cx="698.1" cy="414.9" r="2.5" fill="var(--accent-primary)" fill-opacity="0.61"/>
-<circle cx="864.7" cy="436.5" r="2.4" fill="var(--accent-primary)" fill-opacity="0.41000000000000003"/>
-<circle cx="660.8" cy="459.9" r="2.8" fill="var(--accent-primary)" fill-opacity="0.41000000000000003"/>
-                </svg>
-                </div>
-                <div class="starburst-content">
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                        @foreach($L['stats'] as $i => $s)
-                            <div class="text-center reveal rd{{ $i + 1 }}">
-                                <div class="text-4xl md:text-5xl font-extrabold text-gradient tabular">
-                                    <span class="counter" data-count="{{ $s['v'] }}" data-decimals="{{ $s['d'] ?? 0 }}">0</span>{{ $s['s'] }}
-                                </div>
-                                <div class="text-sm mt-2 c2">{{ $s['l'] }}</div>
-                            </div>
-                        @endforeach
-                    </div>
+            <div class="stats-band">
+                <div class="stats-grid">
+                    @php $platform = \App\Support\PlatformStats::snapshot(); @endphp
+                    @foreach($L['stats'] as $i => $st)
+                        @continue(($platform[$st['k']] ?? null) === null)
+                        @php $dec = $st['d'] ?? 0; $suffix = $st['s'] ?? ''; $value = round((float) $platform[$st['k']], $dec); $shown = number_format($value, $dec, '.', ' ') . $suffix; @endphp
+                        <div class="stat-item reveal rd{{ $i + 1 }}">
+                            <div class="odo" data-value="{{ $value }}" data-decimals="{{ $dec }}" data-suffix="{{ $suffix }}" aria-label="{{ $shown }}">{{ $shown }}</div>
+                            <div class="stat-label c2">{{ $st['l'] }}</div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         </div>
     </section>
+
     <!-- SHOWCASE — 3 флагманских инструмента с фирменными иллюстрациями -->
     <section class="pt-8 pb-20 px-4 sm:px-6 reveal">
         <div class="max-w-7xl mx-auto">
@@ -3306,8 +3109,8 @@ footer {
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['doc'] !!}</svg>
                                 </span>
                                 <div style="min-width:0;">
-                                    <div class="c1" style="font-size:.7rem; font-weight:700;">{{ app()->getLocale() === 'en' ? 'Supply_agreement.docx' : (app()->getLocale() === 'tg' ? 'Шартномаи_таҳвил.docx' : 'Договор_поставки.docx') }}</div>
-                                    <div class="c3" style="font-size:.62rem;">{{ app()->getLocale() === 'en' ? 'Analyzed in 58 sec' : (app()->getLocale() === 'tg' ? 'Дар 58 сония таҳлил шуд' : 'Проанализирован за 58 сек') }}</div>
+                                    <div class="c1" style="font-size:.75rem; font-weight:700;">{{ app()->getLocale() === 'en' ? 'Supply_agreement.docx' : (app()->getLocale() === 'tg' ? 'Шартномаи_таҳвил.docx' : 'Договор_поставки.docx') }}</div>
+                                    <div class="c3" style="font-size:.75rem;">{{ app()->getLocale() === 'en' ? 'Analyzed in 58 sec' : (app()->getLocale() === 'tg' ? 'Дар 58 сония таҳлил шуд' : 'Проанализирован за 58 сек') }}</div>
                                 </div>
                             </div>
                         </div>
@@ -3335,7 +3138,7 @@ footer {
                         <div class="mock-report">
                             <div class="mock-row" style="margin-bottom:0;">
                                 <svg class="w-3.5 h-3.5 shrink-0" style="color:var(--accent-primary)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['book'] !!}</svg>
-                                <span class="c2" style="font-size:.68rem;">{{ app()->getLocale() === 'en' ? 'Art. 350, Art. 421 — Civil Code RT' : (app()->getLocale() === 'tg' ? 'мод. 350, мод. 421 — КГ ҶТ' : 'ст. 350, ст. 421 — ГК РТ') }}</span>
+                                <span class="c2" style="font-size:.75rem;">{{ app()->getLocale() === 'en' ? 'Art. 350, Art. 421 — Civil Code RT' : (app()->getLocale() === 'tg' ? 'мод. 350, мод. 421 — КГ ҶТ' : 'ст. 350, ст. 421 — ГК РТ') }}</span>
                             </div>
                         </div>
                     </div>
@@ -3752,13 +3555,13 @@ footer {
                                 <span class="tint tint-accent" style="width:22px;height:22px;border-radius:7px;">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['book'] !!}</svg>
                                 </span>
-                                <span class="c1" style="font-size:.68rem; font-weight:800;">142 {{ app()->getLocale() === 'en' ? 'articles linked' : (app()->getLocale() === 'tg' ? 'модда пайваст' : 'статьи связаны') }}</span>
+                                <span class="c1" style="font-size:.75rem; font-weight:800;">142 {{ app()->getLocale() === 'en' ? 'articles linked' : (app()->getLocale() === 'tg' ? 'модда пайваст' : 'статьи связаны') }}</span>
                             </div>
                             <div class="mock-globe-badge mock-globe-badge-b">
                                 <span class="tint tint-success" style="width:22px;height:22px;border-radius:7px;">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['check'] !!}</svg>
                                 </span>
-                                <span class="c1" style="font-size:.68rem; font-weight:800;">5 {{ app()->getLocale() === 'en' ? 'codes of RT' : (app()->getLocale() === 'tg' ? 'кодекси ҶТ' : 'кодексов РТ') }}</span>
+                                <span class="c1" style="font-size:.75rem; font-weight:800;">5 {{ app()->getLocale() === 'en' ? 'codes of RT' : (app()->getLocale() === 'tg' ? 'кодекси ҶТ' : 'кодексов РТ') }}</span>
                             </div>
                             <div class="mock-globe-glow"></div>
                         </div>
@@ -3783,7 +3586,7 @@ footer {
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['warning'] !!}</svg>
                         </span>
                         <div>
-                            <div class="text-[11px] uppercase tracking-widest font-bold" style="color:#F43F5E;">{{ $L['prob']['w_label'] }}</div>
+                            <div class="text-xs uppercase tracking-widest font-bold" style="color:#F43F5E;">{{ $L['prob']['w_label'] }}</div>
                             <div class="font-bold c1">{{ $L['prob']['w_title'] }}</div>
                         </div>
                     </div>
@@ -3809,7 +3612,7 @@ footer {
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">{!! $icons['check'] !!}</svg>
                         </span>
                         <div>
-                            <div class="text-[11px] uppercase tracking-widest font-bold" style="color:#10B981;">{{ $L['prob']['a_label'] }}</div>
+                            <div class="text-xs uppercase tracking-widest font-bold" style="color:#10B981;">{{ $L['prob']['a_label'] }}</div>
                             <div class="font-bold c1">{{ $L['prob']['a_title'] }}</div>
                         </div>
                     </div>
@@ -3878,7 +3681,7 @@ footer {
                 <p class="text-lg c2">{{ $L['how']['sub'] }}</p>
             </div>
             <div class="relative">
-                <div class="hidden md:block absolute top-[58px] left-[18%] right-[18%] step-line"></div>
+                <div class="hidden md:block step-line" aria-hidden="true"></div>
                 <div class="grid md:grid-cols-3 gap-8">
                     @foreach($L['how']['steps'] as $i => $step)
                         <div class="card-gradient card-hover p-8 text-center relative reveal rd{{ $i + 1 }}">
@@ -3918,7 +3721,7 @@ footer {
                     </span>
                     <div>
                         <p class="text-sm font-bold c1">{{ $L['tools']['items'][3]['t'] }}</p>
-                        <p class="text-[11px]" style="color:#10B981;">● online</p>
+                        <p class="text-xs" style="color:#10B981;">● online</p>
                     </div>
                 </div>
                 <div class="chat-box">
@@ -3940,11 +3743,11 @@ footer {
                         </template>
                         <div x-show="typing" class="msg ai">
                             <div class="msg-ava ai"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['scale'] !!}</svg></div>
-                            <div class="msg-b"><span class="tdot"></span> <span class="tdot"></span> <span class="tdot"></span><span class="block text-[11px] mt-1.5 c3" x-text="typingLabel"></span></div>
+                            <div class="msg-b"><span class="tdot"></span> <span class="tdot"></span> <span class="tdot"></span><span class="block text-xs mt-1.5 c3" x-text="typingLabel"></span></div>
                         </div>
                     </div>
                 </div>
-                <p class="text-[11px] px-5 py-3 border-t c3" style="border-color: var(--card-border);">{{ $L['demo']['note'] }}</p>
+                <p class="text-xs px-5 py-3 border-t c3" style="border-color: var(--card-border);">{{ $L['demo']['note'] }}</p>
             </div>
         </div>
     </section>
@@ -4014,35 +3817,6 @@ footer {
                     <svg class="w-5 h-5 shrink-0 mt-0.5" style="color:var(--warning);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['warning'] !!}</svg>
                     <p class="text-sm c1">{{ $L['about']['p3'] }}</p>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- TESTIMONIALS -->
-    <section class="py-20 px-4 sm:px-6 reveal">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl md:text-4xl font-extrabold mb-4">{{ $L['testimonials']['title'] }}</h2>
-                <p class="text-lg c2">{{ $L['testimonials']['sub'] }}</p>
-            </div>
-            <div class="grid md:grid-cols-3 gap-6">
-                @foreach($L['testimonials']['items'] as $i => $t)
-                    <div class="card-gradient testimonial-card p-6 reveal rd{{ $i + 1 }}">
-                        <div class="flex gap-1 mb-4" aria-hidden="true">
-                            @for($s = 0; $s < 5; $s++)
-                                <svg class="w-4 h-4" style="color:#F59E0B" fill="currentColor" viewBox="0 0 24 24">{!! $icons['star'] !!}</svg>
-                            @endfor
-                        </div>
-                        <p class="text-sm leading-relaxed mb-5 c2">«{{ $t['x'] }}»</p>
-                        <div class="flex items-center gap-3">
-                            <span class="avatar">{{ mb_substr($t['n'], 0, 1) }}</span>
-                            <div>
-                                <div class="text-sm font-bold c1">{{ $t['n'] }}</div>
-                                <div class="text-xs c3">{{ $t['r'] }}</div>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
             </div>
         </div>
     </section>
@@ -4141,8 +3915,8 @@ footer {
             <div id="tab-upload" class="dash-tab active">
                 <div class="card-gradient p-6 md:p-8">
                     <h2 class="text-xl font-extrabold mb-6">{{ $L['dash']['up_title'] }}</h2>
-                    <div id="dropZone" class="upload-zone p-10 text-center">
-                        <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.txt">
+                    <div id="dropZone" class="upload-zone p-10 text-center" role="button" tabindex="0" aria-label="{{ $L['dash']['choose'] }}">
+                        <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.txt" aria-label="{{ $L['dash']['choose'] }}">
                         <svg class="w-12 h-12 mx-auto mb-3 c3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">{!! $icons['upload'] !!}</svg>
                         <p class="font-bold text-sm mb-1 c1">{{ $L['dash']['drop'] }}</p>
                         <p class="text-xs mb-4 c2">{{ $L['dash']['or'] }}</p>
@@ -4164,7 +3938,7 @@ footer {
                     <div id="analysisProgress" class="hidden mt-8">
                         <p class="text-sm font-bold mb-3 c1">{{ $L['dash']['progress'] }}</p>
                         <div class="h-1.5 rounded-full overflow-hidden mb-3" style="background:var(--card-border);"><div id="progressBar" class="progress-fill"></div></div>
-                        <div class="grid grid-cols-3 gap-2 text-center text-[11px] c3">
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs c3">
                             <div>{{ $L['dash']['st1'] }}</div>
                             <div>{{ $L['dash']['st2'] }}</div>
                             <div>{{ $L['dash']['st3'] }}</div>
@@ -4234,7 +4008,7 @@ footer {
                             <div class="card-gradient p-4">
                                 <h3 class="text-sm font-bold mb-3">{{ $label === 'A' ? $L['dash']['docA'] : $L['dash']['docB'] }}</h3>
                                 <label class="upload-zone block p-6 text-center cursor-pointer">
-                                    <input type="file" id="{{ $inputId }}" class="hidden" accept=".pdf,.docx,.txt" onchange="this.nextElementSibling.nextElementSibling.textContent = this.files[0]?.name || ''">
+                                    <input type="file" id="{{ $inputId }}" class="hidden" accept=".pdf,.docx,.txt" aria-label="{{ $label === 'A' ? $L['dash']['docA'] : $L['dash']['docB'] }}" onchange="this.nextElementSibling.nextElementSibling.textContent = this.files[0]?.name || ''">
                                     <svg class="w-8 h-8 mx-auto mb-2 c3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">{!! $icons['upload'] !!}</svg>
                                     <span class="text-xs block truncate c3"></span>
                                 </label>
@@ -4284,8 +4058,8 @@ footer {
                 <div class="card-gradient p-6">
                     <h3 class="text-lg font-extrabold mb-6">{{ $L['dash']['set_title'] }}</h3>
                     <div class="space-y-4 max-w-lg">
-                        <div><label class="block text-xs mb-1.5 c2">{{ $L['dash']['email_l'] }}</label><input type="email" value="user@company.com"></div>
-                        <div><label class="block text-xs mb-1.5 c2">{{ $L['dash']['lang_l'] }}</label><select><option>Русский</option><option>Тоҷикӣ</option><option>English</option></select></div>
+                        <div><label for="setEmail" class="block text-xs mb-1.5 c2">{{ $L['dash']['email_l'] }}</label><input type="email" id="setEmail" value="user@company.com"></div>
+                        <div><label for="setLang" class="block text-xs mb-1.5 c2">{{ $L['dash']['lang_l'] }}</label><select id="setLang"><option>Русский</option><option>Тоҷикӣ</option><option>English</option></select></div>
                         <div class="pt-4"><button onclick="showToast('success', T.saved)" class="btn-primary px-6 py-2.5 text-sm">{{ $L['dash']['save'] }}</button></div>
                     </div>
                 </div>
@@ -4360,8 +4134,8 @@ footer {
             <button onclick="closeModal('tplModal')" class="bell-btn" aria-label="✕"><svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['x'] !!}</svg></button>
         </div>
         <div class="p-5 space-y-4">
-            <div><label class="block text-xs mb-1.5 c2">{{ $L['dash']['new_tpl'] }}</label><input type="text"></div>
-            <div><label class="block text-xs mb-1.5 c2">{{ $L['docs']['title'] }}</label><select>@foreach($L['docs']['types'] as $t)<option>{{ $t[0] }}</option>@endforeach</select></div>
+            <div><label for="tplName" class="block text-xs mb-1.5 c2">{{ $L['dash']['new_tpl'] }}</label><input type="text" id="tplName"></div>
+            <div><label for="tplType" class="block text-xs mb-1.5 c2">{{ $L['docs']['title'] }}</label><select id="tplType">@foreach($L['docs']['types'] as $t)<option>{{ $t[0] }}</option>@endforeach</select></div>
         </div>
         <div class="p-5 border-t flex justify-end gap-3" style="border-color:var(--card-border);">
             <button onclick="closeModal('tplModal')" class="btn-white !py-2 text-sm">✕</button>
@@ -4387,9 +4161,9 @@ footer {
     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">{!! $icons['up'] !!}</svg>
 </button>
 
-<div class="fab" onclick="showToast('info', T.help)" role="button" aria-label="{{ $L['js']['help'] }}">
-    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">{!! $icons['chat'] !!}</svg>
-</div>
+<button type="button" class="fab" onclick="showToast('info', T.help)" aria-label="{{ $L['js']['help'] }}">
+    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">{!! $icons['chat'] !!}</svg>
+</button>
 
 <script>
 /* ================================================================
@@ -4410,15 +4184,19 @@ const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function toggleTheme() {
     document.body.classList.toggle('dark-theme');
     const dark = document.body.classList.contains('dark-theme');
-    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    document.getElementById('themeBtn')?.setAttribute('aria-pressed', String(dark));
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
     showToast('success', dark ? T.theme_dark : T.theme_light);
     updateChartsTheme();
 }
 
 (function restoreTheme() {
     try {
-        if (localStorage.getItem('theme') === 'dark') {
+        const saved = localStorage.getItem('theme');
+        /* без сохранённого выбора следуем системной теме */
+        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.body.classList.add('dark-theme');
+            document.getElementById('themeBtn')?.setAttribute('aria-pressed', 'true');
         }
     } catch (e) {}
 })();
@@ -4491,6 +4269,68 @@ function initCounters() {
         });
     }, { threshold: .5 });
     document.querySelectorAll('.counter').forEach(el => io.observe(el));
+}
+
+/* ================================================================
+   ЦИФРЫ-ОДОМЕТРЫ: каждая цифра — колонка 0–9, 0–9, которая докручивается до нужного значения.
+   Крутится при каждом появлении панели в окне; левые цифры идут дольше правых, как у настоящего счётчика.
+   ================================================================ */
+function initOdometers() {
+    const nodes = document.querySelectorAll('.odo');
+    if (!nodes.length) return;
+    const build = el => {
+        const decimals = parseInt(el.dataset.decimals || 0, 10);
+        const text = Number(el.dataset.value).toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (el.dataset.suffix || '');
+        el.textContent = '';
+        const chars = [...text];
+        const digitCount = chars.filter(c => /\d/.test(c)).length;
+        let di = 0;
+        chars.forEach(c => {
+            if (!/\d/.test(c)) {
+                const sep = document.createElement('span');
+                sep.className = 'odo-sep';
+                sep.setAttribute('aria-hidden', 'true');
+                sep.textContent = c === ' ' ? '\u202f' : c;
+                el.appendChild(sep);
+                return;
+            }
+            const win = document.createElement('span');
+            win.className = 'odo-d';
+            win.setAttribute('aria-hidden', 'true');
+            const col = document.createElement('span');
+            col.className = 'odo-col';
+            col.style.setProperty('--to', String(10 + Number(c)));
+            col.style.setProperty('--odo-t', (1.1 + 0.35 * (digitCount - 1 - di)).toFixed(2) + 's');
+            for (let k = 0; k < 20; k++) {
+                const d = document.createElement('span');
+                d.textContent = String(k % 10);
+                col.appendChild(d);
+            }
+            win.appendChild(col);
+            el.appendChild(win);
+            di++;
+        });
+    };
+    nodes.forEach(build);
+    if (REDUCED || !('IntersectionObserver' in window)) {
+        nodes.forEach(el => el.classList.add('odo-go'));
+        return;
+    }
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            const el = e.target;
+            if (e.isIntersecting && e.intersectionRatio >= 0.5) {
+                requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('odo-go')));
+            } else if (!e.isIntersecting) {
+                // вышла из окна: сбрасываем без анимации, чтобы при возврате прокрутка шла заново
+                el.querySelectorAll('.odo-col').forEach(c => { c.style.transition = 'none'; });
+                el.classList.remove('odo-go');
+                void el.offsetWidth;
+                el.querySelectorAll('.odo-col').forEach(c => { c.style.transition = ''; });
+            }
+        });
+    }, { threshold: [0, 0.5] });
+    nodes.forEach(el => io.observe(el));
 }
 
 /* ================================================================
@@ -4578,6 +4418,7 @@ function showToast(type, message) {
    SECTIONS / TABS / TOOLS
    ================================================================ */
 function showSection(name) {
+    if (name === 'dashboard') ensureChart().catch(() => {});
     const l = document.getElementById('landingSection');
     const d = document.getElementById('dashboardSection');
     l.classList.toggle('hidden-section', name !== 'landing');
@@ -4618,6 +4459,25 @@ function closeModal(id) {
 }
 
 /* ================================================================
+   CHART.JS — подгружается при первом обращении (208 КБ не нужны для первой отрисовки)
+   ================================================================ */
+const CHART_SRC = @json(asset('vendor/chart.min.js'));
+let chartLoading = null;
+function ensureChart() {
+    if (window.Chart) return Promise.resolve();
+    if (!chartLoading) {
+        chartLoading = new Promise((resolve, reject) => {
+            const el = document.createElement('script');
+            el.src = CHART_SRC;
+            el.onload = resolve;
+            el.onerror = () => { chartLoading = null; reject(new Error('chart.js')); };
+            document.head.appendChild(el);
+        });
+    }
+    return chartLoading;
+}
+
+/* ================================================================
    FILE UPLOAD + ANALYSIS
    ================================================================ */
 let uploadedFile = null;
@@ -4630,6 +4490,9 @@ const fileInput = document.getElementById('fileInput');
 
 if (dropZone) {
     dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+    });
     fileInput.addEventListener('change', e => {
         if (e.target.files.length) handleFile(e.target.files[0]);
     });
@@ -4702,9 +4565,10 @@ function chartColors() {
     };
 }
 
-function showResults() {
+async function showResults() {
     document.getElementById('analysisProgress').classList.add('hidden');
     document.getElementById('analysisResults').classList.remove('hidden');
+    try { await ensureChart(); } catch (e) { return; }
     const c = chartColors();
     const ctx = document.getElementById('riskChart').getContext('2d');
     if (riskChart) riskChart.destroy();
@@ -4741,7 +4605,8 @@ function showResults() {
     showToast('success', T.done);
 }
 
-function initAnalyticsCharts() {
+async function initAnalyticsCharts() {
+    try { await ensureChart(); } catch (e) { return; }
     const c = chartColors();
     const ctx1 = document.getElementById('analyticsChart1');
     const ctx2 = document.getElementById('analyticsChart2');
@@ -4987,6 +4852,7 @@ document.addEventListener('alpine:init', () => {
 document.addEventListener('DOMContentLoaded', () => {
     initReveal();
     initCounters();
+    initOdometers();
     initTilt3D();
 });
 </script>
