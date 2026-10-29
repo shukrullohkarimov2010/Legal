@@ -710,6 +710,73 @@ def misattributed_citations(text: str, results) -> list:
     return problems
 
 
+# Статусы ссылки в ответе, от лучшего к худшему. Интерфейс красит бейдж по ним.
+CITE_VERIFIED = "verified"      # статья есть среди фрагментов, по которым писался ответ
+CITE_EXISTS = "exists"          # статья есть в кодексе, но к ответу её не подбирали
+CITE_WRONG_CODE = "wrong_code"  # номер найден, но в другом кодексе
+CITE_MISSING = "missing"        # такой статьи в названном кодексе нет вовсе
+
+
+def citation_report(text: str, results, lookup=None, limit: int = 8) -> list:
+    """Каждая статья, названная в ответе, с проверкой по базе.
+
+    `results` — фрагменты, выданные модели; `lookup(code_short, article)` —
+    необязательная сверка с полным каталогом кодекса: она отличает статью,
+    которую просто не подбирали, от выдуманной. Без неё всё, чего нет среди
+    фрагментов, остаётся «не подтверждённым» (missing).
+
+    Ссылка без названия кодекса проверяется только по фрагментам: «статья 5» без
+    кодекса не принадлежит никому, и объявлять её выдумкой нечестно.
+    """
+    pairs, by_article = {}, {}
+    for item in results or []:
+        code, article = item.get("code_short"), str(item.get("article") or "").strip()
+        if code and article:
+            pairs.setdefault((code, article), item)
+            by_article.setdefault(article, []).append(item)
+
+    def entry(code, article, status, item=None, info=None):
+        item, info = item or {}, info or {}
+        return {
+            "code": code,
+            "code_name": item.get("code") or CODE_FULL_NAMES.get(code, code),
+            "article": article,
+            "title": item.get("article_title") or info.get("title") or "",
+            "status": status,
+            "source": item.get("source") or info.get("source") or "",
+        }
+
+    report, seen = [], set()
+    for match in _CITE_RE.finditer(text or ""):
+        article = match.group(1)
+        code = _code_near(text, match.start(), match.end())
+        if code is None:
+            hits = by_article.get(article)
+            if not hits:
+                continue
+            code, item = hits[0].get("code_short"), hits[0]
+            status, info = CITE_VERIFIED, None
+        elif (code, article) in pairs:
+            item, status, info = pairs[(code, article)], CITE_VERIFIED, None
+        else:
+            info = lookup(code, article) if lookup else None
+            item = None
+            if info:
+                status = CITE_EXISTS
+            elif article in by_article:
+                item, status = by_article[article][0], CITE_WRONG_CODE
+            else:
+                status = CITE_MISSING
+        key = (code, article)
+        if key in seen:
+            continue
+        seen.add(key)
+        report.append(entry(code, article, status, item, info))
+        if len(report) >= limit:
+            break
+    return report
+
+
 _QUOTE_RE = re.compile(r"«([^«»]{15,400})»")
 _CITED_LINE_RE = re.compile(r"ст\.|стать[а-яё]*", re.I)
 

@@ -354,6 +354,38 @@
         .clarify-card.answered .clarify-option.chosen { opacity: 1; border-color: var(--accent); background: var(--accent-active); }
         .clarify-card.answered .clarify-hint { display: none; }
 
+        /* Проверка цитат: под ответом — статьи, которые назвала модель, со статусом по базе. */
+        .cite-bar { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--card-border); }
+        .cite-title { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); }
+        .cite-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cite-chip {
+            --cite: #10b981;
+            display: inline-flex; align-items: center; gap: 7px; max-width: 100%;
+            padding: 6px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 500; cursor: pointer;
+            color: var(--text-primary); background: color-mix(in srgb, var(--cite) 12%, transparent);
+            border: 1px solid color-mix(in srgb, var(--cite) 45%, transparent);
+            transition: transform .15s, background .15s, box-shadow .15s;
+        }
+        .cite-chip:hover { transform: translateY(-1px); background: color-mix(in srgb, var(--cite) 20%, transparent); box-shadow: 0 4px 14px color-mix(in srgb, var(--cite) 28%, transparent); }
+        .cite-chip:focus-visible { outline: 2px solid var(--cite); outline-offset: 2px; }
+        .cite-chip[aria-expanded="true"] { background: color-mix(in srgb, var(--cite) 24%, transparent); }
+        .cite-chip.exists { --cite: #3b82f6; }
+        .cite-chip.wrong_code { --cite: #f59e0b; }
+        .cite-chip.missing { --cite: #ef4444; }
+        .cite-icon { flex: none; width: 16px; height: 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; background: var(--cite); }
+        .cite-ref { white-space: nowrap; }
+        .cite-state { font-size: 11px; font-weight: 600; color: var(--cite); white-space: nowrap; }
+        .cite-preview {
+            margin-top: 10px; padding: 12px 14px; border-radius: 12px; font-size: 13px; line-height: 1.55;
+            background: var(--code-bg); border: 1px solid var(--card-border);
+            animation: fadeIn .2s ease-out;
+        }
+        .cite-preview-head { font-weight: 600; margin-bottom: 6px; color: var(--text-primary); }
+        .cite-preview-body { color: var(--text-secondary); max-height: 190px; overflow: auto; white-space: pre-wrap; }
+        .cite-preview-note { color: var(--text-muted); }
+        .cite-preview-link { display: inline-block; margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--accent); text-decoration: none; }
+        .cite-preview-link:hover { text-decoration: underline; }
+
         .chat-message { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -1242,7 +1274,7 @@
                 model: state.currentModel,
                 prompt: `${systemPrompts[personality]}\n\nВопрос пользователя: ${message}`,
                 message,
-                history: state.chatHistory.slice(-8),
+                history: state.chatHistory.slice(-8).map(({ citations, citationLang, ...turn }) => turn),
                 personality,
                 role: state.chatRole,
                 depth: state.chatDepth,
@@ -1282,6 +1314,8 @@
         const decoder = new TextDecoder();
         let buffer = '';
         let fullResponse = '';
+        let citationsData = null;
+        let citationLang = 'ru';
         // Таджикский ответ приходит переводом, а в историю должен лечь русский
         // оригинал: промпт следующего хода собирается по-русски.
         let sourceResponse = '';
@@ -1316,6 +1350,8 @@
                     if (json.source_response) sourceResponse = json.source_response;
                     if (json.clarify) { clarifyData = json.clarify; clarifyLang = json.lang || clarifyLang; }
                     if (json.doc_state) docState = json.doc_state;
+                    if (json.citations) citationsData = json.citations;
+                    if (json.lang) citationLang = json.lang;
                     if (json.done) break;
                 } catch (e) { continue; }
             }
@@ -1338,7 +1374,121 @@
             return;
         }
 
-        state.chatHistory.push({ role: 'ai', content: sourceResponse || fullResponse, timestamp: new Date().toISOString() });
+        const aiEntry = { role: 'ai', content: sourceResponse || fullResponse, timestamp: new Date().toISOString() };
+        if (citationsData && citationsData.length) {
+            renderCitations(streamTarget, citationsData, citationLang);
+            aiEntry.citations = citationsData;
+            aiEntry.citationLang = citationLang;
+            scrollToBottom();
+        }
+        state.chatHistory.push(aiEntry);
+    }
+
+    const CITE_TEXT = {
+        ru: {
+            title: 'Проверка цитат по базе законов',
+            verified: 'найдена в базе', exists: 'есть в кодексе', wrong_code: 'другой кодекс', missing: 'нет в базе',
+            article: 'ст.', open: 'Открыть в кодексе →', loading: 'Загружаю текст статьи…', failed: 'Не удалось загрузить текст статьи.',
+            hint: {
+                verified: 'Статья входила в подборку, по которой составлен ответ.',
+                exists: 'Такая статья есть в кодексе, но ответ строился не по ней. Сверьте с текстом.',
+                wrong_code: 'Номер статьи найден в другом кодексе. Проверьте, о каком кодексе речь.',
+                missing: 'Статьи с таким номером в этом кодексе нет в нашей базе. Не полагайтесь на эту ссылку.',
+            },
+        },
+        tg: {
+            title: 'Санҷиши иқтибосҳо аз рӯи базаи қонунҳо',
+            verified: 'дар база ёфт шуд', exists: 'дар кодекс ҳаст', wrong_code: 'кодекси дигар', missing: 'дар база нест',
+            article: 'м.', open: 'Дар кодекс кушодан →', loading: 'Матни моддаро бор мекунам…', failed: 'Матни модда бор нашуд.',
+            hint: {
+                verified: 'Ин модда дар интихоби асоси ҷавоб буд.',
+                exists: 'Чунин модда дар кодекс ҳаст, аммо ҷавоб аз рӯи он таҳия нашудааст. Бо матн муқоиса кунед.',
+                wrong_code: 'Рақами модда дар кодекси дигар ёфт шуд. Санҷед, ки кадом кодекс дар назар аст.',
+                missing: 'Моддаи чунин рақам дар ин кодекс дар базаи мо нест. Ба ин истинод такя накунед.',
+            },
+        },
+    };
+    const CITE_ICON = { verified: '✓', exists: 'i', wrong_code: '!', missing: '✕' };
+
+    // Бейджи под ответом: статья, статус проверки и по клику — текст статьи из кодекса.
+    function renderCitations(target, citations, lang) {
+        if (!target || !Array.isArray(citations) || !citations.length) return;
+        const t = CITE_TEXT[lang] || CITE_TEXT.ru;
+        const bar = document.createElement('div');
+        bar.className = 'cite-bar';
+        const title = document.createElement('div');
+        title.className = 'cite-title';
+        title.textContent = '🛡 ' + t.title;
+        const list = document.createElement('div');
+        list.className = 'cite-list';
+        const preview = document.createElement('div');
+        preview.hidden = true;
+        bar.append(title, list, preview);
+
+        const codexUrl = (c) => `{{ route('contract.codex') }}?` + new URLSearchParams({ code: c.code_id, art: c.article });
+        let openChip = null;
+
+        citations.forEach(c => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'cite-chip ' + c.status;
+            chip.title = t.hint[c.status] || '';
+            chip.setAttribute('aria-expanded', 'false');
+            const icon = document.createElement('span');
+            icon.className = 'cite-icon';
+            icon.textContent = CITE_ICON[c.status] || '?';
+            const ref = document.createElement('span');
+            ref.className = 'cite-ref';
+            ref.textContent = `${c.code}, ${t.article} ${c.article}`;
+            const state = document.createElement('span');
+            state.className = 'cite-state';
+            state.textContent = t[c.status] || '';
+            chip.append(icon, ref, state);
+            chip.addEventListener('click', () => togglePreview(chip, c));
+            list.appendChild(chip);
+        });
+
+        async function togglePreview(chip, c) {
+            if (openChip) openChip.setAttribute('aria-expanded', 'false');
+            if (openChip === chip) { openChip = null; preview.hidden = true; return; }
+            openChip = chip;
+            chip.setAttribute('aria-expanded', 'true');
+            preview.className = 'cite-preview';
+            preview.hidden = false;
+            preview.replaceChildren();
+            const head = document.createElement('div');
+            head.className = 'cite-preview-head';
+            head.textContent = `${c.code_name || c.code}, ${t.article} ${c.article}` + (c.title ? `. ${c.title}` : '');
+            const note = document.createElement('div');
+            note.className = 'cite-preview-note';
+            note.textContent = t.hint[c.status] || '';
+            preview.append(head, note);
+            if (!c.code_id || c.status === 'missing') return;
+
+            const body = document.createElement('div');
+            body.className = 'cite-preview-body';
+            body.textContent = t.loading;
+            preview.appendChild(body);
+            try {
+                const res = await fetch(`${PYTHON_API}/api/codex/article?` + new URLSearchParams({ code: c.code_id, n: c.article }));
+                if (!res.ok) throw new Error(res.status);
+                const art = await res.json();
+                if (openChip !== chip) return;
+                const text = (art.blocks || []).map(b => b.text).filter(Boolean).join('\n');
+                body.textContent = text.length > 1400 ? text.slice(0, 1400) + '…' : text;
+                const link = document.createElement('a');
+                link.className = 'cite-preview-link';
+                link.href = codexUrl(c);
+                link.target = '_blank';
+                link.rel = 'noopener';
+                link.textContent = t.open;
+                preview.appendChild(link);
+            } catch (e) {
+                body.textContent = t.failed;
+            }
+        }
+
+        target.appendChild(bar);
     }
 
     const CLARIFY_TEXT = {
@@ -1434,6 +1584,7 @@
 
         if (role === 'ai') {
             messageContent.innerHTML = `<div class="markdown-content">${marked.parse(extra.display || content)}</div>`;
+            renderCitations(messageContent.querySelector('.markdown-content'), extra.citations, extra.citationLang);
         } else {
             if (content.includes('[Прикреплённый файл:')) {
                 const parts = content.split('\n\n[Прикреплённый файл: ');
@@ -1464,6 +1615,7 @@
         scrollToBottom();
         const entry = { role, content, timestamp: extra.timestamp || new Date().toISOString() };
         if (extra.display) entry.display = extra.display;
+        if (extra.citations) { entry.citations = extra.citations; entry.citationLang = extra.citationLang; }
         state.chatHistory.push(entry);
     }
 
@@ -1736,7 +1888,7 @@
         if (conv.messages && Array.isArray(conv.messages)) {
             // addMessage сам кладёт реплику в chatHistory: явный push перед ним
             // дублировал каждое сообщение в истории, которая уходит на сервер.
-            conv.messages.forEach(msg => addMessage(msg.role, msg.content, { display: msg.display, timestamp: msg.timestamp }));
+            conv.messages.forEach(msg => addMessage(msg.role, msg.content, { display: msg.display, timestamp: msg.timestamp, citations: msg.citations, citationLang: msg.citationLang }));
         }
 
         const convIndex = state.conversations.findIndex(c => c.id === id);

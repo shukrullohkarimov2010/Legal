@@ -4860,6 +4860,30 @@ def _unverified_article_numbers(text, allowed):
     return sorted(cited - allowed_set)
 
 
+def _chat_citations(answer_text, rag_results):
+    """Статьи из ответа со статусом проверки и ссылкой на страницу кодексов.
+
+    Сверка идёт и с найденными фрагментами, и с полным каталогом кодекса: так
+    «статья есть, но к ответу её не подбирали» отличается от выдуманной.
+    """
+    catalog = _codex()
+    ids = {}
+    if catalog is not None:
+        ids = {data["short"]: cid for cid, data in catalog.codes.items()}
+
+    def lookup(code_short, article):
+        cid = ids.get(code_short)
+        info = catalog.article(cid, article) if cid else None
+        return {"title": info["title"], "source": ""} if info else None
+
+    report = chat_modes.citation_report(answer_text, rag_results, lookup if catalog else None)
+    for entry in report:
+        cid = ids.get(entry["code"]) or (codex_catalog.code_id_for(entry["source"])[0] if entry["source"] else "")
+        entry["code_id"] = cid
+        entry.pop("source", None)
+    return report
+
+
 # Ссылки вида «Закон РТ от 17.05.2004г. №35» — законная часть текста кодексов
 # (каждая правка статьи сопровождается «в редакции Закона РТ от ...»), так что
 # сам паттерн не подозрителен. Подозрительна конкретная дата+номер, которых не
@@ -6527,6 +6551,11 @@ def stream_chat_response(payload):
                 # заключение юриста — приписка об ограничениях ставится кодом.
                 if not smalltalk and (deep or doc):
                     obj["response"] = (obj.get("response") or "") + chat_modes.DISCLAIMER
+                if not smalltalk:
+                    try:
+                        obj["citations"] = _chat_citations(answer_text, rag_results)
+                    except Exception as e:  # проверка цитат не должна ронять ответ
+                        print("citations: %s" % e)
             yield obj
 
     if not smalltalk:

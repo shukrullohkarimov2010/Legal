@@ -337,6 +337,38 @@ def test_deep_prompts_demand_quotes_and_applicability():
     doc = cm.document_block(cm.DocRequest("contract", "договор", "", False), "lawyer")
     check("applicability in documents", "ПРИМЕНИМОСТЬ НОРМ" in doc)
 
+def test_citation_report_statuses():
+    results = [
+        {"code_short": "ТК РТ", "code": "Трудовой кодекс", "article": "158",
+         "article_title": "Расторжение договора", "source": "трудовой кодекс.docx"},
+        {"code_short": "ГК РТ", "code": "Гражданский кодекс", "article": "39", "source": "1918_ru_1.docx"},
+    ]
+    known = {("ТК РТ", "77"): {"title": "Сроки", "source": "трудовой кодекс.docx"}}
+    lookup = lambda code, article: known.get((code, article))
+
+    def statuses(text, look=lookup):
+        return {(r["code"], r["article"]): r["status"] for r in cm.citation_report(text, results, look)}
+
+    got = statuses("Согласно Трудовому кодексу Республики Таджикистан, статья 158, и ТК РТ ст. 77, "
+                   "а также ГК РТ ст. 158 и ТК РТ ст. 39 и ТК РТ ст. 9999.")
+    check("verified from results", got.get(("ТК РТ", "158")) == cm.CITE_VERIFIED, str(got))
+    check("exists in codex but not retrieved", got.get(("ТК РТ", "77")) == cm.CITE_EXISTS, str(got))
+    check("number found in another code", got.get(("ТК РТ", "39")) == cm.CITE_WRONG_CODE, str(got))
+    check("article absent everywhere", got.get(("ТК РТ", "9999")) == cm.CITE_MISSING, str(got))
+    check("code named wrongly for 158", got.get(("ГК РТ", "158")) == cm.CITE_WRONG_CODE, str(got))
+
+    nolookup = statuses("ТК РТ ст. 77", None)
+    check("without lookup unknown is missing", nolookup.get(("ТК РТ", "77")) == cm.CITE_MISSING, str(nolookup))
+
+    bare = cm.citation_report("См. статья 158 и статья 5.", results, lookup)
+    check("bare number found in results is verified", [(r["code"], r["status"]) for r in bare] == [("ТК РТ", cm.CITE_VERIFIED)], str(bare))
+
+    twice = cm.citation_report("ТК РТ ст. 158. Ещё раз ТК РТ ст. 158.", results, lookup)
+    check("citation reported once", len(twice) == 1, str(twice))
+    check("no citations", cm.citation_report("Просто текст", results, lookup) == [])
+    check("limit applied", len(cm.citation_report(" ".join("ТК РТ ст. %d." % n for n in range(1, 30)), results, lookup, limit=3)) == 3)
+
+
 def main():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for test in tests:
