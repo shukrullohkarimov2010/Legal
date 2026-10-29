@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LegalAI Assistant — Умный юридический бот</title>
     <link rel="stylesheet" href="{{ asset('css/tw-default.css') }}?v={{ @filemtime(public_path('css/tw-default.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/article-graph.css') }}?v={{ @filemtime(public_path('css/article-graph.css')) }}">
     <script src="{{ asset('vendor/marked.min.js') }}"></script>
+    <script defer src="{{ asset('js/article-graph.js') }}?v={{ @filemtime(public_path('js/article-graph.js')) }}"></script>
     <link href="https://cdn.jsdelivr.net/fontsource/fonts/inter:latin@400,500,600,700&display.css" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
@@ -358,6 +360,8 @@
         .cite-bar { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--card-border); }
         .cite-title { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); }
         .cite-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cite-graph-btn { margin-left: auto; padding: 3px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: 0; text-transform: none; cursor: pointer; color: var(--accent); background: var(--accent-hover); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); transition: transform .15s, background .15s; }
+        .cite-graph-btn:hover { transform: translateY(-1px); background: var(--accent-active); }
         .cite-chip {
             --cite: #10b981;
             display: inline-flex; align-items: center; gap: 7px; max-width: 100%;
@@ -1386,7 +1390,7 @@
 
     const CITE_TEXT = {
         ru: {
-            title: 'Проверка цитат по базе законов',
+            title: 'Проверка цитат по базе законов', graph: 'Граф связей',
             verified: 'найдена в базе', exists: 'есть в кодексе', wrong_code: 'другой кодекс', missing: 'нет в базе',
             article: 'ст.', open: 'Открыть в кодексе →', loading: 'Загружаю текст статьи…', failed: 'Не удалось загрузить текст статьи.',
             hint: {
@@ -1397,7 +1401,7 @@
             },
         },
         tg: {
-            title: 'Санҷиши иқтибосҳо аз рӯи базаи қонунҳо',
+            title: 'Санҷиши иқтибосҳо аз рӯи базаи қонунҳо', graph: 'Графи пайвастагӣ',
             verified: 'дар база ёфт шуд', exists: 'дар кодекс ҳаст', wrong_code: 'кодекси дигар', missing: 'дар база нест',
             article: 'м.', open: 'Дар кодекс кушодан →', loading: 'Матни моддаро бор мекунам…', failed: 'Матни модда бор нашуд.',
             hint: {
@@ -1419,6 +1423,18 @@
         const title = document.createElement('div');
         title.className = 'cite-title';
         title.textContent = '🛡 ' + t.title;
+        const graphable = citations.filter(c => c.code_id && c.status !== 'missing');
+        if (graphable.length && window.ArticleGraph) {
+            const graphBtn = document.createElement('button');
+            graphBtn.type = 'button';
+            graphBtn.className = 'cite-graph-btn';
+            graphBtn.textContent = '🕸 ' + t.graph;
+            graphBtn.addEventListener('click', () => window.ArticleGraph.open({
+                nodes: graphable.map(c => ({ code_id: c.code_id, article: c.article, status: c.status })),
+                api: PYTHON_API, codexUrl: `{{ route('contract.codex') }}`, lang,
+            }));
+            title.appendChild(graphBtn);
+        }
         const list = document.createElement('div');
         list.className = 'cite-list';
         const preview = document.createElement('div');

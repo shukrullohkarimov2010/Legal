@@ -37,6 +37,7 @@ import lang_service  # noqa: E402  — определение языка воп�
 import chat_modes  # noqa: E402  — роли (юрист/адвокат), глубина ответа, документы в чате
 import contract_topics  # noqa: E402  — темы условий договора -> нужные статьи кодексов
 import doc_lang  # noqa: E402  — язык документа: перевод договора и отчёта (таджикский <-> русский)
+import article_graph  # noqa: E402  — граф связей статей кодексов
 import risk_map  # noqa: E402  — карта рисков договора: привязка находок к абзацам
 import codex_catalog  # noqa: E402  — кодексы из RAG-индекса для страницы /contract/codex
 import doc_dialog  # noqa: E402  — вопросы перед составлением документа: какой договор и с кем
@@ -4657,6 +4658,58 @@ def codex_toc():
     if toc is None:
         return jsonify({"error": "Кодекс не найден"}), 404
     return jsonify(toc)
+
+
+# ---------------------------------------------------------------------------
+# Граф связей статей: какие статьи кодексов ссылаются друг на друга.
+# ---------------------------------------------------------------------------
+_graph_state = {"key": None, "graph": None}
+
+
+def _graph():
+    """Граф по текущему индексу; None — индекс не готов. Строится за доли секунды."""
+    index = load_chat_rag_index()
+    if not index.get("ready") or not index.get("chunks"):
+        return None
+    key = (id(index), index.get("built_at"), len(index["chunks"]))
+    if _graph_state["key"] != key:
+        _graph_state["graph"] = article_graph.ArticleGraph(
+            index["chunks"], lambda source: codex_catalog.code_id_for(source)[0])
+        _graph_state["key"] = key
+    return _graph_state["graph"]
+
+
+@app.route("/api/graph/article")
+def graph_article():
+    """Связи одной статьи: на что она ссылается и кто ссылается на неё."""
+    graph = _graph()
+    if graph is None:
+        return _codex_unavailable()
+    links = graph.article_links(request.args.get("code", ""), request.args.get("n", ""))
+    if links is None:
+        return jsonify({"error": "Статья не найдена"}), 404
+    return jsonify(links)
+
+
+@app.route("/api/graph/subgraph", methods=["POST"])
+def graph_subgraph():
+    """Граф вокруг выбранных статей (например, тех, на которые опирается ответ чата)."""
+    graph = _graph()
+    if graph is None:
+        return _codex_unavailable()
+    data = request.get_json(silent=True) or {}
+    focus = []
+    for item in (data.get("nodes") or [])[:12]:
+        if isinstance(item, dict):
+            focus.append((str(item.get("code_id") or ""), str(item.get("article") or "")))
+    try:
+        limit = max(4, min(60, int(data.get("limit") or 32)))
+    except (TypeError, ValueError):
+        limit = 32
+    result = graph.subgraph(focus, limit=limit)
+    if not result["nodes"]:
+        return jsonify({"error": "Статьи не найдены в базе", "nodes": [], "edges": []}), 404
+    return jsonify(result)
 
 
 @app.route("/api/codex/article")
