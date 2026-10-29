@@ -9,7 +9,7 @@
             </div>
             <div class="hidden md:flex items-center space-x-6">
                 <a href="{{ route('welcome') }}" class="text-slate-300 hover:text-white transition">{{ __('ui.nav_home') }}</a>
-                <a href="{{ route('tasks.create') }}" class="text-slate-300 hover:text-white transition">{{ __('ui.nav_features') }}</a>
+                <a href="{{ route('dashboard') }}" class="text-slate-300 hover:text-white transition">{{ __('ui.nav_features') }}</a>
                 <a href="{{ route('tasks.calc') }}" class="text-slate-300 hover:text-white transition">{{ __('ui.nav_calculator') }}</a>
                 <a href="{{ route('tasks.chat') }}" class="text-slate-300 hover:text-white transition">{{ __('ui.nav_ai_chat') }}</a>
                 <x-language-switcher />

@@ -440,7 +440,7 @@ return [
     'platform_features_title' => 'Все возможности платформы',
     'platform_features_text' => '15+ инструментов для полной автоматизации юридической работы',
     'feature_ai_chat' => 'AI Юридический Чат',
-    'feature_ai_chat_text' => 'Интеллектуальный ассистент на базе GPT-4/Gemini для консультаций 24/7',
+    'feature_ai_chat_text' => 'Интеллектуальный ИИ-ассистент LegalAI Pro для консультаций 24/7',
     'popular' => 'Популярное',
     'response_60sec' => '~60 сек ответ',
     'feature_contract_analysis' => 'Анализ Договоров',

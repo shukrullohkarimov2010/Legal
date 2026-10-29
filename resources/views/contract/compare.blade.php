@@ -1792,8 +1792,7 @@ ${tr(T.diffs_and_recs, { diffs: entry.result?.findings?.length || 0, recs: entry
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             state.backendReady = true;
-            // Внутреннее имя модели (напр. "openai:gpt-5-nano") — служебная деталь
-            // бэкенда, пользователю в бейдже/отчёте показываем нейтральную марку.
+            // Название модели пользователю не показывается: в бейдже и отчёте нейтральная марка.
             state.backendLabel = 'LegalAI AI';
             badge.className = 'status-badge connected';
             badge.innerHTML = `<span class="dot pulse-dot"></span><span>${state.backendLabel}</span>`;
@@ -2520,7 +2519,7 @@ ${T.label_compared}
         const r = state.result;
         let md = `${T.md_title}\n`;
         md += `${T.md_date} ${new Date().toLocaleString(T.intl_locale)}\n`;
-        md += `${T.md_source} ${r.fromCache ? T.md_cache : (r.usedAI ? '🤖 llama3.1:8b' : T.md_local)}\n`;
+        md += `${T.md_source} ${r.fromCache ? T.md_cache : (r.usedAI ? '🤖 LegalAI Pro' : T.md_local)}\n`;
         md += `**A:** ${state.nameA}\n**B:** ${state.nameB}\n\n`;
         md += `${T.md_score}\n- ${T.md_compatibility} ${r.compatibilityScore}% (${r.compatibilityLabel})\n- ${T.md_differences} ${r.totalDifferences}\n\n`;
         md += `${T.md_summary}\n${r.summary}\n\n`;

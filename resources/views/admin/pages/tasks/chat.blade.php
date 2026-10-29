@@ -581,7 +581,7 @@
             </div>
             <div class="hidden md:flex items-center space-x-8">
                 <a href="{{ route('welcome') }}" class="text-slate-300 hover:text-white transition">Главная</a>
-                <a href="{{route('tasks.create')}}" class="text-slate-300 hover:text-white transition">Возможности</a>
+                <a href="{{route('dashboard')}}" class="text-slate-300 hover:text-white transition">Возможности</a>
                 <a href="{{route('tasks.calc')}}" class="text-slate-300 hover:text-white transition">Калькулятор</a>
                 <a href="{{route('tasks.chat')}}" class="text-slate-300 hover:text-white transition">Чат ИИ</a>
 
@@ -697,7 +697,7 @@
                         <h2 class="text-lg font-semibold" id="chatTitle" style="color: var(--text-primary);">Новый диалог</h2>
                         <div class="flex items-center space-x-2 text-sm text-slate-400">
                             <span class="w-2 h-2 bg-green-500 rounded-full pulse-animation"></span>
-                            <span id="modelStatus">llama3.1:8b Ready</span>
+                            <span id="modelStatus">LegalAI Pro готов</span>
                         </div>
                         <div id="chatSessionInfo" class="text-xs text-slate-500 mt-1 hidden"></div>
                     </div>
@@ -728,7 +728,7 @@
                 </div>
                 <h3 class="text-2xl font-bold mb-4" style="color: var(--text-primary);">Добро пожаловать в LegalAI Bot</h3>
                 <p class="text-slate-400 mb-8 max-w-lg mx-auto">
-                    Я ваш интеллектуальный юридический помощник на базе локальной ИИ-модели.
+                    Я ваш интеллектуальный юридический помощник LegalAI Pro.
                     Могу помочь с анализом договоров, проверкой рисков и консультациями по законодательству.
                 </p>
                 <div class="grid md:grid-cols-2 gap-4 text-left">
@@ -841,62 +841,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
-            </div>
-
-            <!-- AI Model Selection -->
-            <div class="mb-8">
-                <h4 class="font-semibold mb-4 flex items-center space-x-2" style="color: var(--text-primary);">
-                    <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                    <span>Модель ИИ</span>
-                </h4>
-                <div class="space-y-3">
-                    <div class="model-selector active p-4 rounded-xl border" style="border-color: var(--accent);" onclick="selectModel('legal-fast', this)">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-medium" style="color: var(--text-primary);">legal-fast</div>
-                                <div class="text-sm" style="color: var(--text-muted);">Локальная • Быстрая</div>
-                            </div>
-                            <svg class="check-icon w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="model-selector p-4 rounded-xl border" style="border-color: var(--surface-3);" onclick="selectModel('mistral', this)">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-medium" style="color: var(--text-primary);">mistral</div>
-                                <div class="text-sm" style="color: var(--text-muted);">Локальная • Точная</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="model-selector p-4 rounded-xl border" style="border-color: var(--surface-3);" onclick="selectModel('phi3', this)">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-medium" style="color: var(--text-primary);">phi3:mini</div>
-                                <div class="text-sm" style="color: var(--text-muted);">Локальная • Супер быстрая</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ollama Connection -->
-            <div class="mb-8">
-                <h4 class="font-semibold mb-4 flex items-center space-x-2" style="color: var(--text-primary);">
-                    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                    <span>Подключение Ollama</span>
-                </h4>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm mb-2" style="color: var(--text-muted);">URL Ollama</label>
-                        <input type="text" id="ollamaUrl" value="http://localhost:11434" class="w-full rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500" style="background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-primary);">
-                    </div>
-                    <button onclick="testConnection()" class="w-full btn-primary py-3 rounded-lg font-medium">Проверить подключение</button>
-                </div>
             </div>
 
             <!-- Assistant Role -->
@@ -1167,9 +1111,9 @@
             // Переводчик показывается отдельно: без него таджикский вопрос
             // получит русский ответ, и знать об этом надо до, а не после.
             const langs = status.translation?.enabled ? ' + RU/TJ' : ' + RU';
-            document.getElementById('modelStatus').textContent = `${state.currentModel} Ready${suffix}${langs}`;
+            document.getElementById('modelStatus').textContent = `LegalAI Pro готов${suffix}${langs}`;
         } catch (error) {
-            document.getElementById('modelStatus').textContent = `${state.currentModel} Ready + RAG ?`;
+            document.getElementById('modelStatus').textContent = `LegalAI Pro готов + RAG ?`;
         }
     }
 
@@ -1266,7 +1210,7 @@
                 hideTypingIndicator();
             } else {
                 hideTypingIndicator();
-                addMessage('ai', `⚠️ **Ошибка**: ${error.message}\n\nПроверьте что Ollama запущен: \`ollama serve\``);
+                addMessage('ai', `⚠️ **Ошибка**: ${error.message}\n\nПопробуйте ещё раз через несколько секунд.`);
             }
         } finally {
             state.isProcessing = false;
@@ -1281,7 +1225,6 @@
     async function streamAIResponse(message) {
         const personality = document.querySelector('input[name="personality"]:checked')?.value || 'professional';
         const temperature = parseFloat(document.getElementById('temperature').value);
-        const ollamaUrl = document.getElementById('ollamaUrl').value || 'http://localhost:11434';
 
         const systemPrompts = {
             professional: 'Вы профессиональный юрист с 15-летним опытом работы. Отвечайте точно, с ссылками на законодательство Республики Таджикистан. Будьте формальны и подробны. Используйте markdown для форматирования.',
@@ -1577,42 +1520,6 @@
         const t = STAGE_TEXT[PAGE_LOCALE] || STAGE_TEXT.ru;
         note.textContent = `${t.stage}: ${state.stageLabel || t.wait} · ${Math.floor(elapsed / 1000)} ${t.sec}`;
         note.classList.remove('hidden');
-    }
-
-    function selectModel(model, element) {
-        state.currentModel = model;
-
-        document.querySelectorAll('.model-selector').forEach(el => {
-            el.classList.remove('active');
-            el.style.borderColor = 'var(--surface-3)';
-            const existingCheck = el.querySelector('.check-icon');
-            if (existingCheck) existingCheck.remove();
-        });
-
-        element.classList.add('active');
-        element.style.borderColor = 'var(--accent)';
-        element.querySelector('.flex').insertAdjacentHTML('beforeend',
-            `<svg class="check-icon w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>`
-        );
-
-        document.getElementById('modelStatus').textContent = `${model} Ready`;
-        checkChatRagStatus();
-    }
-
-    async function testConnection() {
-        const url = document.getElementById('ollamaUrl').value.trim();
-        try {
-            const res = await fetch(`${url}/api/health`);
-            if (res.ok) {
-                showToast('✅ Ollama подключен!');
-            } else {
-                throw new Error('Ошибка подключения');
-            }
-        } catch (e) {
-            showToast(`❌ Ошибка: ${e.message}`);
-        }
     }
 
     function toggleSettings() {

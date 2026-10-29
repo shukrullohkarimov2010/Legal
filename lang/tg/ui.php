@@ -426,7 +426,7 @@ return [
     'platform_features_title' => 'Ҳама имкониятҳои платформа',
     'platform_features_text' => '15+ восита барои автоматизатсияи пурраи кори ҳуқуқӣ',
     'feature_ai_chat' => 'Чати ҳуқуқии AI',
-    'feature_ai_chat_text' => 'Ёрдамчии интеллектуалӣ дар асоси GPT-4/Gemini барои машваратҳои 24/7',
+    'feature_ai_chat_text' => 'Ёрдамчии интеллектуалии AI-и LegalAI Pro барои машваратҳои 24/7',
     'popular' => 'Маъруф',
     'response_60sec' => '~60 сония ҷавоб',
     'feature_contract_analysis' => 'Таҳлили шартномаҳо',

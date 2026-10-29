@@ -20,9 +20,9 @@ return [
 
     'ai_via_ollama' => 'AI-анализ LegalAI',
     'ai_subtitle' => 'Полный промпт · Кэш',
-    'ollama_url_placeholder' => 'URL Ollama',
-    'model_faster' => '⚡ llama3.2:3b (быстрее)',
-    'model_fastest' => '🚀 phi3:mini (самая быстрая)',
+    'ollama_url_placeholder' => 'Адрес ИИ-сервиса',
+    'model_faster' => '⚡ LegalAI Pro (быстрее)',
+    'model_fastest' => '🚀 LegalAI Pro (самая быстрая)',
     'check_btn' => '🔄 Проверить',
     'ai_analysis' => 'AI-анализ',
     'cache' => 'Кэш',
@@ -70,7 +70,7 @@ return [
     'recommendations' => 'Рекомендации',
     'priority_actions' => 'Приоритетные действия',
     'disclaimer_label' => 'Дисклеймер:',
-    'disclaimer_text' => 'Отчёт сгенерирован ИИ (llama3.1:8b). Для юридически значимых решений проконсультируйтесь с юристом.',
+    'disclaimer_text' => 'Отчёт сгенерирован ИИ. Для юридически значимых решений проконсультируйтесь с юристом.',
     'export_report' => 'Экспорт отчёта',
     'save_result' => 'Сохраните результат',
     'new_comparison' => '🔄 Новое сравнение',
@@ -100,12 +100,12 @@ return [
 
         'checking_ollama' => 'Проверка AI-сервиса...',
         'no_models' => 'Нет моделей',
-        'ollama_no_models_html' => '<strong>⚠️ Сервис запущен, но нет моделей.</strong><br>',
+        'ollama_no_models_html' => '<strong>⚠️ ИИ-сервис временно недоступен.</strong><br>',
         'ollama_connected' => 'AI-сервис подключён.',
-        'ollama_models_available' => ':count моделей доступно.',
+        'ollama_models_available' => 'ИИ-ассистент готов к работе.',
         'ollama_connected_toast' => 'AI-сервис подключён',
         'ollama_unavailable' => 'AI-сервис недоступен',
-        'ollama_connect_failed' => '<strong>❌ Не удалось подключиться к AI-сервису.</strong><br>Проверьте, что запущен python/app.py.',
+        'ollama_connect_failed' => '<strong>❌ Не удалось подключиться к AI-сервису.</strong><br>Повторите попытку через несколько секунд.',
 
         'connecting_to' => '⏳ Отправка запроса (:model)...',
         'streaming_unsupported' => 'Streaming не поддерживается',
@@ -113,7 +113,7 @@ return [
         'done_tokens' => '✅ Готово! :tokens токенов за :seconds с (:speed ток/с)',
         'empty_response' => 'Пустой ответ',
         'cancelled_by_user' => 'Анализ отменен пользователем',
-        'ollama_unavailable_hint' => 'AI-сервис недоступен. Убедитесь, что запущен python/app.py.',
+        'ollama_unavailable_hint' => 'ИИ-сервис временно недоступен. Повторите попытку через несколько секунд.',
         'analysis_cancelled' => 'Анализ отменен',
         'cancelled_keyword' => 'отменен',
 
@@ -199,7 +199,7 @@ return [
         'done_recs' => '✅ Готово: :count рекомендаций (:source)',
 
         'model_from_cache' => '📦 Из кэша',
-        'model_ai_streaming' => '🤖 llama3.1:8b · Streaming',
+        'model_ai_streaming' => '🤖 LegalAI Pro · Streaming',
         'model_local' => '📊 Локальный анализ',
         'doc_info' => ':words слов · :size',
 

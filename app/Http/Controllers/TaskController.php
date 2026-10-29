@@ -16,7 +16,8 @@ class TaskController extends Controller
 
     public function create()
     {
-        return view('admin.pages.tasks.create');
+        // Старая страница-витрина с устаревшим содержимым; рабочие инструменты находятся на дашборде.
+        return redirect()->route('dashboard');
     }
 
     public function store(Request $request)
@@ -38,7 +39,8 @@ class TaskController extends Controller
 
     public function show(Task $task)
     {
-        return view('admin.pages.tasks.show', compact('task'));
+        // Старый локальный генератор договоров заменён рабочим генератором.
+        return redirect()->route('contract.generate');
     }
 
     public function edit(Task $task)

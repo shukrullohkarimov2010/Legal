@@ -71,7 +71,10 @@
 
   var SKIP_TAGS = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEXTAREA: 1, TEMPLATE: 1, PRE: 1 };
   var ATTRS = ['placeholder', 'title', 'aria-label', 'alt'];
-  var SKIP_SELECTOR = '[translate="no"], .cab-md';
+  // Отчёты, договоры и ответы модели уже написаны на языке документа (python/doc_lang.py).
+  // Словарь интерфейса по ним не ходит: он ломает русский отчёт, подставляя «Миёна»,
+  // «Банди договора» и «шартномаи меҳнатӣ» в отдельные слова и подписи.
+  var SKIP_SELECTOR = '[translate="no"], .cab-md, .markdown-body, .markdown-content, .contract-box';
 
   // Текст внутри <textarea>, <pre> и скриптов не трогаем (там вводит или вставляет сам пользователь),
   // а подсказки и подписи самих полей (placeholder, aria-label) — переводим.

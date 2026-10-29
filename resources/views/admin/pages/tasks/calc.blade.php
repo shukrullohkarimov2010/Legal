@@ -113,7 +113,7 @@
             </a>
 
             <div class="hidden items-center gap-8 md:flex">
-                <a href="{{ route('tasks.create') }}" class="text-sm font-medium text-slate-300 transition hover:text-white">Возможности</a>
+                <a href="{{ route('dashboard') }}" class="text-sm font-medium text-slate-300 transition hover:text-white">Возможности</a>
                 <a href="{{ route('tasks.calc') }}" class="text-sm font-medium text-white">Калькулятор</a>
                 <a href="{{ route('dashboard') }}" class="text-sm font-medium text-slate-300 transition hover:text-white">Дашборд</a>
                 <a href="{{ route('login') }}" class="inline-flex items-center rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
@@ -175,7 +175,7 @@
                                         placeholder="Например, 100000"
                                         class="w-full rounded-2xl border surface-border bg-white/80 px-4 py-4 pr-16 text-lg text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:bg-dark-input dark:text-slate-100"
                                     >
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400 dark:text-slate-400">сом</span>
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400 dark:text-slate-400">сомони</span>
                                 </div>
                             </div>
 
@@ -263,6 +263,10 @@
                                 </div>
                             </div>
                         </div>
+
+                        <p class="mt-6 rounded-2xl border surface-border p-4 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                            Размер неустойки определяется договором или законом (ГК РТ, статьи 381 и 383). Если неустойка явно несоразмерна последствиям нарушения, суд вправе её уменьшить (ГК РТ, статья 384).
+                        </p>
 
                         <div class="mt-10">
                             <button
@@ -368,12 +372,12 @@
                     { id: 'construction', label: 'Подряд', note: 'Строительство и работы' },
                     { id: 'labor', label: 'Трудовой', note: 'Кадровые обязательства' }
                 ],
-                selectedRate: { id: 'key', label: '0.033%', desc: 'Ключевая ставка ЦБ' },
+                selectedRate: { id: 'key', label: '0.033%', desc: 'Минимальная ставка' },
                 customRateValue: null,
                 rates: [
-                    { id: 'key', label: '0.033%', desc: 'Ключевая ставка ЦБ' },
+                    { id: 'key', label: '0.033%', desc: 'Минимальная ставка' },
                     { id: 'standard', label: '0.1%', desc: 'Стандартная договорная ставка' },
-                    { id: 'consumer', label: '0.5%', desc: 'Потребительская модель' },
+                    { id: 'consumer', label: '0.5%', desc: 'Повышенная ставка' },
                     { id: 'custom', label: 'Свой %', desc: 'Ручной ввод' }
                 ],
                 hasCalculated: false,
@@ -444,12 +448,13 @@
                 return `${new Intl.NumberFormat('ru-RU', {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 2
-                }).format(value || 0)} сом`;
+                }).format(value || 0)} ${'{{ app()->getLocale() === 'tg' ? 'сомонӣ' : 'сомони' }}'}`;
             },
             getPeriodLabel() {
-                if (this.timeUnit === 'days') return 'дней';
-                if (this.timeUnit === 'weeks') return 'недель';
-                if (this.timeUnit === 'months') return 'месяцев';
+                const tg = '{{ app()->getLocale() }}' === 'tg';
+                if (this.timeUnit === 'days') return tg ? 'рӯз' : 'дней';
+                if (this.timeUnit === 'weeks') return tg ? 'ҳафта' : 'недель';
+                if (this.timeUnit === 'months') return tg ? 'моҳ' : 'месяцев';
                 return '';
             },
             selectedRateText() {

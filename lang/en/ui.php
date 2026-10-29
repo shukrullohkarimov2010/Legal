@@ -437,7 +437,7 @@ return [
     'platform_features_title' => 'Platform capabilities',
     'platform_features_text' => '15+ tools for full legal workflow automation',
     'feature_ai_chat' => 'AI Legal Chat',
-    'feature_ai_chat_text' => 'An intelligent assistant powered by GPT-4/Gemini for 24/7 consultation',
+    'feature_ai_chat_text' => 'The LegalAI Pro intelligent AI assistant for 24/7 consultation',
     'popular' => 'Popular',
     'response_60sec' => '~60 sec response',
     'feature_contract_analysis' => 'Contract Analysis',

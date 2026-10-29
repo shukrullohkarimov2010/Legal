@@ -2718,7 +2718,7 @@
             </div>
             <div class="toggle-row">
                 <select id="aiModel" class="field-select" disabled style="width: auto; padding: 6px 12px; font-size: 0.8125rem;">
-                    <option value="gpt-6-luna">gpt-6-luna</option>
+                    <option value="LegalAI Pro">LegalAI Pro</option>
                 </select>
                 <span style="color: var(--text-muted); font-size: 0.75rem;">{{ __('generate.analysis_model') }}</span>
             </div>
@@ -3099,7 +3099,7 @@
         API_CACHE_TTL: 24 * 60 * 60 * 1000,
         TOTAL_STEPS: 5
     };
-    // ИИ идёт только через сервер сайта: модель (gpt-6-luna) задаётся в .env, браузер к Ollama не обращается.
+    // ИИ идёт только через сервер сайта: браузер к внешним ИИ-сервисам не обращается.
     const PY_API = "{{ rtrim(env('PYTHON_API_URL', 'http://127.0.0.1:5000'), '/') }}";
     const aiBackend = 'server';
     const CABINET_ACTIVITY_URL = '{{ route('cabinet.activity.store') }}';
@@ -3354,7 +3354,7 @@
         if (n < 4) document.getElementById('result')?.classList.remove('active');
     }
 
-    // ===== Ollama =====
+    // ===== ИИ-сервис =====
     async function checkOllamaConnection() {
         try {
             const controller = new AbortController();
@@ -3367,8 +3367,8 @@
             if (modelSelect) {
                 modelSelect.innerHTML = '';
                 const opt = document.createElement('option');
-                opt.value = info.model;
-                opt.textContent = '🟢 ' + info.model;
+                opt.value = 'LegalAI Pro';
+                opt.textContent = '🟢 LegalAI Pro';
                 modelSelect.appendChild(opt);
             }
             ollamaStatus = 'connected';
@@ -3402,7 +3402,7 @@
         }
     }
 
-    async function ollamaChat(system, user, model = 'gpt-6-luna', opts = {}) {
+    async function ollamaChat(system, user, model = 'LegalAI Pro', opts = {}) {
         const cacheKey = simpleHash(`${model}:${system}:${user}`);
         const cached = requestCache.get(cacheKey);
 

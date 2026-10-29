@@ -20,9 +20,9 @@ return [
 
     'ai_via_ollama' => 'Таҳлили AI аз LegalAI',
     'ai_subtitle' => 'Промпти пурра · Кэш',
-    'ollama_url_placeholder' => 'URL-и Ollama',
-    'model_faster' => '⚡ llama3.2:3b (тезтар)',
-    'model_fastest' => '🚀 phi3:mini (тезтарин)',
+    'ollama_url_placeholder' => 'Суроғаи хидмати AI',
+    'model_faster' => '⚡ LegalAI Pro (тезтар)',
+    'model_fastest' => '🚀 LegalAI Pro (тезтарин)',
     'check_btn' => '🔄 Санҷидан',
     'ai_analysis' => 'Таҳлили AI',
     'cache' => 'Кэш',
@@ -70,7 +70,7 @@ return [
     'recommendations' => 'Тавсияҳо',
     'priority_actions' => 'Амалҳои афзалиятнок',
     'disclaimer_label' => 'Дисклеймер:',
-    'disclaimer_text' => 'Ҳисобот аз ҷониби AI (llama3.1:8b) тавлид шудааст. Барои қарорҳои муҳими ҳуқуқӣ бо ҳуқуқшинос машварат кунед.',
+    'disclaimer_text' => 'Ҳисобот аз ҷониби AI тавлид шудааст. Барои қарорҳои муҳими ҳуқуқӣ бо ҳуқуқшинос машварат кунед.',
     'export_report' => 'Содироти ҳисобот',
     'save_result' => 'Натиҷаро нигоҳ доред',
     'new_comparison' => '🔄 Муқоисаи нав',
@@ -100,12 +100,12 @@ return [
 
         'checking_ollama' => 'Санҷиши хидмати AI...',
         'no_models' => 'Модел нест',
-        'ollama_no_models_html' => '<strong>⚠️ Хидмат кор мекунад, вале модел надорад.</strong><br>',
+        'ollama_no_models_html' => '<strong>⚠️ Хидмати AI муваққатан дастрас нест.</strong><br>',
         'ollama_connected' => 'Хидмати AI пайваст шуд.',
-        'ollama_models_available' => ':count модел дастрас аст.',
+        'ollama_models_available' => 'Ёрдамчии AI омода аст.',
         'ollama_connected_toast' => 'Хидмати AI пайваст шуд',
         'ollama_unavailable' => 'Хидмати AI дастрас нест',
-        'ollama_connect_failed' => '<strong>❌ Пайваст ба хидмати AI муяссар нашуд.</strong><br>Мутмаин шавед, ки python/app.py кор мекунад.',
+        'ollama_connect_failed' => '<strong>❌ Пайваст ба хидмати AI муяссар нашуд.</strong><br>Чанд сонияи дигар бори дигар кӯшиш кунед.',
 
         'connecting_to' => '⏳ Фиристодани дархост (:model)...',
         'streaming_unsupported' => 'Streaming дастгирӣ намешавад',
@@ -113,7 +113,7 @@ return [
         'done_tokens' => '✅ Тайёр! :tokens токен дар :seconds сония (:speed ток/сон)',
         'empty_response' => 'Ҷавоби холӣ',
         'cancelled_by_user' => 'Таҳлил аз ҷониби корбар бекор карда шуд',
-        'ollama_unavailable_hint' => 'Хидмати AI дастрас нест. Мутмаин шавед, ки python/app.py кор мекунад.',
+        'ollama_unavailable_hint' => 'Хидмати AI муваққатан дастрас нест. Чанд сонияи дигар бори дигар кӯшиш кунед.',
         'analysis_cancelled' => 'Таҳлил бекор карда шуд',
         'cancelled_keyword' => 'бекор',
 
@@ -199,7 +199,7 @@ return [
         'done_recs' => '✅ Тайёр: :count тавсия (:source)',
 
         'model_from_cache' => '📦 Аз кэш',
-        'model_ai_streaming' => '🤖 llama3.1:8b · Streaming',
+        'model_ai_streaming' => '🤖 LegalAI Pro · Streaming',
         'model_local' => '📊 Таҳлили маҳаллӣ',
         'doc_info' => ':words калима · :size',
 

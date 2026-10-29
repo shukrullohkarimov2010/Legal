@@ -66,6 +66,8 @@ MODEL_NAME = os.environ.get("LEGAL_MODEL_NAME", "legal-strong")
 # режиме не используется, вместо него всегда идёт OPENAI_MODEL. Поиск по
 # кодексам (BM25/эмбеддинги) провайдер не затрагивает — это отдельный слой.
 LLM_PROVIDER = (os.environ.get("LLM_PROVIDER") or "ollama").strip().lower()
+# Единственное название ИИ, которое видят пользователи и публичные ответы API.
+AI_PUBLIC_NAME = "LegalAI Pro"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = (os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
 OPENAI_MODEL = os.environ.get("GPT_MODEL") or os.environ.get("OPENAI_MODEL") or "gpt-5-nano"
@@ -392,9 +394,20 @@ CONTRACT_TYPE_KEYWORDS = {
         "лицензионного", "лицензиар", "лицензиат", "право использования", "лицензию",
     ],
     "простой товарищества": [
-        "простого товарищества", "совместной деятельности", "товарищи",
+        "простого товарищества", "совместной деятельности", "совместной организационной деятельности",
+        "товарищи", "инвестиц", "инвестор", "вклад", "прибыль",
     ],
 }
+
+# Тип, названный в самом заголовке договора, важнее подсчёта слов по тексту: в «Договоре субподряда и совместной
+# деятельности» слова про подряд и услуги встречаются чаще, и без этого договор получал нормы о подряде, а не о
+# совместной деятельности. Ищется только в начале текста (заголовок и преамбула).
+TITLE_TYPE_PATTERNS = {
+    "простой товарищества": re.compile(r"совместн\w+ (?:организационн\w+ )?деятельност|простого товарищества", re.IGNORECASE),
+}
+TITLE_TYPE_SCAN_CHARS = 400
+TITLE_TYPE_SCORE = 0.9
+
 
 def classify_contract_type(text):
     """
@@ -420,6 +433,16 @@ def classify_contract_type(text):
             scores.append({"type": contract_type, "score": round(normalized, 3), "matches": score})
     
     # Сортируем по убыванию
+    head = text[:TITLE_TYPE_SCAN_CHARS]
+    for contract_type, pattern in TITLE_TYPE_PATTERNS.items():
+        if not pattern.search(head):
+            continue
+        entry = next((item for item in scores if item["type"] == contract_type), None)
+        if entry:
+            entry["score"] = max(entry["score"], TITLE_TYPE_SCORE)
+        else:
+            scores.append({"type": contract_type, "score": TITLE_TYPE_SCORE, "matches": 1})
+
     scores.sort(key=lambda x: x["score"], reverse=True)
     
     if not scores:
@@ -538,9 +561,42 @@ def _cited_article_numbers(text):
         )
     )
 
+_QUOTE_EDGES = '«»“”„"\'‘’ \t\r\n'
+
+
+def _clean_quote(text):
+    """Цитата без кавычек по краям: отчёт сам берёт её в «ёлочки», а проверка ищет голый текст."""
+    return str(text or "").strip(_QUOTE_EDGES)
+
+
+def _repair_quote_from_contract(finding, contract_text, min_share=0.6, min_shared=3):
+    """Перефразированную моделью цитату заменяет дословным предложением договора.
+
+    Модель часто пересказывает пункт своими словами, и тогда настоящий риск удалялся как «цитата не найдена».
+    Если почти все основы слов цитаты и заголовка риска есть в одном предложении договора, в отчёт идёт это
+    предложение дословно. Выдуманная цитата не похожа ни на одно предложение и по-прежнему отсеивается.
+    """
+    quote_stems = _stems(_clean_quote(finding.get("fragment")))
+    if len(quote_stems) < min_shared:
+        return False
+    best, best_score = None, 0.0
+    for segment in re.split(r"\n+|(?<=[.;!?])\s+", str(contract_text or "")):
+        segment = segment.strip()
+        if len(segment) < 20:
+            continue
+        shared = len(quote_stems & _stems(segment))
+        score = shared / len(quote_stems)
+        if shared >= min_shared and score >= min_share and score > best_score:
+            best, best_score = segment, score
+    if not best:
+        return False
+    finding["fragment"] = best if len(best) <= 400 else best[:400].rsplit(" ", 1)[0] + "…"
+    return True
+
+
 def detect_hallucination(finding, contract_text, rag_context=""):
     """Return a reason when a finding cannot be verified by the contract and RAG."""
-    quote = _normalize_text(finding.get("fragment", ""))
+    quote = _normalize_text(_clean_quote(finding.get("fragment", "")))
     contract = _normalize_text(contract_text)
     if len(quote) < 15 or not _quote_matches_contract(quote, contract):
         return "цитата не найдена в тексте договора"
@@ -1896,15 +1952,19 @@ class LLMBackendError(Exception):
     """Провайдер генерации недоступен или ответил ошибкой."""
 
 
+# Сообщения для пользователя не называют провайдера и модель; подробности остаются в журнале сервера.
+AI_UNAVAILABLE_TEXT = "⚠️ ИИ-ассистент временно недоступен. Повторите попытку через несколько секунд."
+
+
 def _llm_unavailable_message():
-    if LLM_PROVIDER == "openai":
-        return "⚠️ Не удалось подключиться к OpenAI API. Проверьте OPENAI_API_KEY и сеть."
-    return "⚠️ Не удалось подключиться к Ollama. Убедитесь, что сервер запущен: ollama serve"
+    print(f"  [LLM] недоступен бэкенд генерации ({LLM_PROVIDER})")
+    return AI_UNAVAILABLE_TEXT
 
 
 def _openai_headers():
     if not OPENAI_API_KEY:
-        raise LLMBackendError("⚠️ OPENAI_API_KEY не задан в .env — обращение к OpenAI невозможно.")
+        print("  [LLM] OPENAI_API_KEY не задан в .env — запросы к ИИ невозможны")
+        raise LLMBackendError(AI_UNAVAILABLE_TEXT)
     return {"Authorization": "Bearer " + OPENAI_API_KEY, "Content-Type": "application/json"}
 
 
@@ -2038,7 +2098,8 @@ def llm_stream(model, prompt, *, temperature=0.5, num_predict=2048, top_p=0.9,
                 print("  [LLM] соединение оборвано до первого токена, повторяю запрос")
                 time.sleep(1.0)
             except requests.exceptions.HTTPError as error:
-                raise LLMBackendError("⚠️ Ошибка OpenAI API: " + (_openai_error_detail(error) or str(error)))
+                print("  [LLM] ошибка API: " + (_openai_error_detail(error) or str(error)))
+                raise LLMBackendError(AI_UNAVAILABLE_TEXT)
         yield {"done": True}
         return
 
@@ -2098,7 +2159,8 @@ def llm_once(model, prompt, num_predict, temperature=0.1, keep_alive=None, timeo
         except requests.exceptions.ConnectionError:
             raise LLMBackendError(_llm_unavailable_message())
         except requests.exceptions.HTTPError as error:
-            raise LLMBackendError("⚠️ Ошибка OpenAI API: " + (_openai_error_detail(error) or str(error)))
+            print("  [LLM] ошибка API: " + (_openai_error_detail(error) or str(error)))
+            raise LLMBackendError(AI_UNAVAILABLE_TEXT)
         choices = (r.json() or {}).get("choices") or []
         message = (choices[0].get("message") if choices else {}) or {}
         return message.get("content") or ""
@@ -2264,7 +2326,7 @@ def _build_contract_type_guidance(contract_type):
 def _contract_code_filter(labor):
     """Какие кодексы допустимы как основание условий договора: уголовные и административные — нет;
     трудовой — только для трудового договора."""
-    excluded = ("УК", "УПК", "КоАП", "УИК")
+    excluded = ("УК", "УПК", "КоАП", "ПКоАП", "УИК", "ТмК", "ВдК", "ВздК", "ЛК")
 
     def allowed(item):
         code = str(item.get("code_short") or "")
@@ -2634,7 +2696,13 @@ def _is_duplicate_risk(risk1, risk2, threshold=0.70):
     same_point = bool((risk1.get('point') or '').strip()) and (risk1.get('point') or '').strip() == (risk2.get('point') or '').strip()
     if (same_point and overlap >= 0.6) or overlap >= 0.85:
         return True
-    
+
+    # 5. Тот же пункт, та же проверенная норма и заметное пересечение цитат: условие описано дважды
+    #    разными кусками одной фразы («реже срока, по усмотрению» и «по усмотрению, товарами»).
+    norm1 = str(risk1.get('norm') or '').strip().lower()
+    if same_point and norm1 and norm1 == str(risk2.get('norm') or '').strip().lower() and overlap >= 0.5:
+        return True
+
     return False
 
 def _deduplicate_findings(findings):
@@ -2709,7 +2777,9 @@ def _apply_severity_heuristics(findings):
 
     for finding in findings:
         current = finding.get("severity", "medium")
-        text = " ".join(str(finding.get(k, "") or "") for k in ("title", "fragment", "why", "fix", "norm")).lower()
+        # «Что исправить» и норма — рекомендация и ссылка модели, а не условие договора: из-за слов «в одностороннем
+        # порядке» в совете к вполне взаимному праву отказа находка ошибочно становилась «Высокой».
+        text = " ".join(str(finding.get(k, "") or "") for k in ("title", "fragment", "why")).lower()
         if not text:
             continue
         for groups, target in rules:
@@ -2843,7 +2913,10 @@ def _filter_findings_by_rag_evidence(findings, contract_text, rag_context=""):
     """Keep findings grounded in the contract; mark missing RAG norms honestly instead of deleting."""
     verified = []
     for finding in findings:
+        finding["fragment"] = _clean_quote(finding.get("fragment"))
         reason = detect_hallucination(finding, contract_text, rag_context)
+        if reason == "цитата не найдена в тексте договора" and _repair_quote_from_contract(finding, contract_text):
+            reason = detect_hallucination(finding, contract_text, rag_context)
         if reason == "цитата не найдена в тексте договора":
             print(f"  [RAG EVIDENCE] Removed ungrounded finding: {finding.get('title', 'N/A')[:60]} ({reason})")
             continue
@@ -3215,6 +3288,50 @@ def check_essential_conditions(text, contract_type_info=None):
         })
     return findings
 
+_ARTICLE_MENTION_RE = re.compile(
+    r"\b(статья|статьи|статье|статью|статьёй|статьей|ст\.)\s*(\d+(?:[.\-]\d+)*(?:\s*(?:,|и)\s*\d+(?:[.\-]\d+)*)*)",
+    re.IGNORECASE,
+)
+# Падеж слова «статья» сохраняется: «под статью 718» -> «под указанную выше статью».
+_ARTICLE_MENTION_FORMS = {
+    "статья": "указанная выше статья", "статьи": "указанной выше статьи", "статье": "указанной выше статье",
+    "статью": "указанную выше статью", "статьёй": "указанной выше статьёй", "статьей": "указанной выше статьёй",
+    "ст.": "указанной выше статье",
+}
+
+
+def _align_article_mentions(finding):
+    """Номера статей в «Основании» и «Правке» не должны расходиться с нормой, проверенной по RAG.
+
+    Модель пишет эти поля свободным текстом и может назвать статью, которой нет в «Норме РТ из RAG»
+    (в отчёте стояло «Статья 675», а в правке — «под статью 718»). Такая ссылка не проверена ни по
+    цитате, ни по базе, поэтому остаётся только ссылка на проверенную норму.
+    """
+    allowed = _cited_article_numbers(finding.get("norm", ""))
+    if not allowed:
+        return
+
+    def fix(match):
+        numbers = re.findall(r"\d+(?:[.\-]\d+)*", match.group(2))
+        if all(number in allowed for number in numbers):
+            return match.group(0)
+        return _ARTICLE_MENTION_FORMS.get(match.group(1).lower(), "указанная выше статья")
+
+    for key in ("why", "fix"):
+        if finding.get(key):
+            finding[key] = _ARTICLE_MENTION_RE.sub(fix, finding[key])
+
+
+def _polish_findings(findings):
+    """Заголовок с заглавной буквы и ссылки на статьи только из проверенной нормы."""
+    for finding in findings:
+        title = str(finding.get("title") or "").strip()
+        if title:
+            finding["title"] = title[0].upper() + title[1:]
+        _align_article_mentions(finding)
+    return findings
+
+
 def _attach_rag_norm_text(findings):
     """Attach real article text from the connected RAG codexes to verified norms.
 
@@ -3305,21 +3422,54 @@ VERIFY_MAX_FINDINGS = 24
 VERIFY_BATCH = 8
 
 
+# Названия сторон в запросе к поиску только мешают: «Исполнитель» цепляет статьи «Исполнитель завещания» и
+# «Обжалование действий исполнителя органа исполнения», хотя речь о стороне договора.
+_PARTY_WORDS_RE = re.compile(r"\b(?:исполнител|заказчик|сторон)\w*", re.IGNORECASE)
+NORM_CANDIDATES_MAX = 7
+# Отраслевые кодексы берутся в кандидаты только когда сама находка о соответствующей отрасли: иначе поиск по общим
+# словам («отчёт», «уведомление») тянет налоговую отчётность и земельные платежи к любому договору.
+_SECTOR_CODES = {
+    "НК": r"налог|ндс|пошлин|сбор",
+    "ЗмК": r"земел|участк",
+    "ГрК": r"строител|градостроит|проектн",
+    "КАТ": r"перевоз|автомобил|транспорт",
+}
+
+
 def _norm_candidates(finding, contract_type, labor, index):
     """Статьи, которые могут относиться к условию из находки: по теме условия и по смыслу находки."""
     search = lambda query, top_k: retrieve_rag(query, top_k=top_k, index=index)  # noqa: E731
     allowed = _contract_code_filter(labor)
+    finding_text = " ".join(str(finding.get(k) or "") for k in ("fragment", "title", "why")).lower()
+
+    def in_scope(item):
+        if not allowed(item):
+            return False
+        code = str(item.get("code_short") or "")
+        return all(re.search(pattern, finding_text) for short, pattern in _SECTOR_CODES.items() if code.startswith(short))
+
     seed = " ".join(str(finding.get(k) or "") for k in ("fragment", "title"))
-    pool = contract_topics.topic_results(seed, search, contract_type, per_topic=1, max_topics=3, labor=labor)
-    pool += search(" ".join(str(finding.get(k) or "") for k in ("title", "why")), 8)
+    pool = contract_topics.topic_results(seed, search, contract_type, per_topic=1, max_topics=4, labor=labor)
+    if not pool:
+        # Условие не подпало ни под одну тему — подбираем темы по описанию риска.
+        pool = contract_topics.topic_results(str(finding.get("why") or ""), search, contract_type,
+                                             per_topic=1, max_topics=3, labor=labor)
+    # Название типа договора тоже ищет темы, но уже после тем самого условия: «простой товарищества» подтягивает
+    # статьи о совместной деятельности, даже когда пункт про «результат работ» или «назначение средств» этих слов
+    # не содержит, и при этом не вытесняет статью, подобранную под сам пункт.
+    pool += contract_topics.topic_results(str(contract_type or ""), search, contract_type, per_topic=1, max_topics=1, labor=labor)
+    for fields in (("title", "why"), ("fragment",)):
+        query = _PARTY_WORDS_RE.sub(" ", " ".join(str(finding.get(k) or "") for k in fields)).strip()
+        if query:
+            pool += [item for item in search(query, 8) if in_scope(item)][:4]
     out, seen = [], set()
     for item in pool:
         key = (item.get("code_short"), item.get("article"))
-        if key in seen or not allowed(item):
+        if key in seen or not in_scope(item):
             continue
         seen.add(key)
         out.append(item)
-        if len(out) >= 5:
+        if len(out) >= NORM_CANDIDATES_MAX:
             break
     return out
 
@@ -3357,9 +3507,13 @@ def _verify_batch(batch, contract_text, contract_type, labor, index):
         lines = []
         current = _cited_article_numbers(finding.get("norm", ""))
         if current:
-            lines.append(f"   [0] текущая ссылка модели: {finding.get('norm', '')}")
+            # Без названия и текста статьи проверяющий выбирал [0] вслепую, и чужая статья (отказ от договора
+            # транспортной экспедиции вместо отказа от договора услуг) оставалась в отчёте.
+            own = next((c for c in (_resolve_rag_article_chunk(n, finding.get("norm", "")) for n in sorted(current)) if c), None)
+            own_text = re.sub(r"\s+", " ", (own or {}).get("text", "")).strip()[:400]
+            lines.append(f"   [0] текущая ссылка модели: {finding.get('norm', '')}" + (f" — {own_text}" if own_text else ""))
         for k, item in enumerate(options, 1):
-            text = re.sub(r"\s+", " ", item.get("text", "")).strip()[:330]
+            text = re.sub(r"\s+", " ", item.get("text", "")).strip()[:400]
             lines.append(f"   [{k}] {item.get('citation') or legal_rag.citation_for(item)} — {item.get('title')}: {text}")
         blocks.append(
             f"ВЫВОД {n}: [{finding.get('severity')}] {finding.get('title')}\n"
@@ -3594,6 +3748,7 @@ def estimate_risk_metrics(analysis_text, contract_text="", rag_context="", contr
 
     # Прикрепляем реальный текст статей из подключённого RAG к подтверждённым нормам.
     findings = _attach_rag_norm_text(findings)
+    findings = _polish_findings(findings)
 
     print(f"  [PARSER] После фильтрации, эвристик и дедупликации: {len(findings)}")
     for f in findings:
@@ -4527,9 +4682,25 @@ def codex_search():
     query = request.args.get("q", "")
     # Индекс русский: таджикский запрос переводится до поиска, а страница показывает, по чему искали.
     query_ru = _crime_text_to_russian(query) if query.strip() else query
+    def text_search(text, n):
+        """Слова из запроса + смысловой поиск: «испытательный срок» не встречается в названии статьи об
+        испытании при приёме на работу, и чистый BM25 находил только УИК."""
+        base = list(legal_rag.lexical_search(index, text, limit=n))
+        try:
+            extra = retrieve_rag(text, top_k=min(n, 12), index=index)
+        except Exception as error:  # noqa: BLE001
+            print("  [CODEX] смысловой поиск недоступен (%s)" % type(error).__name__)
+            extra = []
+        best = max((score for score, _chunk in base), default=1.0)
+        # Статью, которую смысловой поиск поставил в первую десятку, фильтр слабых совпадений отбрасывать не должен.
+        picked = {chunk.get("id") for chunk in extra[:10]}
+        seen = {chunk.get("id") for _score, chunk in base}
+        return ([(best if chunk.get("id") in picked else score, chunk) for score, chunk in base]
+                + [(best, chunk) for chunk in extra if chunk.get("id") not in seen])
+
     payload = catalog.search(
         query_ru,
-        lambda text, n: legal_rag.lexical_search(index, text, limit=n),
+        text_search,
         code_id=request.args.get("code") or None,
         limit=limit,
     )
@@ -6540,6 +6711,9 @@ def _number_present(number, text):
     variants = [number]
     if number.isdigit() and len(number) > 3:
         variants.append(_grouped(number))
+    # Модель пишет десятичную дробь с точкой или запятой независимо от записи в требовании: «0,1» и «0.1» — одно число.
+    if re.fullmatch(r"\d+[.,]\d+", number):
+        variants.append(number.replace(",", "#").replace(".", ",").replace("#", "."))
     for variant in variants:
         pattern = r"(?<![\d,.])%s(?![\d])" % re.escape(variant)
         if re.search(pattern, text or ""):
@@ -7106,6 +7280,7 @@ def health():
     if LLM_PROVIDER == "openai":
         openai_status = "configured" if OPENAI_API_KEY else "missing OPENAI_API_KEY"
 
+    ai_ready = (ollama_status == "ok") if LLM_PROVIDER != "openai" else bool(OPENAI_API_KEY)
     temp_files = 0
     temp_size = 0
     if os.path.exists(TEMP_DIR):
@@ -7120,23 +7295,12 @@ def health():
         "service": "LegalAI API",
         "version": "3.1.0-complete-lawyer",
         "analysis_version": ANALYSIS_VERSION,
-        "model": _active_model_tag(),
-        "llm_provider": LLM_PROVIDER,
-        # Что реально отвечает на странице квалификации по УК РТ: страница
-        # показывает пользователю, уходит ли описание события во внешнее облако.
-        "draft_llm": {
-            "provider": LLM_PROVIDER,
-            "model": DRAFT_GPT_MODEL if LLM_PROVIDER == "openai" else CONTRACT_DRAFT_MODEL,
-            "ready": LLM_PROVIDER != "openai" or bool(OPENAI_API_KEY),
-        },
-        "crime_llm": {
-            "provider": LLM_PROVIDER,
-            "model": CRIME_GPT_MODEL if LLM_PROVIDER == "openai" else CRIME_MODEL,
-            "cloud": LLM_PROVIDER == "openai",
-        },
-        "ollama": {"status": ollama_status, "models": ollama_models, "url": OLLAMA_URL},
-        "openai": {"status": openai_status, "model": OPENAI_MODEL, "base_url": OPENAI_BASE_URL},
-        "temp_dir": {"path": os.path.abspath(TEMP_DIR), "files": temp_files, "size_bytes": temp_size},
+        # Публичный ответ не раскрывает названия моделей, провайдера и адреса сервисов: страницы показывают
+        # только нейтральную марку, а детали настройки остаются в .env.
+        "model": AI_PUBLIC_NAME,
+        "draft_llm": {"model": AI_PUBLIC_NAME, "ready": ai_ready},
+        "crime_llm": {"model": AI_PUBLIC_NAME, "ready": ai_ready},
+        "temp_dir": {"files": temp_files, "size_bytes": temp_size},
         "rag": rag_status_payload(),
         "active_sessions": len(active_sessions),
         "timestamp": time.time()

@@ -2694,7 +2694,7 @@
 
     function downloadGenerated(format) {
         const text = document.getElementById('gen-result-text')?.textContent;
-        if (!text) return;
+        if (!text) return;87
         if (format === 'txt') { const b = new Blob([text], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'contract.txt'; a.click(); }
     }
 
