@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link rel="stylesheet" href="{{ asset('css/tw-analyze.css') }}?v={{ @filemtime(public_path('css/tw-analyze.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/risk-map.css') }}?v={{ @filemtime(public_path('css/risk-map.css')) }}">
     <script src="{{ asset('vendor/marked.min.js') }}"></script>
     <script src="{{ asset('vendor/html2pdf.bundle.min.js') }}"></script>
     <script src="{{ asset('vendor/docx-8.2.3.umd.js') }}"></script>
@@ -825,6 +826,9 @@
                         <!-- Findings Container -->
                         <div id="findingsContainer" class="space-y-3"></div>
 
+                        <!-- Карта рисков: текст договора с подсветкой (public/js/risk-map.js) -->
+                        <section id="riskMapSection" class="hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8" aria-label="Карта рисков договора"></section>
+
                         <div class="section-divider">
                             <span class="section-divider-text">📋 Полный отчёт</span>
                         </div>
@@ -923,6 +927,7 @@
     </div>
 </div>
 
+<script src="{{ asset('js/risk-map.js') }}?v={{ @filemtime(public_path('js/risk-map.js')) }}"></script>
 <script>
     const PYTHON_API = "{{ $pythonApiUrl ?? 'http://127.0.0.1:5000' }}";
     const CONTRACT_RAG_SOURCE = '1918_ru_1.docx';
@@ -1233,7 +1238,7 @@
                     case'status':{if(typeof v.progress_percent==='number')updateProgress(v.progress_percent);if(v.step==='cache_hit')setAnalysisCacheState('hit');const message=v.message||v.step||'Обработка...';const key=v.step==='analyzing'?`${v.step}:${v.processed}/${v.total}`:`${v.step}:${message}`;if(key!==lastStatusLogKey){log(message,'status');lastStatusLogKey=key;}break;}
                     case'progress':if(typeof v.progress_percent==='number')updateProgress(v.progress_percent);break;
                     case'chunk_result':break;
-                    case'summary_complete':lastServerMetrics=v.metrics||null;setAnalysisCacheState(v.cache_hit?'hit':'fresh');processSummary(v.content, v.metrics || null, v.revised_contract || null);break;
+                    case'summary_complete':lastServerMetrics=v.metrics||null;setAnalysisCacheState(v.cache_hit?'hit':'fresh');processSummary(v.content, v.metrics || null, v.revised_contract || null);if(window.RiskMap)RiskMap.render(v.risk_map||null,{api:PYTHON_API,codexUrl:"{{ route('contract.codex') }}"});break;
                     case'complete':log('🎉 Завершено!','success');finalizeReport();break;
                     case'error':log(`❌ ${v.message||v.error||'Ошибка'}`,'error');showToast(v.message||v.error||'Ошибка','error');eventSource.close();resetSubmitBtn();break;
                 }
@@ -1506,6 +1511,7 @@
         fr.classList.add('hidden');
         document.querySelectorAll('.pro-reveal').forEach(el=>el.classList.remove('revealed'));
         setRevisedContractDownload(null);
+        if(window.RiskMap)RiskMap.reset();
         document.getElementById('fileInput').value='';
         document.getElementById('dropContent').classList.remove('hidden');
         document.getElementById('fileSelected').classList.add('hidden');

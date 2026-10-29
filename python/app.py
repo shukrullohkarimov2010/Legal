@@ -37,6 +37,7 @@ import lang_service  # noqa: E402  — определение языка воп�
 import chat_modes  # noqa: E402  — роли (юрист/адвокат), глубина ответа, документы в чате
 import contract_topics  # noqa: E402  — темы условий договора -> нужные статьи кодексов
 import doc_lang  # noqa: E402  — язык документа: перевод договора и отчёта (таджикский <-> русский)
+import risk_map  # noqa: E402  — карта рисков договора: привязка находок к абзацам
 import codex_catalog  # noqa: E402  — кодексы из RAG-индекса для страницы /contract/codex
 import doc_dialog  # noqa: E402  — вопросы перед составлением документа: какой договор и с кем
 
@@ -4251,6 +4252,7 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
             # Do not let a second generative pass introduce unsupported claims.
             # The published report is rendered only from findings that passed
             # contract-quote and RAG-article verification.
+            report_metrics = None
             if source_lang == "tg":
                 try:
                     report_metrics, report_type_info = yield from _with_heartbeat(
@@ -4318,7 +4320,8 @@ def generate_sse(file_path, request_id, original_filename=None, generate_revised
                     "content": final_summary,
                     "length": len(final_summary),
                     "revised_contract": revised_contract,
-                    "metrics": response_metrics
+                    "metrics": response_metrics,
+                    "risk_map": _contract_risk_map(full_text, risk_metrics, report_metrics, source_lang),
                 }, "summary_complete")
                 print("✅ Заключение сгенерировано")
             else:
@@ -7204,6 +7207,72 @@ def contract_compare():
 
 
 # ================= ЭНДПОИНТЫ =================
+def _contract_risk_map(contract_text, risk_metrics, report_metrics, source_lang):
+    """Карта рисков для интерфейса; ошибка карты не должна ронять заключение."""
+    try:
+        shown = (report_metrics or {}).get("findings") if report_metrics else None
+        result = risk_map.build_risk_map(contract_text, risk_metrics.get("findings"), display=shown)
+        for item in result["findings"]:
+            # Норма уже прошла сверку с RAG при анализе: «есть в кодексе» здесь
+            # значит «подтверждена», поэтому показываем её зелёной.
+            cites = _chat_citations(item["norm"], []) if item["norm"] else []
+            for cite in cites:
+                if cite["status"] == chat_modes.CITE_EXISTS:
+                    cite["status"] = chat_modes.CITE_VERIFIED
+            item["citations"] = cites
+        result["lang"] = source_lang
+        return result
+    except Exception as e:  # noqa: BLE001
+        print("risk_map: %s" % e)
+        return None
+
+
+@app.route("/api/clause/rewrite", methods=["POST"])
+def clause_rewrite():
+    """Безопасная формулировка пункта договора, из-за которого найден риск."""
+    data = request.get_json(silent=True) or {}
+    clause = str(data.get("clause") or "").strip()[:2500]
+    if len(clause) < 15:
+        return jsonify({"error": "Нужен текст пункта"}), 400
+    title = str(data.get("title") or "").strip()[:300]
+    why = str(data.get("why") or "").strip()[:900]
+    fix = str(data.get("fix") or "").strip()[:900]
+    norm = str(data.get("norm") or "").strip()[:400]
+    lang = "tg" if str(data.get("lang") or "") == "tg" else "ru"
+    prompt = f"""Ты — юрист по законодательству Республики Таджикистан. Перепиши пункт договора так,
+чтобы устранить указанный риск.
+
+ПУНКТ ДОГОВОРА:
+{clause}
+
+РИСК: {title}
+ПОЧЕМУ ЭТО РИСК: {why or "не указано"}
+НОРМА: {norm or "не указана"}
+КАК ИСПРАВИТЬ: {fix or "на твоё усмотрение"}
+
+Правила:
+- Верни только текст исправленного пункта, без пояснений, заголовков и кавычек вокруг.
+- Сохрани нумерацию, стороны и смысл, не относящийся к риску; меняй только то, что нужно.
+- Используй только право Республики Таджикистан; не выдумывай номера статей и законов.
+- Если в пункте не хватает данных (сумма, срок), оставь понятное место в скобках, например [срок].
+"""
+    try:
+        text = llm_once(MODEL_NAME, prompt, 700, temperature=0.2, timeout=120,
+                        openai_model=ANALYSIS_GPT_MODEL, reasoning_effort="minimal")
+    except Exception as e:  # noqa: BLE001
+        print("clause_rewrite: %s" % e)
+        return jsonify({"error": "Модель недоступна, повторите попытку"}), 503
+    text = (text or "").strip().strip("«»\"")
+    if not text:
+        return jsonify({"error": "Модель не вернула текст"}), 502
+    if lang == "tg":
+        try:
+            text = doc_lang.translate_text(text, "ru", "tg", _analysis_llm, kind="пункт договора")
+        except Exception as e:  # noqa: BLE001
+            print("clause_rewrite translate: %s" % e)
+    return jsonify({"text": text, "lang": lang})
+
+
 @app.route("/api/analyze", methods=["POST"])
 def analyze_upload():
     try:
