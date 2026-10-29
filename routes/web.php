@@ -68,6 +68,8 @@ Route::get('/contract/create', [ContractController::class, 'create'])
 Route::get('/contract/analyze', [ContractController::class, 'showForm'])->name('contract.analyze');
 Route::get('/contract/codex', [ContractController::class, 'codex'])
     ->name('contract.codex');
+Route::get('/contract/court', [ContractController::class, 'court'])
+    ->name('contract.court');
 // Маршруты contract.upload и contract.stream убраны: они указывали на методы
 // upload() и streamProxy(), которых в ContractController нет, и обращение к
 // ним возвращало HTTP 500. Загрузка договора и поток анализа идут напрямую в

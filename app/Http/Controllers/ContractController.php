@@ -40,6 +40,12 @@ class ContractController extends Controller
             'pythonApiUrl' => $this->pythonApi,
         ]);
     }
+    public function court()
+    {
+        return view('contract.court', [
+            'pythonApiUrl' => $this->pythonApi,
+        ]);
+    }
     public function compare()
     {
         return view('contract.compare');

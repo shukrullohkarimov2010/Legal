@@ -37,6 +37,7 @@ import lang_service  # noqa: E402  — определение языка воп�
 import chat_modes  # noqa: E402  — роли (юрист/адвокат), глубина ответа, документы в чате
 import contract_topics  # noqa: E402  — темы условий договора -> нужные статьи кодексов
 import doc_lang  # noqa: E402  — язык документа: перевод договора и отчёта (таджикский <-> русский)
+import moot_court  # noqa: E402  — симулятор суда: дела, баллы, вердикт
 import article_graph  # noqa: E402  — граф связей статей кодексов
 import risk_map  # noqa: E402  — карта рисков договора: привязка находок к абзацам
 import codex_catalog  # noqa: E402  — кодексы из RAG-индекса для страницы /contract/codex
@@ -4677,6 +4678,166 @@ def _graph():
             index["chunks"], lambda source: codex_catalog.code_id_for(source)[0])
         _graph_state["key"] = key
     return _graph_state["graph"]
+
+
+# ---------------------------------------------------------------------------
+# Симулятор суда: ИИ играет судью, противную сторону и свидетеля.
+# ---------------------------------------------------------------------------
+_court_cards = {}
+
+
+def _court_lang(value):
+    return "tg" if str(value or "").strip().lower() == "tg" else "ru"
+
+
+def _court_json(prompt, num_predict):
+    raw = llm_once(MODEL_NAME, prompt, num_predict, temperature=0.5, timeout=180, json_mode=True,
+                   openai_model=chat_modes.strong_model() or ANALYSIS_GPT_MODEL, reasoning_effort="low")
+    return _parse_json_object(raw)
+
+
+def _court_to_ru(text, lang):
+    """Реплика пользователя по-русски: промпты и корпус законов русские."""
+    if lang != "tg" or not text:
+        return text
+    try:
+        return doc_lang.translate_text(text, "tg", "ru", _analysis_llm, kind="реплика в судебном заседании")
+    except Exception as e:  # noqa: BLE001
+        print("court translate in: %s" % e)
+        return text
+
+
+def _court_from_ru(items, lang):
+    if lang != "tg":
+        return items
+    try:
+        return doc_lang.translate_items(items, "ru", "tg", _analysis_llm, kind="реплики судебного заседания")
+    except Exception as e:  # noqa: BLE001
+        print("court translate out: %s" % e)
+        return items
+
+
+@app.route("/api/court/cases")
+def court_cases():
+    """Учебные дела; для таджикского интерфейса карточки переводятся один раз и кешируются."""
+    lang = _court_lang(request.args.get("lang"))
+    cards = []
+    for cid in moot_court.case_ids():
+        translated = None
+        if lang == "tg":
+            if cid not in _court_cards:
+                case = moot_court.get_case(cid)
+                values = _court_from_ru([case[f] for f in moot_court.CARD_FIELDS], "tg")
+                _court_cards[cid] = dict(zip(moot_court.CARD_FIELDS, values))
+            translated = _court_cards[cid]
+        cards.append(moot_court.public_case(cid, translated))
+    return jsonify({"cases": cards})
+
+
+def _court_rag(case, message):
+    """Статьи по делу и по последней реплике: единственный источник ссылок для судьи."""
+    index = load_chat_rag_index(force=False)
+    if not index.get("ready"):
+        return [], ""
+    results = retrieve_rag(case["query"] + " " + message, top_k=7, index=index)
+    return results, format_rag_context(results, max_chars=6500)
+
+
+@app.route("/api/court/turn", methods=["POST"])
+def court_turn():
+    """Один ход заседания: реплика пользователя -> ответ судьи, противной стороны или свидетеля и оценка."""
+    data = request.get_json(silent=True) or {}
+    case = moot_court.get_case(data.get("case_id"))
+    message = str(data.get("message") or "").strip()[:moot_court.MAX_TEXT]
+    if not case:
+        return jsonify({"error": "Дело не найдено"}), 404
+    if len(message) < 3:
+        return jsonify({"error": "Введите реплику"}), 400
+    lang = _court_lang(data.get("lang"))
+    history = moot_court.sanitize_history(data.get("history"))
+    action = moot_court.normalize_action(data.get("action"))
+    turn_no = sum(1 for h in history if h["speaker"] == "user") + 1
+
+    message_ru = _court_to_ru(message, lang)
+    results, context = _court_rag(case, message_ru)
+    try:
+        parsed = moot_court.parse_turn(_court_json(
+            moot_court.build_turn_prompt(case, history, message_ru, action, context, turn_no), 900))
+    except Exception as e:  # noqa: BLE001
+        print("court turn: %s" % e)
+        return jsonify({"error": "Модель недоступна, повторите попытку"}), 503
+    if not parsed:
+        return jsonify({"error": "Суд не смог ответить, повторите реплику"}), 502
+
+    citations = _chat_citations(message_ru, results)
+    score = moot_court.turn_score(parsed["parts"], citations)
+    texts = [line["text"] for line in parsed["lines"]] + [parsed["comment"], parsed["hint"]]
+    shown = _court_from_ru(texts, lang)
+    lines = [{"speaker": line["speaker"], "text": shown[i]} for i, line in enumerate(parsed["lines"])]
+    count = len(parsed["lines"])
+    return jsonify({
+        "lines": lines,
+        "score": score,
+        "parts": parsed["parts"],
+        "comment": shown[count],
+        "hint": shown[count + 1],
+        "citations": citations,
+        "turn": turn_no,
+        "max_turns": moot_court.MAX_TURNS,
+    })
+
+
+@app.route("/api/court/verdict", methods=["POST"])
+def court_verdict():
+    """Решение суда и итоговая оценка работы пользователя."""
+    data = request.get_json(silent=True) or {}
+    case = moot_court.get_case(data.get("case_id"))
+    if not case:
+        return jsonify({"error": "Дело не найдено"}), 404
+    lang = _court_lang(data.get("lang"))
+    history = moot_court.sanitize_history(data.get("history"))
+    if not any(h["speaker"] == "user" for h in history):
+        return jsonify({"error": "Заседание не началось"}), 400
+    scores = [v for v in (data.get("scores") or []) if isinstance(v, (int, float))][-moot_court.MAX_TURNS:]
+    cited = [str(c)[:60] for c in (data.get("cited") or [])[:8]]
+    mean = round(sum(scores) / len(scores)) if scores else 0
+    try:
+        parsed = moot_court.parse_verdict(_court_json(moot_court.build_verdict_prompt(case, history, mean, cited), 1100))
+    except Exception as e:  # noqa: BLE001
+        print("court verdict: %s" % e)
+        return jsonify({"error": "Модель недоступна, повторите попытку"}), 503
+    if not parsed:
+        return jsonify({"error": "Суд не смог вынести решение, повторите"}), 502
+
+    score = moot_court.final_score(scores, parsed["overall"])
+    # Статьи для изучения берутся из тех, что найдены по самому делу: свободный
+    # поиск по темам от модели выдавал статьи из чужих кодексов.
+    articles, seen = [], set()
+    for item in _court_rag(case, "")[0]:
+        key = (item.get("code_short"), item.get("article"))
+        if not item.get("article") or key in seen:
+            continue
+        seen.add(key)
+        articles.append({
+            "code": item.get("code_short"), "article": item.get("article"), "title": item.get("article_title") or "",
+            "code_id": codex_catalog.code_id_for(item.get("source") or "")[0],
+        })
+        if len(articles) >= 4:
+            break
+    texts = [parsed["verdict"]] + parsed["strengths"] + parsed["mistakes"] + parsed["study"]
+    shown = _court_from_ru(texts, lang)
+    n_s, n_m = len(parsed["strengths"]), len(parsed["mistakes"])
+    return jsonify({
+        "verdict": shown[0],
+        "outcome": parsed["outcome"],
+        "score": score,
+        "grade": moot_court.grade(score),
+        "breakdown": parsed["breakdown"],
+        "strengths": shown[1:1 + n_s],
+        "mistakes": shown[1 + n_s:1 + n_s + n_m],
+        "study": shown[1 + n_s + n_m:],
+        "articles": articles,
+    })
 
 
 @app.route("/api/graph/article")

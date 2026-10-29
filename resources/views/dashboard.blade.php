@@ -903,6 +903,8 @@
         }
         /* Criminal Code RT Colors */
 .feature-icon-box.red { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #b91c1c; }
+.feature-icon-box.purple { background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #6d28d9; }
+[data-theme="dark"] .feature-icon-box.purple { background: linear-gradient(135deg, rgba(124,58,237,0.28), rgba(79,70,229,0.15)); color: #c4b5fd; }
 [data-theme="dark"] .feature-icon-box.red { background: linear-gradient(135deg, rgba(220,38,38,0.25), rgba(185,28,28,0.15)); color: #f87171; }
 .feature-badge.red { color: #dc2626; }
 [data-theme="dark"] .feature-badge.red { color: #f87171; }
@@ -2305,6 +2307,22 @@
                                 <div class="progress-premium-fill" style="width: 85%; background: linear-gradient(135deg, #06b6d4, #3b82f6);"></div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- FULL CARD: Court Simulator -->
+                <div class="bento-card bento-card-full reveal stagger-6" onclick="location.href='{{ route('contract.court') }}'" role="link" tabindex="0" onkeydown="if(event.key==='Enter'){location.href='{{ route('contract.court') }}'}">
+                    <div class="feature-badge purple mb-3"><span class="dot"></span><span>{{ __('dashboard.court_badge') }}</span></div>
+                    <div class="feature-icon-box purple">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M4 7l8-4 8 4M7 7l-3 7a3 3 0 006 0L7 7zm10 0l-3 7a3 3 0 006 0l-3-7z"/></svg>
+                    </div>
+                    <h3 class="feature-title">{{ __('dashboard.court_title') }}</h3>
+                    <p class="feature-desc">{{ __('dashboard.court_text') }}</p>
+                    <div class="d-flex align-items-center justify-content-between mt-auto">
+                        <a href="{{ route('contract.court') }}" class="feature-link" style="color: var(--accent-purple);" onclick="event.stopPropagation();">
+                            <span>{{ __('dashboard.court_btn') }}</span>
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        </a>
                     </div>
                 </div>
             </div>
