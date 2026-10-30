@@ -23,3 +23,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Кеш озвучки симулятора суда (mp3 от OpenAI)
+/tmp_uploads/tts_cache/
+/python/tmp_uploads/

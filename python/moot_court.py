@@ -307,6 +307,27 @@ def final_score(turn_scores: list, overall: int) -> int:
     return _clip(0.5 * mean + 0.5 * overall, 0, 100)
 
 
+_STEM_RE = re.compile(r"[А-Яа-яЁёӢӣҒғҚқӮӯҲҳҶҷ]{4,}")
+
+
+def relevant_titles(query: str, items: list, limit: int = 4) -> list:
+    """Статьи, чьё название пересекается с делом хотя бы по одной основе слова.
+
+    Поиск по делу иногда приносит статью только из-за общих служебных слов
+    («тайна» в «тайном хищении» и «тайне усыновления»); показывать её как
+    «статью по делу» нельзя. Совпадение ищется по первым пяти буквам слова.
+    """
+    stems = {w.lower()[:5] for w in _STEM_RE.findall(query or "")}
+    out = []
+    for item in items:
+        title = str(item.get("title") or "")
+        if stems & {w.lower()[:5] for w in _STEM_RE.findall(title)}:
+            out.append(item)
+        if len(out) >= limit:
+            break
+    return out
+
+
 def grade(score: int) -> str:
     if score >= 85:
         return "excellent"

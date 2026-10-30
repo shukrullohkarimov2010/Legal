@@ -4717,6 +4717,70 @@ def _court_from_ru(items, lang):
         return items
 
 
+# ---------------------------------------------------------------------------
+# Голос персонажей симулятора. По умолчанию голос даёт браузер (бесплатно);
+# COURT_TTS=openai включает живые голоса OpenAI (около $0,015 за минуту речи).
+# Озвучка кешируется на диске: повтор той же реплики денег не стоит.
+# ---------------------------------------------------------------------------
+COURT_TTS = (os.environ.get("COURT_TTS") or "browser").strip().lower()
+TTS_MODEL = os.environ.get("TTS_MODEL") or "gpt-4o-mini-tts"
+_TTS_DIR = os.path.join(TEMP_DIR, "tts_cache")
+_TTS_VOICES = {
+    ("judge", "m"): "onyx", ("judge", "f"): "sage",
+    ("opponent", "m"): "ash", ("opponent", "f"): "coral",
+    ("witness", "m"): "echo", ("witness", "f"): "shimmer",
+}
+_TTS_STYLE = {
+    "judge": "Ты судья в зале суда: говори спокойно, весомо и официально, с паузами.",
+    "opponent": "Ты сторона в судебном споре: говори уверенно, напористо и чётко, как опытный юрист.",
+    "witness": "Ты свидетель в суде: говори естественно, немного взволнованно, простыми словами.",
+}
+
+
+def _tts_enabled():
+    return COURT_TTS == "openai" and bool(OPENAI_API_KEY)
+
+
+@app.route("/api/tts", methods=["POST"])
+def court_tts():
+    """Озвучка реплики персонажа (mp3). 404 — облачный голос выключен, страница берёт голос браузера."""
+    if not _tts_enabled():
+        return jsonify({"error": "Облачный голос выключен"}), 404
+    data = request.get_json(silent=True) or {}
+    text = re.sub(r"\s+", " ", str(data.get("text") or "")).strip()[:1200]
+    if not text:
+        return jsonify({"error": "Нет текста"}), 400
+    who = str(data.get("who") or "")
+    who = who if who in _TTS_STYLE else "judge"
+    gender = "f" if str(data.get("gender") or "") == "f" else "m"
+    lang = _court_lang(data.get("lang"))
+    voice = _TTS_VOICES[(who, gender)]
+    style = _TTS_STYLE[who] + (" Говори по-таджикски, с естественным таджикским произношением." if lang == "tg"
+                               else " Говори по-русски.")
+    key = hashlib.sha1(json.dumps([TTS_MODEL, voice, style, text], ensure_ascii=False).encode("utf-8")).hexdigest()
+    name = key + ".mp3"
+    if os.path.isfile(os.path.join(_TTS_DIR, name)):
+        return send_from_directory(os.path.abspath(_TTS_DIR), name, mimetype="audio/mpeg", max_age=86400)
+    body = {"model": TTS_MODEL, "voice": voice, "input": text, "response_format": "mp3"}
+    if TTS_MODEL.startswith("gpt-"):
+        body["instructions"] = style
+    try:
+        r = requests.post(OPENAI_BASE_URL + "/audio/speech", headers=_openai_headers(), json=body, timeout=60)
+    except Exception as e:  # noqa: BLE001
+        print("tts: %s" % e)
+        return jsonify({"error": "Сервис голоса недоступен"}), 503
+    if r.status_code != 200 or not r.headers.get("content-type", "").startswith("audio"):
+        print("tts: HTTP %s %s" % (r.status_code, r.text[:200]))
+        return jsonify({"error": "Сервис голоса вернул ошибку"}), 502
+    try:
+        os.makedirs(_TTS_DIR, exist_ok=True)
+        with open(os.path.join(_TTS_DIR, name), "wb") as fh:
+            fh.write(r.content)
+    except OSError as e:
+        print("tts cache: %s" % e)
+    return Response(r.content, mimetype="audio/mpeg", headers={"Cache-Control": "max-age=86400"})
+
+
 @app.route("/api/court/cases")
 def court_cases():
     """Учебные дела; для таджикского интерфейса карточки переводятся один раз и кешируются."""
@@ -4731,7 +4795,7 @@ def court_cases():
                 _court_cards[cid] = dict(zip(moot_court.CARD_FIELDS, values))
             translated = _court_cards[cid]
         cards.append(moot_court.public_case(cid, translated))
-    return jsonify({"cases": cards})
+    return jsonify({"cases": cards, "voice": "openai" if _tts_enabled() else "browser"})
 
 
 def _court_rag(case, message):
@@ -4822,8 +4886,7 @@ def court_verdict():
             "code": item.get("code_short"), "article": item.get("article"), "title": item.get("article_title") or "",
             "code_id": codex_catalog.code_id_for(item.get("source") or "")[0],
         })
-        if len(articles) >= 4:
-            break
+    articles = moot_court.relevant_titles(case["query"], articles, limit=4) or articles[:2]
     texts = [parsed["verdict"]] + parsed["strengths"] + parsed["mistakes"] + parsed["study"]
     shown = _court_from_ru(texts, lang)
     n_s, n_m = len(parsed["strengths"]), len(parsed["mistakes"])

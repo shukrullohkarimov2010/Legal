@@ -24,6 +24,22 @@
             criteria: { legal_basis: 'Юридическое обоснование', logic: 'Логика', evidence: 'Работа с доказательствами', procedure: 'Процессуальный порядок' },
             lastTurn: 'Оценка последней реплики', cited: 'Ваши ссылки на статьи', noCites: 'В этой реплике статей не названо.',
             showHint: '💡 Показать подсказку', cite: { verified: 'по делу', exists: 'не по делу', wrong_code: 'другой кодекс', missing: 'нет в базе' },
+            announce: 'Суд вернулся из совещательной комнаты. Оглашается решение.',
+            outcomeBy: {
+                criminal: { won: 'Оправдан', partial: 'Ответственность смягчена', lost: 'Признан виновным' },
+                civil: { won: 'Иск удовлетворён', partial: 'Иск удовлетворён частично', lost: 'В иске отказано' },
+                labor: { won: 'Требования удовлетворены', partial: 'Требования удовлетворены частично', lost: 'В требованиях отказано' },
+            },
+            doc: {
+                state: 'Республика Таджикистан', court: 'Учебный суд LegalAI Pro', titleBy: { criminal: 'Приговор', civil: 'Решение', labor: 'Решение' },
+                onCase: 'по делу', city: 'г. Душанбе', number: 'Дело №', resolvedBy: { criminal: 'Суд приговорил:', civil: 'Суд решил:', labor: 'Суд решил:' },
+                judge: 'Председательствующий судья', judgeName: 'ИИ-судья LegalAI', seal: 'LEGALAI PRO • УЧЕБНЫЙ СУД • ',
+                note: 'Учебный документ, создан симулятором. Юридической силы не имеет.',
+            },
+            listen: '🔊 Прослушать решение', stopListen: '⏹ Остановить', pdf: '🖨 Сохранить в PDF', yourResult: 'Ваш результат',
+            medals: { gold: 'Золото · Адвокат года', silver: 'Серебро · Сильный юрист', bronze: 'Бронза · Уверенный старт', novice: 'Стажёр · Есть куда расти' },
+            stats: { rounds: ['раунд', 'раунда', 'раундов'], cited: ['статья по делу', 'статьи по делу', 'статей по делу'], objections: ['возражение', 'возражения', 'возражений'], sustained: 'принято' },
+            soundOn: 'Включить звук и голос', soundOff: 'Выключить звук и голос',
             protocol: 'Протокол заседания', objection: 'Возражение!', accepted: 'Принято', rejected: 'Отклонено', skip: 'Пропустить реплики',
             opening: function (c) { return 'Заседание объявляется открытым. Рассматривается дело: «' + c.title + '». Слово предоставляется стороне: ' + c.role + '.'; },
             youAre: function (c) { return 'Вы — ' + c.role + '. ' + c.goal; },
@@ -53,6 +69,22 @@
             criteria: { legal_basis: 'Асосноккунии ҳуқуқӣ', logic: 'Мантиқ', evidence: 'Кор бо далелҳо', procedure: 'Тартиби мурофиавӣ' },
             lastTurn: 'Баҳои баромади охирин', cited: 'Истинодҳои шумо ба моддаҳо', noCites: 'Дар ин баромад моддае ном бурда нашуд.',
             showHint: '💡 Нишон додани маслиҳат', cite: { verified: 'ба парванда мувофиқ', exists: 'ба парванда не', wrong_code: 'кодекси дигар', missing: 'дар база нест' },
+            announce: 'Суд аз утоқи машварат баргашт. Қарор эълон карда мешавад.',
+            outcomeBy: {
+                criminal: { won: 'Беайб дониста шуд', partial: 'Ҷавобгарӣ сабук карда шуд', lost: 'Гунаҳгор дониста шуд' },
+                civil: { won: 'Даъво қонеъ гардонида шуд', partial: 'Даъво қисман қонеъ гардонида шуд', lost: 'Даъво рад карда шуд' },
+                labor: { won: 'Талабот қонеъ гардонида шуд', partial: 'Талабот қисман қонеъ гардонида шуд', lost: 'Талабот рад карда шуд' },
+            },
+            doc: {
+                state: 'Ҷумҳурии Тоҷикистон', court: 'Суди таълимии LegalAI Pro', titleBy: { criminal: 'Ҳукм', civil: 'Ҳалнома', labor: 'Ҳалнома' },
+                onCase: 'оид ба парванда', city: 'ш. Душанбе', number: 'Парвандаи №', resolvedBy: { criminal: 'Суд ҳукм кард:', civil: 'Суд ҳал кард:', labor: 'Суд ҳал кард:' },
+                judge: 'Судяи раисикунанда', judgeName: 'Судяи зеҳни сунъии LegalAI', seal: 'LEGALAI PRO • СУДИ ТАЪЛИМӢ • ',
+                note: 'Ҳуҷҷати таълимӣ, аз ҷониби симулятор сохта шудааст. Қувваи ҳуқуқӣ надорад.',
+            },
+            listen: '🔊 Гӯш кардани қарор', stopListen: '⏹ Қатъ кардан', pdf: '🖨 Ҳамчун PDF нигоҳ доштан', yourResult: 'Натиҷаи шумо',
+            medals: { gold: 'Тилло · Ҳуқуқшиноси сол', silver: 'Нуқра · Ҳуқуқшиноси қавӣ', bronze: 'Биринҷӣ · Оғози боэътимод', novice: 'Таҷрибаомӯз · Ҷои рушд ҳаст' },
+            stats: { rounds: ['давр'], cited: ['модда ба парванда'], objections: ['эътироз'], sustained: 'қабул шуд' },
+            soundOn: 'Овоз ва садоро фаъол кардан', soundOff: 'Овоз ва садоро хомӯш кардан',
             protocol: 'Протоколи мурофиа', objection: 'Эътироз!', accepted: 'Қабул шуд', rejected: 'Рад шуд', skip: 'Гузаштан аз гуфтугӯ',
             opening: function (c) { return 'Маҷлиси суд кушода эълон мешавад. Парванда баррасӣ мешавад: «' + c.title + '». Суханро ба тараф медиҳам: ' + c.role + '.'; },
             youAre: function (c) { return 'Шумо — ' + c.role + '. ' + c.goal; },
@@ -73,7 +105,7 @@
     var CRIT = ['legal_basis', 'logic', 'evidence', 'procedure'];
     var CIRC = 2 * Math.PI * 70;
 
-    var st = { cases: [], c: null, history: [], scores: [], cited: [], action: 'argue', busy: false, turn: 0, max: 10, done: false };
+    var st = { cases: [], c: null, history: [], scores: [], cited: [], action: 'argue', busy: false, turn: 0, max: 10, done: false, objections: 0, sustained: 0 };
     var $ = function (id) { return document.getElementById(id); };
 
     function el(tag, cls, text) {
@@ -100,6 +132,8 @@
         api('/api/court/cases?lang=' + encodeURIComponent(cfg.lang)).then(function (r) {
             if (!r.ok) throw new Error('cases');
             st.cases = r.data.cases;
+            // Сервер говорит, есть ли облачный голос; без него работает голос браузера.
+            window.CourtVoice.configure({ mode: r.data.voice, api: cfg.api, lang: cfg.lang });
             renderCases();
         }).catch(function () {
             var box = $('cases');
@@ -134,6 +168,8 @@
 
     function startCase(c) {
         st.c = c; st.history = []; st.scores = []; st.cited = []; st.action = 'argue'; st.busy = false; st.turn = 0; st.done = false;
+        st.objections = 0; st.sustained = 0;
+        window.CourtVoice.prefetch([{ who: 'judge', gender: 'm', text: T.opening(c) }]);
         $('caseTitle').textContent = c.title;
         $('caseRole').textContent = T.role + ': ' + c.role;
         $('briefSummary').textContent = T.brief;
@@ -242,6 +278,9 @@
                 var label = c.code + ', ст. ' + c.article;
                 if (c.status === 'verified' && st.cited.indexOf(label) < 0) st.cited.push(label);
             });
+            // Озвучка всех реплик заказывается сразу: пока идёт штамп и первая реплика, остальные уже готовы.
+            window.CourtVoice.prefetch(r.data.lines.map(function (l) { return { who: l.speaker, gender: genderOf(l.speaker), text: l.text }; }));
+            if (action === 'object') st.objections += 1;
             return shown.then(function () {
                 scene.thinking(false);
                 return playLines(r.data.lines, action);
@@ -273,16 +312,30 @@
         return null;
     }
 
+    function genderOf(who) {
+        if (who === 'opponent') return st.c.opponent_gender === 'f' ? 'f' : 'm';
+        if (who === 'witness') return st.c.witness_gender === 'f' ? 'f' : 'm';
+        return 'm';
+    }
+
+    var OBJECTS = /^\s*[«"]?\s*(возража|протестую|эътироз)/i;
+
     function playLines(lines, action) {
         var stamped = false;
         return lines.reduce(function (chain, line) {
             return chain.then(function () {
                 logLine(line.speaker, line.text);
-                var spoken = scene.say(line.speaker, line.text);
+                // «Возражаю!» противной стороны сопровождается поднятой рукой.
+                var raise = line.speaker === 'opponent' && OBJECTS.test(line.text);
+                if (raise) scene.gesture('opponent', 'raise', true);
+                var spoken = scene.say(line.speaker, line.text).then(function () {
+                    if (raise) scene.gesture('opponent', 'raise', false);
+                });
                 if (action === 'object' && line.speaker === 'judge' && !stamped) {
                     var verdict = decisionOf(line.text);
                     if (verdict) {
                         stamped = true;
+                        if (verdict === 'accepted') st.sustained += 1;
                         return spoken.then(function () { return scene.stamp(T[verdict], verdict === 'accepted' ? 'good' : 'bad'); });
                     }
                 }
@@ -378,8 +431,16 @@
         api('/api/court/verdict', { case_id: st.c.id, history: st.history, scores: st.scores, cited: st.cited, lang: cfg.lang }).then(function (r) {
             if (!r.ok) throw new Error(r.data.error || 'verdict');
             st.done = true;
+            var d = r.data;
             scene.thinking(false);
-            return scene.gavel(2).then(function () { renderVerdict(r.data); });
+            window.CourtVoice.prefetch([{ who: 'judge', gender: 'm', text: T.announce }, { who: 'judge', gender: 'm', text: d.verdict }]);
+            // Оглашение: молоток, судья зачитывает решение вслух, штамп с исходом, затем документ.
+            var outcome = outcomeText(d.outcome);
+            return scene.gavel(2)
+                .then(function () { return scene.say('judge', T.announce); })
+                .then(function () { return scene.say('judge', d.verdict); })
+                .then(function () { return scene.stamp(outcome, (d.outcome === 'won' ? 'good' : d.outcome === 'lost' ? 'bad' : 'warn') + (outcome.length > 14 ? ' long' : '')); })
+                .then(function () { scene.clear(); renderVerdict(d); });
         }).catch(function (e) {
             scene.thinking(false);
             scene.clear();
@@ -390,8 +451,8 @@
         });
     }
 
-    function list(title, items) {
-        var card = el('div', 'card');
+    function list(title, items, kind) {
+        var card = el('div', 'card v-list ' + (kind || ''));
         card.appendChild(el('h4', null, title));
         var ul = el('ul');
         items.forEach(function (t) { ul.appendChild(el('li', null, t)); });
@@ -399,54 +460,166 @@
         return card;
     }
 
+    function outcomeText(outcome) {
+        var byKind = T.outcomeBy[st.c && st.c.kind] || T.outcomeBy.civil;
+        return byKind[outcome] || byKind.partial;
+    }
+
+    // Форма слова после числа: «1 раунд», «3 раунда», «5 раундов». В таджикском форма одна.
+    function plural(n, forms) {
+        if (forms.length < 3) return forms[0];
+        var m10 = n % 10, m100 = n % 100;
+        if (m10 === 1 && m100 !== 11) return forms[0];
+        if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return forms[1];
+        return forms[2];
+    }
+
+    function medalOf(score) { return score >= 85 ? 'gold' : score >= 70 ? 'silver' : score >= 50 ? 'bronze' : 'novice'; }
+
+    function countUp(node, to, ms) {
+        var t0 = performance.now();
+        (function frame(now) {
+            var p = Math.min(1, (now - t0) / ms);
+            node.textContent = String(Math.round(to * (1 - Math.pow(1 - p, 3))));
+            if (p < 1) requestAnimationFrame(frame);
+        })(t0);
+    }
+
+    // Радар по четырём критериям: сверху обоснование, справа логика, снизу доказательства, слева порядок.
+    function radar(values) {
+        var cx = 110, cy = 110, R = 80, ang = [-90, 0, 90, 180];
+        var point = function (a, r) { var rad = a * Math.PI / 180; return (cx + r * Math.cos(rad)).toFixed(1) + ',' + (cy + r * Math.sin(rad)).toFixed(1); };
+        var svg = '<svg viewBox="0 0 220 220" class="radar" aria-hidden="true">';
+        [25, 50, 75, 100].forEach(function (p) { svg += '<polygon class="ring" points="' + ang.map(function (a) { return point(a, R * p / 100); }).join(' ') + '"/>'; });
+        ang.forEach(function (a) { svg += '<line class="axis" x1="' + cx + '" y1="' + cy + '" x2="' + point(a, R).split(',')[0] + '" y2="' + point(a, R).split(',')[1] + '"/>'; });
+        var pts = CRIT.map(function (k, i) { return point(ang[i], R * Math.max(4, Number(values[k]) || 0) / 100); });
+        svg += '<g class="area-g"><polygon class="area" points="' + pts.join(' ') + '"/>';
+        pts.forEach(function (p) { var xy = p.split(','); svg += '<circle class="dot" cx="' + xy[0] + '" cy="' + xy[1] + '" r="4"/>'; });
+        svg += '</g></svg>';
+        return svg;
+    }
+
+    function seal() {
+        var box = el('div', 'seal');
+        box.innerHTML = '<svg viewBox="0 0 140 140" aria-hidden="true"><defs><path id="sealPath" d="M70 70 m-50 0 a50 50 0 1 1 100 0 a50 50 0 1 1 -100 0"/></defs>' +
+            '<circle cx="70" cy="70" r="64" class="s1"/><circle cx="70" cy="70" r="58" class="s2"/><circle cx="70" cy="70" r="38" class="s2"/>' +
+            '<text class="st"><textPath href="#sealPath"></textPath></text>' +
+            '<g class="sc" transform="translate(70 70)"><path d="M0 -22 V20 M-14 20 H14 M-20 -12 H20 M-20 -12 L-28 4 H-12 Z M20 -12 L12 4 H28 Z"/></g></svg>';
+        box.querySelector('textPath').textContent = T.doc.seal + T.doc.seal;
+        return box;
+    }
+
+    function confetti(host) {
+        var layer = el('div', 'confetti');
+        var colors = ['#fbbf24', '#34d399', '#818cf8', '#f472b6', '#60a5fa'];
+        for (var i = 0; i < 46; i++) {
+            var p = el('i');
+            p.style.left = (Math.random() * 100).toFixed(1) + '%';
+            p.style.background = colors[i % colors.length];
+            p.style.animationDelay = (Math.random() * 0.9).toFixed(2) + 's';
+            p.style.setProperty('--r', (Math.random() * 720 - 360).toFixed(0) + 'deg');
+            p.style.setProperty('--x', (Math.random() * 160 - 80).toFixed(0) + 'px');
+            layer.appendChild(p);
+        }
+        host.appendChild(layer);
+        setTimeout(function () { layer.remove(); }, 4200);
+    }
+
+    var listening = null;
+
     function renderVerdict(d) {
-        var box = $('verdictBody');
+        var box = $('verdictBody'), kind = st.c.kind, medal = medalOf(d.score);
         box.replaceChildren();
-        var head = el('div', 'v-head');
-        head.appendChild(el('div', 'gavel', '🔨'));
-        head.appendChild(el('h2', null, T.verdictTitle));
-        head.appendChild(el('span', 'outcome ' + d.outcome, T.outcomes[d.outcome] || ''));
-        box.appendChild(head);
 
-        var grid = el('div', 'v-grid');
-        var left = el('div');
-        var g = el('div', 'gauge');
-        g.innerHTML = '<svg viewBox="0 0 160 160"><circle class="track" cx="80" cy="80" r="70"></circle><circle class="fill" cx="80" cy="80" r="70"></circle></svg>';
-        var num = el('div', 'num');
-        num.append(el('b', null, String(d.score)), el('span', null, T.of100));
-        g.appendChild(num);
-        left.appendChild(g);
-        var grade = el('div', 'grade', T.grades[d.grade] || '');
-        grade.style.setProperty('--gc', colorFor(d.score));
-        left.appendChild(grade);
-        grid.append(left, el('div', 'v-text', d.verdict));
-        box.appendChild(grid);
-        requestAnimationFrame(function () { requestAnimationFrame(function () { gauge(g, d.score); }); });
-
-        var bd = el('div', 'card');
-        bd.appendChild(el('h4', null, T.breakdown));
-        CRIT.forEach(function (key) {
-            var v = (d.breakdown || {})[key] || 0, row = el('div', 'bar');
-            var top = el('div', 'bar-top');
-            top.append(el('span', null, T.criteria[key]), el('b', null, String(v)));
-            var track = el('div', 'bar-track'), fillEl = el('i');
-            fillEl.style.setProperty('--bc', colorFor(v));
-            track.appendChild(fillEl);
-            row.append(top, track);
-            bd.appendChild(row);
-            requestAnimationFrame(function () { requestAnimationFrame(function () { fillEl.style.width = v + '%'; }); });
+        // 1. Итог крупно: исход дела, балл, медаль, статистика заседания.
+        var hero = el('section', 'vx-hero ' + d.outcome);
+        var left = el('div', 'vx-left');
+        left.appendChild(el('div', 'vx-kicker', '⚖️ ' + (T.doc.titleBy[kind] || T.verdictTitle)));
+        left.appendChild(el('h2', 'vx-outcome', outcomeText(d.outcome)));
+        left.appendChild(el('div', 'vx-case', st.c.title));
+        var stats = el('div', 'vx-stats');
+        [[st.turn, plural(st.turn, T.stats.rounds)], [st.cited.length, plural(st.cited.length, T.stats.cited)],
+         [st.objections + (st.objections ? ' · ' + st.sustained + ' ' + T.stats.sustained : ''), plural(st.objections, T.stats.objections)]].forEach(function (s) {
+            var chip = el('div', 'vx-stat');
+            chip.append(el('b', null, String(s[0])), el('span', null, s[1]));
+            stats.appendChild(chip);
         });
-        box.appendChild(bd);
+        left.appendChild(stats);
+        var right = el('div', 'vx-right');
+        var g = el('div', 'gauge big');
+        g.innerHTML = '<svg viewBox="0 0 160 160"><circle class="track" cx="80" cy="80" r="70"></circle><circle class="fill" cx="80" cy="80" r="70"></circle></svg>';
+        var num = el('div', 'num'), numB = el('b', null, '0');
+        num.append(numB, el('span', null, T.of100));
+        g.appendChild(num);
+        right.append(el('div', 'vx-label', T.yourResult), g, el('div', 'medal ' + medal, T.medals[medal]));
+        hero.append(left, right);
+        box.appendChild(hero);
+        requestAnimationFrame(function () { requestAnimationFrame(function () { gauge(g, d.score); countUp(numB, d.score, 1200); }); });
+        if (d.outcome === 'won') confetti(hero);
 
-        var cols = el('div', 'v-cols');
-        if (d.strengths && d.strengths.length) cols.appendChild(list('✅ ' + T.strengths, d.strengths));
-        if (d.mistakes && d.mistakes.length) cols.appendChild(list('⚠️ ' + T.mistakes, d.mistakes));
-        if (d.study && d.study.length) cols.appendChild(list('📚 ' + T.study, d.study));
-        if (cols.children.length) box.appendChild(cols);
+        // 2. Документ: приговор или решение суда, с печатью.
+        var tools = el('div', 'vx-tools');
+        var listen = el('button', 'btn ghost', T.listen);
+        listen.type = 'button';
+        listen.addEventListener('click', function () {
+            if (listening) { listening.stop(); listening = null; listen.textContent = T.listen; return; }
+            listening = window.CourtVoice.speak('judge', 'm', d.verdict, function () {});
+            if (!listening) return;
+            listen.textContent = T.stopListen;
+            listening.done.then(function () { listening = null; listen.textContent = T.listen; });
+        });
+        var pdf = el('button', 'btn ghost', T.pdf);
+        pdf.type = 'button';
+        pdf.addEventListener('click', function () { window.print(); });
+        tools.append(listen, pdf);
+        box.appendChild(tools);
+
+        var doc = el('article', 'doc');
+        var head = el('header', 'doc-head');
+        var emblem = el('div', 'doc-emblem');
+        emblem.innerHTML = '<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="27"/><path d="M30 12 V46 M20 46 H40 M16 20 H44 M16 20 L10 32 H22 Z M44 20 L38 32 H50 Z"/></svg>';
+        head.append(emblem, el('div', 'doc-state', T.doc.state), el('div', 'doc-court', T.doc.court));
+        doc.appendChild(head);
+        doc.appendChild(el('h3', 'doc-title', T.doc.titleBy[kind] || T.verdictTitle));
+        doc.appendChild(el('div', 'doc-sub', T.doc.onCase + ' «' + st.c.title + '»'));
+        var meta = el('div', 'doc-meta'), now = new Date();
+        var date = ('0' + now.getDate()).slice(-2) + '.' + ('0' + (now.getMonth() + 1)).slice(-2) + '.' + now.getFullYear();
+        meta.append(el('span', null, T.doc.city), el('span', null, date));
+        doc.appendChild(meta);
+        var seed = 0;
+        (st.c.id + date + st.scores.join('')).split('').forEach(function (ch) { seed = (seed * 31 + ch.charCodeAt(0)) % 99991; });
+        doc.appendChild(el('div', 'doc-number', T.doc.number + ' LA-' + now.getFullYear() + '-' + String(10000 + seed % 89999)));
+        doc.appendChild(el('p', 'doc-body', d.verdict));
+        var resolve = el('div', 'doc-resolve');
+        resolve.append(el('b', null, T.doc.resolvedBy[kind] || T.doc.resolvedBy.civil), el('span', null, outcomeText(d.outcome) + '.'));
+        doc.appendChild(resolve);
+        var sign = el('div', 'doc-sign');
+        var who = el('div', 'doc-signer');
+        who.append(el('span', null, T.doc.judge), el('i', 'doc-line'), el('b', null, T.doc.judgeName));
+        sign.append(who, seal());
+        doc.appendChild(sign);
+        doc.appendChild(el('div', 'doc-note', T.doc.note));
+        box.appendChild(doc);
+
+        // 3. Разбор: радар по критериям и статьи по делу.
+        var grid = el('div', 'vx-grid');
+        var radarCard = el('div', 'card');
+        radarCard.appendChild(el('h4', null, T.breakdown));
+        var wrap = el('div', 'radar-wrap');
+        wrap.innerHTML = radar(d.breakdown || {});
+        var labels = ['top', 'right', 'bottom', 'left'];
+        CRIT.forEach(function (key, i) {
+            var lab = el('span', 'rl ' + labels[i]);
+            var v = (d.breakdown || {})[key] || 0;
+            lab.append(el('b', null, String(v)), document.createTextNode(T.criteria[key]));
+            lab.style.setProperty('--lc', colorFor(v));
+            wrap.appendChild(lab);
+        });
+        radarCard.appendChild(wrap);
+        grid.appendChild(radarCard);
 
         if (d.articles && d.articles.length) {
             var arts = el('div', 'card');
-            arts.style.marginTop = '14px';
             arts.appendChild(el('h4', null, T.articles));
             var chips = el('div', 'cites');
             d.articles.forEach(function (a) {
@@ -458,16 +631,24 @@
                 chips.appendChild(chip);
             });
             arts.appendChild(chips);
-            box.appendChild(arts);
+            grid.appendChild(arts);
         }
+        box.appendChild(grid);
+
+        // 4. Что получилось, над чем работать, что изучить.
+        var cols = el('div', 'v-cols');
+        if (d.strengths && d.strengths.length) cols.appendChild(list('✅ ' + T.strengths, d.strengths, 'good'));
+        if (d.mistakes && d.mistakes.length) cols.appendChild(list('⚠️ ' + T.mistakes, d.mistakes, 'warn'));
+        if (d.study && d.study.length) cols.appendChild(list('📚 ' + T.study, d.study, 'info'));
+        if (cols.children.length) box.appendChild(cols);
 
         var actions = el('div', 'v-actions');
         var again = el('button', 'btn', '↻ ' + T.again);
         again.type = 'button';
-        again.addEventListener('click', function () { startCase(st.c); });
+        again.addEventListener('click', function () { if (listening) listening.stop(); startCase(st.c); });
         var other = el('button', 'btn ghost', '← ' + T.other);
         other.type = 'button';
-        other.addEventListener('click', function () { show('screenCases'); });
+        other.addEventListener('click', function () { if (listening) listening.stop(); show('screenCases'); });
         actions.append(again, other);
         box.appendChild(actions);
         show('screenVerdict');
@@ -493,7 +674,8 @@
 
     function init() {
         initTheme();
-        scene = window.CourtScene.create($('scene'));
+        window.CourtVoice.configure({ mode: 'browser', api: cfg.api, lang: cfg.lang });
+        scene = window.CourtScene.create($('scene'), { voice: window.CourtVoice, labels: { soundOn: T.soundOn, soundOff: T.soundOff } });
         var skip = el('button', 'scene-btn', '⏭');
         skip.type = 'button';
         skip.title = T.skip;

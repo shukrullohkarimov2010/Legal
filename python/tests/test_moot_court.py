@@ -115,6 +115,14 @@ def test_verdict():
     check("no verdict", mc.parse_verdict({"outcome": "won"}) is None and mc.parse_verdict(None) is None)
 
 
+def test_relevant_titles():
+    items = [{"title": "Кража"}, {"title": "Разглашение тайны усыновления"}, {"title": "Мелкое хищение"}, {"title": ""}]
+    got = [i["title"] for i in mc.relevant_titles("кража тайное хищение чужого имущества", items)]
+    check("off-topic article dropped", got == ["Кража", "Мелкое хищение"], str(got))
+    check("limit", len(mc.relevant_titles("кража хищение", [{"title": "Кража"}] * 9, limit=3)) == 3)
+    check("nothing relevant", mc.relevant_titles("кража", [{"title": "Брак"}]) == [])
+
+
 def test_final_score_and_grade():
     check("no turns uses judge", mc.final_score([], 72) == 72)
     check("half and half", mc.final_score([60, 60, 60], 80) == 70)
