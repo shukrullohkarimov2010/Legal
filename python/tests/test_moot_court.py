@@ -49,6 +49,9 @@ def test_sanitize_history():
     many = mc.sanitize_history([{"speaker": "user", "text": "реплика %d" % i} for i in range(40)])
     check("tail only", len(many) == mc.MAX_HISTORY and many[-1]["text"] == "реплика 39")
     check("not a list", mc.sanitize_history(None) == [] and mc.sanitize_history("x") == [])
+    kept = mc.sanitize_history([{"speaker": "user", "text": "q", "action": "witness"}, {"speaker": "user", "text": "r", "action": "hack"},
+                                {"speaker": "judge", "text": "s", "action": "witness"}])
+    check("action kept only for user and only if known", kept[0].get("action") == "witness" and "action" not in kept[1] and "action" not in kept[2], str(kept))
     check("action normalized", mc.normalize_action("OBJECT") == "object" and mc.normalize_action("x") == "argue")
 
 
@@ -59,6 +62,13 @@ def test_prompts():
     check("prompt carries rag and history", "ГК РТ ст. 1" in prompt and "СУДЬЯ: Слушаем." in prompt)
     empty = mc.build_turn_prompt(case, [], "довод", "argue", "", 1)
     check("empty history and rag handled", "только началось" in empty and "Фрагменты не найдены" in empty)
+    ask = mc.build_turn_prompt(mc.get_case("theft"), [], "Видели ли вы это?", "witness", "", 1)
+    check("witness question names the witness", "Дилором Назарова" in ask and "адресован именно ему" in ask)
+    check("witness answers first", "Первой репликой отвечает СВИДЕТЕЛЬ" in ask)
+    check("no objection to unclear addressee", "Не требуй уточнить" in ask)
+    marked = mc.build_turn_prompt(mc.get_case("theft"), [{"speaker": "user", "text": "Видели?", "action": "witness"},
+                                                           {"speaker": "user", "text": "Возражаю", "action": "object"}], "ещё", "argue", "", 2)
+    check("history remembers the action", "вопрос свидетелю: Дилором Назарова" in marked and "[возражение]" in marked)
     verdict = mc.build_verdict_prompt(case, [], 64, ["ГК РТ, ст. 384"])
     check("verdict prompt", "64 из 100" in verdict and "ГК РТ, ст. 384" in verdict)
     check("outcome defined by user's goal", "по цели пользователя" in verdict and "оправдание" in verdict)

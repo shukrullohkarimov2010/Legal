@@ -18,7 +18,7 @@
                 witness: 'Задайте свидетелю вопрос по обстоятельствам дела.',
             },
             tags: { object: '✋ Возражение', witness: '🧍 Вопрос свидетелю' },
-            send: 'Отправить', sending: 'Суд слушает…', finish: 'Завершить заседание', hint: 'Ctrl + Enter — отправить',
+            addressee: 'Вы обращаетесь к', send: 'Отправить', sending: 'Суд слушает…', finish: 'Завершить заседание', hint: 'Ctrl + Enter — отправить',
             brief: 'Материалы дела', round: function (n, max) { return 'Раунд ' + n + ' из ' + max; }, roundIdle: 'Заседание началось',
             score: 'Текущий балл', scoreIdle: 'после первой реплики',
             criteria: { legal_basis: 'Юридическое обоснование', logic: 'Логика', evidence: 'Работа с доказательствами', procedure: 'Процессуальный порядок' },
@@ -46,7 +46,7 @@
                 witness: 'Ба шоҳид оид ба ҳолатҳои парванда савол диҳед.',
             },
             tags: { object: '✋ Эътироз', witness: '🧍 Савол ба шоҳид' },
-            send: 'Фиристодан', sending: 'Суд гӯш мекунад…', finish: 'Анҷом додани мурофиа', hint: 'Ctrl + Enter — фиристодан',
+            addressee: 'Шумо муроҷиат мекунед ба', send: 'Фиристодан', sending: 'Суд гӯш мекунад…', finish: 'Анҷом додани мурофиа', hint: 'Ctrl + Enter — фиристодан',
             brief: 'Маводҳои парванда', round: function (n, max) { return 'Давр ' + n + ' аз ' + max; }, roundIdle: 'Мурофиа оғоз шуд',
             score: 'Холи ҷорӣ', scoreIdle: 'пас аз аввалин баромад',
             criteria: { legal_basis: 'Асосноккунии ҳуқуқӣ', logic: 'Мантиқ', evidence: 'Кор бо далелҳо', procedure: 'Тартиби мурофиавӣ' },
@@ -192,12 +192,17 @@
             b.addEventListener('click', function () {
                 st.action = key;
                 box.querySelectorAll('.act').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.action === key)); });
-                $('input').placeholder = T.placeholders[key];
+                $('input').placeholder = placeholderFor(key);
                 $('input').focus({ preventScroll: true });
             });
             box.appendChild(b);
         });
-        $('input').placeholder = T.placeholders[st.action];
+        $('input').placeholder = placeholderFor(st.action);
+    }
+
+    // Вопрос свидетелю: в подсказке названо, к кому обращаетесь, чтобы не писать «ты» наугад.
+    function placeholderFor(key) {
+        return key === 'witness' ? T.placeholders.witness + ' ' + T.addressee + ': ' + st.c.witness + '.' : T.placeholders[key];
     }
 
     function updateControls() {
@@ -214,7 +219,7 @@
         if (st.busy || st.done || text.length < 3 || st.turn >= st.max) return;
         var action = st.action;
         $('composeError').textContent = '';
-        var mine = say('me', text, T.tags[action]);
+        var mine = say('me', text, action === 'witness' ? T.tags.witness + ': ' + st.c.witness : T.tags[action]);
         var wait = typing();
         var before = st.history.slice();
         st.busy = true;
@@ -224,7 +229,7 @@
         api('/api/court/turn', { case_id: st.c.id, history: before, message: text, action: action, lang: cfg.lang }).then(function (r) {
             if (!r.ok) throw new Error(r.data.error || 'turn');
             wait.remove();
-            st.history = before.concat([{ speaker: 'user', text: text }], r.data.lines.map(function (l) { return { speaker: l.speaker, text: l.text }; }));
+            st.history = before.concat([{ speaker: 'user', text: text, action: action }], r.data.lines.map(function (l) { return { speaker: l.speaker, text: l.text }; }));
             st.turn = r.data.turn;
             st.max = r.data.max_turns || st.max;
             st.scores.push(r.data.score);

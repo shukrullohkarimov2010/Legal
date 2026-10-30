@@ -116,7 +116,10 @@ def sanitize_history(history) -> list:
             continue
         speaker, text = str(item.get("speaker") or ""), str(item.get("text") or "").strip()
         if speaker in SPEAKERS and text:
-            clean.append({"speaker": speaker, "text": text[:MAX_TEXT]})
+            entry = {"speaker": speaker, "text": text[:MAX_TEXT]}
+            if speaker == "user" and str(item.get("action") or "") in ACTIONS:
+                entry["action"] = str(item["action"])
+            clean.append(entry)
     return clean[-MAX_HISTORY:]
 
 
@@ -129,17 +132,40 @@ def normalize_action(value) -> str:
 
 _SPEAKER_NAMES = {"user": "ЗАЩИТНИК/ПРЕДСТАВИТЕЛЬ (пользователь)", "judge": "СУДЬЯ", "opponent": "ПРОТИВНАЯ СТОРОНА", "witness": "СВИДЕТЕЛЬ"}
 
-_ACTION_NOTES = {
-    "argue": "Пользователь излагает свою позицию или аргумент.",
-    "object": "Пользователь заявил ВОЗРАЖЕНИЕ против действий или слов противной стороны. Судья обязан принять решение: возражение принято или отклонено, с кратким основанием.",
-    "witness": "Пользователь задаёт вопрос СВИДЕТЕЛЮ. Отвечает свидетель, только то, что он мог видеть и знать по делу, без юридических оценок; судья вмешивается только если вопрос недопустим (наводящий, не по делу).",
-}
+def action_note(action: str, case: dict) -> str:
+    if action == "object":
+        return ("Пользователь заявил ВОЗРАЖЕНИЕ против действий или слов противной стороны. Судья обязан принять "
+                "решение: возражение принято или отклонено, с кратким основанием.")
+    if action == "witness":
+        return (
+            "Пользователь задаёт вопрос СВИДЕТЕЛЮ: %(w)s. Вопрос адресован именно ему: «ты», «вы» и «вас» в вопросе "
+            "относятся к свидетелю, а «он», «его» и «ему» без имени — к подсудимому или стороне, о которой идёт дело. "
+            "Не требуй уточнить, кому адресован вопрос или о ком речь, если это понятно из дела.\n"
+            "Первой репликой отвечает СВИДЕТЕЛЬ от первого лица, коротко и по существу: только то, что он мог видеть и знать "
+            "по делу; чего не знает — так и говорит. Выдумывать новые факты, меняющие суть дела, свидетель не вправе. "
+            "Если вопрос недопустим (наводящий, оскорбительный), его снимает СУДЬЯ. Если вопрос не относится к делу, "
+            "судья снимает его и одной фразой напоминает, о чём дело; противная сторона в этом случае молчит."
+        ) % {"w": case.get("witness", "свидетель")}
+    return "Пользователь излагает свою позицию или аргумент."
 
 
-def _dialogue(history) -> str:
+def _user_label(entry: dict, case: dict) -> str:
+    action = entry.get("action")
+    if action == "object":
+        return "%s [возражение]" % _SPEAKER_NAMES["user"]
+    if action == "witness":
+        return "%s [вопрос свидетелю: %s]" % (_SPEAKER_NAMES["user"], case.get("witness", "свидетель"))
+    return _SPEAKER_NAMES["user"]
+
+
+def _dialogue(history, case: dict) -> str:
     if not history:
         return "Заседание только началось."
-    return "\n".join("%s: %s" % (_SPEAKER_NAMES.get(h["speaker"], h["speaker"]), h["text"]) for h in history)
+    lines = []
+    for h in history:
+        name = _user_label(h, case) if h["speaker"] == "user" else _SPEAKER_NAMES.get(h["speaker"], h["speaker"])
+        lines.append("%s: %s" % (name, h["text"]))
+    return "\n".join(lines)
 
 
 def build_turn_prompt(case: dict, history: list, message: str, action: str, rag_context: str, turn_no: int) -> str:
@@ -154,10 +180,10 @@ def build_turn_prompt(case: dict, history: list, message: str, action: str, rag_
 {rag_context or "Фрагменты не найдены."}
 
 ХОД ЗАСЕДАНИЯ:
-{_dialogue(history)}
+{_dialogue(history, case)}
 
 НОВАЯ РЕПЛИКА ПОЛЬЗОВАТЕЛЯ (раунд {turn_no}): {message}
-ТИП ДЕЙСТВИЯ: {_ACTION_NOTES.get(action, _ACTION_NOTES['argue'])}
+ТИП ДЕЙСТВИЯ: {action_note(action, case)}
 
 ЗАДАЧА: продолжи заседание и оцени реплику пользователя.
 Правила:
@@ -183,7 +209,7 @@ def build_verdict_prompt(case: dict, history: list, mean_score: int, cited: list
 ЦЕЛЬ ПОЛЬЗОВАТЕЛЯ: {case['goal']}
 
 ХОД ЗАСЕДАНИЯ:
-{_dialogue(history)}
+{_dialogue(history, case)}
 
 Статьи, названные пользователем и найденные в базе: {cites}.
 Средний балл за реплики по системе: {mean_score} из 100.
