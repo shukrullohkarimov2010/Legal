@@ -24,11 +24,12 @@
             criteria: { legal_basis: 'Юридическое обоснование', logic: 'Логика', evidence: 'Работа с доказательствами', procedure: 'Процессуальный порядок' },
             lastTurn: 'Оценка последней реплики', cited: 'Ваши ссылки на статьи', noCites: 'В этой реплике статей не названо.',
             showHint: '💡 Показать подсказку', cite: { verified: 'по делу', exists: 'не по делу', wrong_code: 'другой кодекс', missing: 'нет в базе' },
+            protocol: 'Протокол заседания', objection: 'Возражение!', accepted: 'Принято', rejected: 'Отклонено', skip: 'Пропустить реплики',
             opening: function (c) { return 'Заседание объявляется открытым. Рассматривается дело: «' + c.title + '». Слово предоставляется стороне: ' + c.role + '.'; },
             youAre: function (c) { return 'Вы — ' + c.role + '. ' + c.goal; },
             maxReached: 'Достигнут предел раундов. Завершите заседание, чтобы услышать решение суда.',
             errTurn: 'Не удалось получить ответ суда. Повторите реплику.', errCases: 'Не удалось загрузить дела. Проверьте, запущен ли сервер.',
-            deliberating: 'Суд удаляется на совещание…', errVerdict: 'Не удалось вынести решение. Повторите.',
+            thinking: 'Суд совещается', deliberating: 'Суд удаляется на совещание…', errVerdict: 'Не удалось вынести решение. Повторите.',
             verdictTitle: 'Решение суда', outcomes: { won: 'Дело выиграно', partial: 'Выиграно частично', lost: 'Дело проиграно' },
             grades: { excellent: 'Отличная работа', good: 'Хорошая работа', fair: 'Есть над чем поработать', weak: 'Нужна серьёзная подготовка' },
             breakdown: 'Оценка по критериям', strengths: 'Что получилось', mistakes: 'Над чем поработать', study: 'Что изучить', articles: 'Статьи по этому делу',
@@ -52,11 +53,12 @@
             criteria: { legal_basis: 'Асосноккунии ҳуқуқӣ', logic: 'Мантиқ', evidence: 'Кор бо далелҳо', procedure: 'Тартиби мурофиавӣ' },
             lastTurn: 'Баҳои баромади охирин', cited: 'Истинодҳои шумо ба моддаҳо', noCites: 'Дар ин баромад моддае ном бурда нашуд.',
             showHint: '💡 Нишон додани маслиҳат', cite: { verified: 'ба парванда мувофиқ', exists: 'ба парванда не', wrong_code: 'кодекси дигар', missing: 'дар база нест' },
+            protocol: 'Протоколи мурофиа', objection: 'Эътироз!', accepted: 'Қабул шуд', rejected: 'Рад шуд', skip: 'Гузаштан аз гуфтугӯ',
             opening: function (c) { return 'Маҷлиси суд кушода эълон мешавад. Парванда баррасӣ мешавад: «' + c.title + '». Суханро ба тараф медиҳам: ' + c.role + '.'; },
             youAre: function (c) { return 'Шумо — ' + c.role + '. ' + c.goal; },
             maxReached: 'Шумораи давраҳо ба охир расид. Мурофиаро анҷом диҳед, то қарори судро шунавед.',
             errTurn: 'Ҷавоби суд гирифта нашуд. Баромадро такрор кунед.', errCases: 'Парвандаҳо бор нашуданд. Санҷед, ки сервер кор мекунад.',
-            deliberating: 'Суд ба утоқи машварат меравад…', errVerdict: 'Қарор баровардан муяссар нашуд. Такрор кунед.',
+            thinking: 'Суд машварат мекунад', deliberating: 'Суд ба утоқи машварат меравад…', errVerdict: 'Қарор баровардан муяссар нашуд. Такрор кунед.',
             verdictTitle: 'Қарори суд', outcomes: { won: 'Парванда ғалаба шуд', partial: 'Қисман ғалаба шуд', lost: 'Парванда бохта шуд' },
             grades: { excellent: 'Кори аъло', good: 'Кори хуб', fair: 'Ҷои кор кардан ҳаст', weak: 'Омодагии ҷиддӣ лозим аст' },
             breakdown: 'Баҳо аз рӯи меъёрҳо', strengths: 'Чӣ хуб баромад', mistakes: 'Болои чӣ кор кардан лозим', study: 'Чиро омӯхтан лозим', articles: 'Моддаҳо оид ба ин парванда',
@@ -136,19 +138,29 @@
         $('caseRole').textContent = T.role + ': ' + c.role;
         $('briefSummary').textContent = T.brief;
         $('briefText').textContent = c.facts + '\n\n🧍 ' + c.witness;
+        $('protocolSummary').textContent = T.protocol;
         $('log').replaceChildren();
         $('input').value = '';
         $('composeError').textContent = '';
-        say('system', T.opening(c));
-        say('system', T.youAre(c));
         resetSide();
         buildActions();
-        updateControls();
         show('screenRoom');
-        $('input').focus({ preventScroll: true });
+        scene.setCase(c, { judge: T.speakers.judge, witness: T.speakers.witness, me: T.speakers.me, role: T.role + ': ' + c.role });
+        logLine('judge', T.opening(c));
+        logLine('system', T.youAre(c));
+        // Открытие заседания: удар молотка, затем слово судьи.
+        st.busy = true;
+        updateControls();
+        scene.resetFast();
+        scene.gavel(3).then(function () { return scene.say('judge', T.opening(c)); }).then(function () {
+            scene.clear();
+            st.busy = false;
+            updateControls();
+            $('input').focus({ preventScroll: true });
+        });
     }
 
-    function say(who, text, tag) {
+    function logLine(who, text, tag) {
         var row = el('div', 'msg ' + who);
         if (who === 'system') {
             row.appendChild(el('div', 'bubble', text));
@@ -163,19 +175,6 @@
             body.appendChild(bubble);
             row.append(avatar, body);
         }
-        $('log').appendChild(row);
-        $('log').scrollTop = $('log').scrollHeight;
-        return row;
-    }
-
-    function typing() {
-        var row = el('div', 'msg judge');
-        row.appendChild(el('div', 'avatar', '⚖️'));
-        var bubble = el('div', 'bubble');
-        var dots = el('div', 'typing');
-        dots.append(el('i'), el('i'), el('i'));
-        bubble.appendChild(dots);
-        row.appendChild(bubble);
         $('log').appendChild(row);
         $('log').scrollTop = $('log').scrollHeight;
         return row;
@@ -219,16 +218,22 @@
         if (st.busy || st.done || text.length < 3 || st.turn >= st.max) return;
         var action = st.action;
         $('composeError').textContent = '';
-        var mine = say('me', text, action === 'witness' ? T.tags.witness + ': ' + st.c.witness : T.tags[action]);
-        var wait = typing();
+        var mine = logLine('me', text, action === 'witness' ? T.tags.witness + ': ' + st.c.witness : T.tags[action]);
         var before = st.history.slice();
         st.busy = true;
         $('input').value = '';
         updateControls();
 
+        // Реплика звучит на сцене; возражение сопровождается штампом, пока суд думает.
+        scene.resetFast();
+        var waiting = true;
+        var shown = scene.say('me', text, { instant: true, dwell: 700 });
+        if (action === 'object') shown = shown.then(function () { return scene.stamp(T.objection, 'bad'); });
+        shown.then(function () { if (waiting) scene.thinking(true, T.thinking); });
+
         api('/api/court/turn', { case_id: st.c.id, history: before, message: text, action: action, lang: cfg.lang }).then(function (r) {
             if (!r.ok) throw new Error(r.data.error || 'turn');
-            wait.remove();
+            waiting = false;
             st.history = before.concat([{ speaker: 'user', text: text, action: action }], r.data.lines.map(function (l) { return { speaker: l.speaker, text: l.text }; }));
             st.turn = r.data.turn;
             st.max = r.data.max_turns || st.max;
@@ -237,25 +242,51 @@
                 var label = c.code + ', ст. ' + c.article;
                 if (c.status === 'verified' && st.cited.indexOf(label) < 0) st.cited.push(label);
             });
-            return playLines(r.data.lines).then(function () { renderSide(r.data); });
+            return shown.then(function () {
+                scene.thinking(false);
+                return playLines(r.data.lines, action);
+            }).then(function () {
+                scene.float(r.data.score);
+                renderSide(r.data);
+            });
         }).catch(function (e) {
-            wait.remove();
+            waiting = false;
+            scene.thinking(false);
+            scene.clear();
             mine.remove();
             $('input').value = text;
             $('composeError').textContent = (e && e.message && e.message !== 'turn') ? e.message : T.errTurn;
         }).then(function () {
             st.busy = false;
-            if (st.turn >= st.max) say('system', T.maxReached);
+            scene.clear();
+            if (st.turn >= st.max) logLine('system', T.maxReached);
             updateControls();
             if (!$('input').disabled) $('input').focus({ preventScroll: true });
         });
     }
 
-    function playLines(lines) {
+    // Решение судьи по возражению: «принято» или «отклонено» (по словам в его реплике).
+    function decisionOf(text) {
+        var t = String(text || '').toLowerCase();
+        if (/(не\s+принима|отклон|отказ|рад\s+(карда|мешавад|мекунад))/.test(t)) return 'rejected';
+        if (/(принима|принят|удовлетвор|қабул)/.test(t)) return 'accepted';
+        return null;
+    }
+
+    function playLines(lines, action) {
+        var stamped = false;
         return lines.reduce(function (chain, line) {
             return chain.then(function () {
-                say(line.speaker, line.text);
-                return new Promise(function (resolve) { setTimeout(resolve, 450); });
+                logLine(line.speaker, line.text);
+                var spoken = scene.say(line.speaker, line.text);
+                if (action === 'object' && line.speaker === 'judge' && !stamped) {
+                    var verdict = decisionOf(line.text);
+                    if (verdict) {
+                        stamped = true;
+                        return spoken.then(function () { return scene.stamp(T[verdict], verdict === 'accepted' ? 'good' : 'bad'); });
+                    }
+                }
+                return spoken;
             });
         }, Promise.resolve());
     }
@@ -342,11 +373,16 @@
         st.busy = true;
         updateControls();
         $('finish').textContent = '⏳ ' + T.deliberating;
+        scene.resetFast();
+        scene.thinking(true, T.deliberating);
         api('/api/court/verdict', { case_id: st.c.id, history: st.history, scores: st.scores, cited: st.cited, lang: cfg.lang }).then(function (r) {
             if (!r.ok) throw new Error(r.data.error || 'verdict');
             st.done = true;
-            renderVerdict(r.data);
+            scene.thinking(false);
+            return scene.gavel(2).then(function () { renderVerdict(r.data); });
         }).catch(function (e) {
+            scene.thinking(false);
+            scene.clear();
             $('composeError').textContent = (e && e.message && e.message !== 'verdict') ? e.message : T.errVerdict;
         }).then(function () {
             st.busy = false;
@@ -453,8 +489,17 @@
         });
     }
 
+    var scene = null;
+
     function init() {
         initTheme();
+        scene = window.CourtScene.create($('scene'));
+        var skip = el('button', 'scene-btn', '⏭');
+        skip.type = 'button';
+        skip.title = T.skip;
+        skip.setAttribute('aria-label', T.skip);
+        skip.addEventListener('click', function () { scene.skipAll(); });
+        $('scene').querySelector('.scene-tools').prepend(skip);
         $('send').addEventListener('click', send);
         $('finish').addEventListener('click', finish);
         $('input').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); } });

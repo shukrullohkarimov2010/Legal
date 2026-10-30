@@ -38,6 +38,7 @@ def test_cases():
     check("translated field used", card["title"] == "Сарлавҳа")
     check("empty translation falls back", card["facts"] == mc.CASES["theft"]["facts"])
     check("query not exposed", "query" not in card)
+    check("genders exposed for the scene", card["opponent_gender"] in ("m", "f") and card["witness_gender"] in ("m", "f"))
 
 
 def test_sanitize_history():

@@ -63,11 +63,11 @@
                         <small id="caseRole"></small>
                     </div>
                 </div>
-                <details class="brief" open>
+                <details class="brief">
                     <summary id="briefSummary"></summary>
                     <p id="briefText" style="white-space: pre-wrap"></p>
                 </details>
-                <div id="log" class="log" aria-live="polite"></div>
+                <div id="scene" aria-live="polite"></div>
                 <div class="composer">
                     <div id="actions" class="actions" role="group"></div>
                     <div class="input-row">
@@ -80,6 +80,10 @@
                         <button type="button" id="finish" class="btn ok" disabled></button>
                     </div>
                 </div>
+                <details class="brief" open>
+                    <summary id="protocolSummary"></summary>
+                    <div id="log" class="log"></div>
+                </details>
             </div>
 
             <aside class="side">
@@ -114,6 +118,7 @@
         codexUrl: "{{ route('contract.codex') }}",
     };
 </script>
+<script src="{{ asset('js/court-scene.js') }}?v={{ @filemtime(public_path('js/court-scene.js')) }}"></script>
 <script src="{{ asset('js/court.js') }}?v={{ @filemtime(public_path('js/court.js')) }}"></script>
 </body>
 </html>
