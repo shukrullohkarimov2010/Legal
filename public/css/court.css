@@ -324,3 +324,69 @@ details.brief.closed summary { color: var(--ink-3); }
     .doc { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: 0; animation: none; }
     .seal { animation: none; opacity: .85; }
 }
+
+/* ───────── Доска доказательств ───────── */
+.board {
+    padding: 14px 18px 18px; border-top: 1px solid var(--line);
+    background:
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, .06) 0 1px, transparent 1.5px) 0 0 / 9px 9px,
+        radial-gradient(circle at 70% 60%, rgba(0, 0, 0, .08) 0 1px, transparent 1.5px) 0 0 / 7px 7px,
+        linear-gradient(135deg, #b98a57, #a07445);
+    box-shadow: inset 0 0 0 6px #6b4a2b, inset 0 0 22px rgba(0, 0, 0, .35);
+}
+.board[hidden] { display: none; }
+.board-head { margin-bottom: 10px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #fff7e8; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
+.board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.ev {
+    position: relative; display: flex; flex-direction: column; gap: 6px; padding: 14px 12px 10px; border-radius: 4px;
+    color: #2a2418; background: linear-gradient(180deg, #fffdf6, #f6efdc); transform: rotate(var(--tilt, 0deg));
+    box-shadow: 0 10px 18px -8px rgba(40, 25, 10, .55), 0 1px 0 rgba(255, 255, 255, .8) inset; transition: transform .2s var(--ease), box-shadow .2s;
+}
+.ev:hover { transform: rotate(0) translateY(-3px) scale(1.02); box-shadow: 0 16px 26px -10px rgba(40, 25, 10, .6); z-index: 2; }
+.ev.fresh { animation: pinDrop .6s cubic-bezier(.2, 1.4, .4, 1) both; }
+.ev .pin { position: absolute; top: -6px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a8a, #c81e1e 60%, #7a0e0e); box-shadow: 0 3px 4px rgba(0, 0, 0, .4); }
+.ev:nth-child(3n+2) .pin { background: radial-gradient(circle at 35% 35%, #93c5fd, #1d4ed8 60%, #0b2a7a); }
+.ev:nth-child(3n) .pin { background: radial-gradient(circle at 35% 35%, #fde68a, #d97706 60%, #7a4206); }
+.ev-new { position: absolute; top: 6px; right: 6px; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 900; letter-spacing: .06em; color: #fff; background: #e11d48; }
+.ev-top { display: flex; align-items: center; gap: 8px; padding-right: 30px; }
+.ev-icon { font-size: 20px; }
+.ev-top b { font-size: 13.5px; line-height: 1.3; }
+.ev-detail { margin: 0; font-size: 12.5px; line-height: 1.45; color: #4a3f2b; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.ev-foot { margin-top: auto; padding-top: 4px; }
+.ev-btn { width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px dashed #a07445; background: transparent; color: #6b4a2b; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: background .15s, color .15s; }
+.ev-btn:hover { background: #6b4a2b; color: #fff7e8; border-style: solid; }
+.ev.picked { outline: 3px solid #6366f1; outline-offset: 2px; transform: rotate(0) translateY(-2px); }
+.ev.picked .ev-btn { background: #4f46e5; color: #fff; border: 0; }
+.ev-state { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 800; color: #6b4a2b; background: rgba(107, 74, 43, .12); }
+.ev-state.ok { color: #065f46; background: rgba(16, 185, 129, .18); } .ev-state.bad { color: #991b1b; background: rgba(239, 68, 68, .16); }
+.ev.admitted { box-shadow: 0 0 0 2px rgba(16, 185, 129, .6), 0 10px 18px -8px rgba(40, 25, 10, .55); }
+.ev.rejected { opacity: .7; filter: grayscale(.4); }
+.ev-ghost { position: fixed; z-index: 60; margin: 0; pointer-events: none; transition: transform .85s cubic-bezier(.5, 0, .2, 1), opacity .5s .4s; }
+@keyframes pinDrop { from { opacity: 0; transform: translateY(-40px) rotate(-12deg) scale(1.1); } to { opacity: 1; transform: rotate(var(--tilt, 0deg)); } }
+
+.exhibit-chip { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 6px 8px 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--ink); background: color-mix(in srgb, var(--accent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+.exhibit-chip[hidden] { display: none; }
+.exhibit-chip button { width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--surface); color: var(--ink-2); cursor: pointer; font-size: 11px; }
+
+/* ───────── Своё дело ───────── */
+.case.custom { border-style: dashed; border-width: 2px; background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 7%, var(--surface)), var(--surface)); }
+.case.custom.ready { border-style: solid; }
+.kind.custom { --c: var(--accent); }
+.facts-lead { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+.custom-input { width: 100%; min-height: 120px; resize: vertical; padding: 12px; border-radius: 12px; font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2); }
+.custom-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.custom-role { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--ink-2); }
+.custom-role select { flex: 1; max-width: 62%; padding: 8px 10px; border-radius: 10px; font: inherit; font-size: 13px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2); }
+.case.building { animation: pulse 1.4s ease-in-out infinite; }
+.ev-mini { display: flex; flex-wrap: wrap; gap: 6px; }
+.ev-mini span { padding: 3px 9px; border-radius: 999px; font-size: 12px; color: var(--ink-2); background: var(--sunken); border: 1px solid var(--line); }
+.case-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.case-actions .btn { flex: 1; }
+@keyframes pulse { 0%, 100% { box-shadow: var(--shadow); } 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent), var(--shadow); } }
+
+/* Переключатель голоса в шапке */
+.voice-seg { align-items: center; }
+.voice-seg .seg-label { padding: 0 4px 0 6px; font-size: 13px; }
+.voice-seg button { font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0; }
+.voice-seg button:disabled { opacity: .4; cursor: not-allowed; }
+@media (max-width: 720px) { .voice-seg .seg-label { display: none; } .voice-seg button { padding: 4px 7px; font-size: 11px; } }

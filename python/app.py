@@ -4718,9 +4718,10 @@ def _court_from_ru(items, lang):
 
 
 # ---------------------------------------------------------------------------
-# Голос персонажей симулятора. По умолчанию голос даёт браузер (бесплатно);
-# COURT_TTS=openai включает живые голоса OpenAI (около $0,015 за минуту речи).
-# Озвучка кешируется на диске: повтор той же реплики денег не стоит.
+# Голос персонажей симулятора. На странице его переключают: «lama:3.1» — голос
+# браузера (бесплатно), «legal» — живые голоса OpenAI (около $0,015 за минуту речи).
+# COURT_TTS задаёт режим по умолчанию: browser или openai; off запрещает платный
+# голос совсем. Озвучка кешируется на диске: повтор той же реплики денег не стоит.
 # ---------------------------------------------------------------------------
 COURT_TTS = (os.environ.get("COURT_TTS") or "browser").strip().lower()
 TTS_MODEL = os.environ.get("TTS_MODEL") or "gpt-4o-mini-tts"
@@ -4738,7 +4739,12 @@ _TTS_STYLE = {
 
 
 def _tts_enabled():
-    return COURT_TTS == "openai" and bool(OPENAI_API_KEY)
+    """Можно ли озвучивать через OpenAI: есть ключ и платный голос не запрещён."""
+    return COURT_TTS != "off" and bool(OPENAI_API_KEY)
+
+
+def _tts_default():
+    return "openai" if COURT_TTS == "openai" and _tts_enabled() else "browser"
 
 
 @app.route("/api/tts", methods=["POST"])
@@ -4790,12 +4796,24 @@ def court_cases():
         translated = None
         if lang == "tg":
             if cid not in _court_cards:
-                case = moot_court.get_case(cid)
-                values = _court_from_ru([case[f] for f in moot_court.CARD_FIELDS], "tg")
-                _court_cards[cid] = dict(zip(moot_court.CARD_FIELDS, values))
+                _court_cards[cid] = _court_translate_case(moot_court.get_case(cid))
             translated = _court_cards[cid]
         cards.append(moot_court.public_case(cid, translated))
-    return jsonify({"cases": cards, "voice": "openai" if _tts_enabled() else "browser"})
+    return jsonify({"cases": cards, "voice": _tts_default(), "voice_cloud": _tts_enabled()})
+
+
+def _court_translate_case(case):
+    """Тексты карточки дела и улик на таджикском одним переводом."""
+    fields = list(moot_court.CARD_FIELDS)
+    evidence = case.get("evidence") or []
+    texts = [case[f] for f in fields]
+    for item in evidence:
+        texts += [item["title"], item["detail"]]
+    values = _court_from_ru(texts, "tg")
+    translated = dict(zip(fields, values[:len(fields)]))
+    rest = values[len(fields):]
+    translated["evidence"] = [{"title": rest[2 * i], "detail": rest[2 * i + 1]} for i in range(len(evidence))]
+    return translated
 
 
 def _court_rag(case, message):
@@ -4811,22 +4829,30 @@ def _court_rag(case, message):
 def court_turn():
     """Один ход заседания: реплика пользователя -> ответ судьи, противной стороны или свидетеля и оценка."""
     data = request.get_json(silent=True) or {}
-    case = moot_court.get_case(data.get("case_id"))
+    case = moot_court.resolve_case(data.get("case_id"), data.get("custom_case"))
     message = str(data.get("message") or "").strip()[:moot_court.MAX_TEXT]
     if not case:
         return jsonify({"error": "Дело не найдено"}), 404
     if len(message) < 3:
         return jsonify({"error": "Введите реплику"}), 400
+    exhibit = moot_court.sanitize_exhibit(data.get("exhibit"))
     lang = _court_lang(data.get("lang"))
     history = moot_court.sanitize_history(data.get("history"))
     action = moot_court.normalize_action(data.get("action"))
     turn_no = sum(1 for h in history if h["speaker"] == "user") + 1
 
     message_ru = _court_to_ru(message, lang)
+    if exhibit:
+        # Улика из материалов дела берётся в русском оригинале; новая (из показаний) переводится.
+        known = {e["id"]: e for e in case.get("evidence") or []}
+        if exhibit["id"] in known:
+            exhibit = dict(known[exhibit["id"]])
+        elif lang == "tg":
+            exhibit["title"], exhibit["detail"] = (_court_to_ru(exhibit["title"], lang), _court_to_ru(exhibit["detail"], lang))
     results, context = _court_rag(case, message_ru)
     try:
         parsed = moot_court.parse_turn(_court_json(
-            moot_court.build_turn_prompt(case, history, message_ru, action, context, turn_no), 900))
+            moot_court.build_turn_prompt(case, history, message_ru, action, context, turn_no, exhibit), 1000))
     except Exception as e:  # noqa: BLE001
         print("court turn: %s" % e)
         return jsonify({"error": "Модель недоступна, повторите попытку"}), 503
@@ -4835,10 +4861,15 @@ def court_turn():
 
     citations = _chat_citations(message_ru, results)
     score = moot_court.turn_score(parsed["parts"], citations)
+    found = parsed["new_evidence"]
     texts = [line["text"] for line in parsed["lines"]] + [parsed["comment"], parsed["hint"]]
+    for item in found:
+        texts += [item["title"], item["detail"]]
     shown = _court_from_ru(texts, lang)
     lines = [{"speaker": line["speaker"], "text": shown[i]} for i, line in enumerate(parsed["lines"])]
     count = len(parsed["lines"])
+    new_evidence = [{"id": "n%d" % turn_no, "icon": "🗣️", "title": shown[count + 2 + 2 * i], "detail": shown[count + 3 + 2 * i],
+                     "new": True} for i in range(len(found))]
     return jsonify({
         "lines": lines,
         "score": score,
@@ -4848,14 +4879,41 @@ def court_turn():
         "citations": citations,
         "turn": turn_no,
         "max_turns": moot_court.MAX_TURNS,
+        "ruling": parsed["ruling"] if exhibit else "none",
+        "new_evidence": new_evidence,
     })
+
+
+@app.route("/api/court/custom", methods=["POST"])
+def court_custom():
+    """Своё дело: из описания ситуации модель собирает дело со сторонами, свидетелем и уликами."""
+    data = request.get_json(silent=True) or {}
+    situation = re.sub(r"\s+", " ", str(data.get("situation") or "")).strip()[:2000]
+    if len(situation) < 30:
+        return jsonify({"error": "Опишите ситуацию подробнее: кто, что произошло, о чём спор"}), 400
+    lang = _court_lang(data.get("lang"))
+    role = re.sub(r"\s+", " ", str(data.get("role") or "")).strip()[:80]
+    situation_ru = _court_to_ru(situation, lang)
+    case = None
+    try:
+        for _ in range(2):
+            case = moot_court.sanitize_custom(_court_json(moot_court.build_custom_prompt(situation_ru, role), 1400))
+            if case:
+                break
+    except Exception as e:  # noqa: BLE001
+        print("court custom: %s" % e)
+        return jsonify({"error": "Модель недоступна, повторите попытку"}), 503
+    if not case:
+        return jsonify({"error": "Не удалось составить дело, уточните описание"}), 502
+    translated = _court_translate_case(case) if lang == "tg" else None
+    return jsonify({"case": moot_court.card_of("custom", case, translated), "source": case})
 
 
 @app.route("/api/court/verdict", methods=["POST"])
 def court_verdict():
     """Решение суда и итоговая оценка работы пользователя."""
     data = request.get_json(silent=True) or {}
-    case = moot_court.get_case(data.get("case_id"))
+    case = moot_court.resolve_case(data.get("case_id"), data.get("custom_case"))
     if not case:
         return jsonify({"error": "Дело не найдено"}), 404
     lang = _court_lang(data.get("lang"))

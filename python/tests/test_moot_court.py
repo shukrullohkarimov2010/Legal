@@ -123,6 +123,56 @@ def test_relevant_titles():
     check("nothing relevant", mc.relevant_titles("кража", [{"title": "Брак"}]) == [])
 
 
+def test_evidence_cards():
+    card = mc.public_case("theft")
+    check("evidence on card", len(card["evidence"]) == 4 and all(e["id"] and e["icon"] and e["title"] for e in card["evidence"]))
+    tr = mc.public_case("theft", {"evidence": [{"title": "Сабти видео", "detail": "..."}]})
+    check("evidence translated by index", tr["evidence"][0]["title"] == "Сабти видео" and tr["evidence"][1]["title"] == card["evidence"][1]["title"])
+    prompt = mc.build_turn_prompt(mc.get_case("theft"), [], "Прошу приобщить", "argue", "", 1,
+                                  exhibit={"title": "Журнал павильона", "detail": "Запись в 13:10"})
+    check("materials in prompt", "МАТЕРИАЛЫ ДЕЛА" in prompt and "Видеозапись с камеры" in prompt)
+    check("exhibit in prompt", "ПРЕДЪЯВЛЯЕТ СУДУ ДОКАЗАТЕЛЬСТВО: «Журнал павильона»" in prompt and "ruling" in prompt)
+    check("no exhibit block without exhibit", "ПРЕДЪЯВЛЯЕТ" not in mc.build_turn_prompt(mc.get_case("theft"), [], "x", "argue", "", 1))
+    hist = mc.sanitize_history([{"speaker": "user", "text": "вот", "exhibit": "Расписка"}])
+    check("history keeps exhibit", hist[0].get("exhibit") == "Расписка")
+    check("dialogue marks exhibit", "предъявлено доказательство: Расписка" in mc.build_turn_prompt(mc.get_case("debt"), hist, "x", "argue", "", 2))
+    check("exhibit sanitized", mc.sanitize_exhibit({"title": " Расписка ", "detail": ""}) == {"id": "", "title": "Расписка", "detail": "Расписка"})
+    check("bad exhibit", mc.sanitize_exhibit({"title": ""}) is None and mc.sanitize_exhibit("x") is None)
+
+
+def test_parse_turn_ruling_and_new_evidence():
+    base = {"lines": [{"speaker": "judge", "text": "Приобщить."}]}
+    got = mc.parse_turn(dict(base, ruling="ADMITTED", new_evidence=[{"title": "Показания продавца", "detail": "Не видела"}, {"title": "x", "detail": "y"}]))
+    check("ruling parsed", got["ruling"] == "admitted")
+    check("one new evidence", got["new_evidence"] == [{"title": "Показания продавца", "detail": "Не видела"}], str(got["new_evidence"]))
+    junk = mc.parse_turn(dict(base, ruling="maybe", new_evidence=[{"title": "", "detail": "y"}, "x"]))
+    check("junk ignored", junk["ruling"] == "none" and junk["new_evidence"] == [])
+
+
+def test_custom_case():
+    raw = {"kind": "LABOR", "title": "Невыплата зарплаты", "role": "представитель работника", "opponent": "",
+           "opponent_gender": "x", "witness": "Сино Раҳимова, бухгалтер", "witness_gender": "f",
+           "goal": "Взыскать задолженность по зарплате.", "facts": "Работник три месяца не получал заработную плату. " * 3,
+           "query": "сроки выплаты заработной платы ответственность работодателя",
+           "evidence": [{"icon": "📄", "title": "Трудовой договор", "detail": "Оклад 3000 сомони."}, {"title": "", "detail": "x"}] + [
+               {"title": "Док %d" % i, "detail": "Суть"} for i in range(9)]}
+    case = mc.sanitize_custom(raw)
+    check("custom kind normalized", case["kind"] == "labor")
+    check("default opponent by kind", case["opponent"] == "Представитель работодателя")
+    check("genders", case["opponent_gender"] == "m" and case["witness_gender"] == "f")
+    check("evidence capped and cleaned", len(case["evidence"]) == mc.MAX_EVIDENCE and case["evidence"][0]["icon"] == "📄" and case["evidence"][1]["icon"] == "📎")
+    check("resolve custom", mc.resolve_case("custom", raw)["title"] == "Невыплата зарплаты")
+    check("resolve builtin", mc.resolve_case("theft", None)["title"] == mc.CASES["theft"]["title"])
+    check("too short facts rejected", mc.sanitize_custom(dict(raw, facts="Коротко.")) is None)
+    check("missing role rejected", mc.sanitize_custom(dict(raw, role="")) is None)
+    check("not a dict", mc.sanitize_custom("x") is None and mc.resolve_case("custom", None) is None)
+    check("weak query replaced", len(mc.sanitize_custom(dict(raw, query="зарплата"))["query"].split()) >= 3)
+    card = mc.card_of("custom", case)
+    check("custom card", card["id"] == "custom" and len(card["evidence"]) == mc.MAX_EVIDENCE)
+    prompt = mc.build_custom_prompt("Меня уволили", "представитель работника")
+    check("custom prompt", "Меня уволили" in prompt and "представитель работника" in prompt and "evidence" in prompt)
+
+
 def test_final_score_and_grade():
     check("no turns uses judge", mc.final_score([], 72) == 72)
     check("half and half", mc.final_score([60, 60, 60], 80) == 70)

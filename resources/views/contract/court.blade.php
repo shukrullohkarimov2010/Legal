@@ -37,6 +37,11 @@
                 <button type="button" aria-pressed="{{ $tg ? 'false' : 'true' }}" onclick="location.href='{{ route('locale.switch', ['locale' => 'ru']) }}'">RU</button>
                 <button type="button" aria-pressed="{{ $tg ? 'true' : 'false' }}" onclick="location.href='{{ route('locale.switch', ['locale' => 'tg']) }}'">ТҶ</button>
             </div>
+            <div class="seg voice-seg" id="voiceSeg" role="group" aria-label="{{ $tg ? 'Овоз' : 'Голос' }}">
+                <span class="seg-label" aria-hidden="true">🎙</span>
+                <button type="button" data-mode="browser" aria-pressed="true">lama:3.1</button>
+                <button type="button" data-mode="openai" aria-pressed="false">legal</button>
+            </div>
             <button type="button" id="themeBtn" class="chip-btn" aria-label="Theme">☀️</button>
         </nav>
     </div>
@@ -68,8 +73,10 @@
                     <p id="briefText" style="white-space: pre-wrap"></p>
                 </details>
                 <div id="scene" aria-live="polite"></div>
+                <div id="board" class="board" hidden></div>
                 <div class="composer">
                     <div id="actions" class="actions" role="group"></div>
+                    <div id="exhibitChip" class="exhibit-chip" hidden></div>
                     <div class="input-row">
                         <textarea id="input" rows="2" maxlength="1200"></textarea>
                         <button type="button" id="send" class="btn"></button>

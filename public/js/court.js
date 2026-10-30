@@ -24,6 +24,16 @@
             criteria: { legal_basis: 'Юридическое обоснование', logic: 'Логика', evidence: 'Работа с доказательствами', procedure: 'Процессуальный порядок' },
             lastTurn: 'Оценка последней реплики', cited: 'Ваши ссылки на статьи', noCites: 'В этой реплике статей не названо.',
             showHint: '💡 Показать подсказку', cite: { verified: 'по делу', exists: 'не по делу', wrong_code: 'другой кодекс', missing: 'нет в базе' },
+            board: '📌 Доска доказательств', present: '📎 Предъявить суду', presented: 'предъявлено', admittedBadge: '✓ приобщено', rejectedBadge: '✕ отказано',
+            admitted: 'Приобщено', refused: 'Отказано', newBadge: 'НОВОЕ', boardAdded: function (t) { return '📌 На доску добавлено: ' + t; },
+            exhibitHint: 'Объясните суду, что доказывает эта улика и почему её нужно приобщить.', removeExhibit: 'Убрать улику',
+            custom: {
+                badge: 'Своё дело', title: 'Опишите свою ситуацию', lead: 'ИИ соберёт из неё дело для заседания: стороны, свидетеля и улики. Имена заменит вымышленными.',
+                placeholder: 'Например: я снимал квартиру, съехал, а хозяин не возвращает залог 3000 сомони и говорит, что я испортил пол…',
+                role: 'Ваша роль', roles: ['Определит ИИ', 'защитник подсудимого', 'представитель истца', 'представитель ответчика', 'представитель работника', 'представитель работодателя'],
+                build: '✨ Собрать дело', building: 'Суд готовит материалы дела…', again: '✎ Изменить описание', evidence: 'Улики',
+                err: 'Не удалось собрать дело. Уточните описание и попробуйте ещё раз.', short: 'Опишите подробнее: кто участники, что произошло, о чём спор.',
+            },
             announce: 'Суд вернулся из совещательной комнаты. Оглашается решение.',
             outcomeBy: {
                 criminal: { won: 'Оправдан', partial: 'Ответственность смягчена', lost: 'Признан виновным' },
@@ -40,6 +50,9 @@
             medals: { gold: 'Золото · Адвокат года', silver: 'Серебро · Сильный юрист', bronze: 'Бронза · Уверенный старт', novice: 'Стажёр · Есть куда расти' },
             stats: { rounds: ['раунд', 'раунда', 'раундов'], cited: ['статья по делу', 'статьи по делу', 'статей по делу'], objections: ['возражение', 'возражения', 'возражений'], sustained: 'принято' },
             soundOn: 'Включить звук и голос', soundOff: 'Выключить звук и голос',
+            voiceFree: 'lama:3.1 — бесплатный голос браузера (без таджикского)',
+            voicePaid: 'legal — живой голос OpenAI, около $0,015 за минуту речи',
+            voiceOff: 'legal недоступен: на сервере нет ключа OpenAI или платный голос выключен (COURT_TTS=off)',
             protocol: 'Протокол заседания', objection: 'Возражение!', accepted: 'Принято', rejected: 'Отклонено', skip: 'Пропустить реплики',
             opening: function (c) { return 'Заседание объявляется открытым. Рассматривается дело: «' + c.title + '». Слово предоставляется стороне: ' + c.role + '.'; },
             youAre: function (c) { return 'Вы — ' + c.role + '. ' + c.goal; },
@@ -69,6 +82,16 @@
             criteria: { legal_basis: 'Асосноккунии ҳуқуқӣ', logic: 'Мантиқ', evidence: 'Кор бо далелҳо', procedure: 'Тартиби мурофиавӣ' },
             lastTurn: 'Баҳои баромади охирин', cited: 'Истинодҳои шумо ба моддаҳо', noCites: 'Дар ин баромад моддае ном бурда нашуд.',
             showHint: '💡 Нишон додани маслиҳат', cite: { verified: 'ба парванда мувофиқ', exists: 'ба парванда не', wrong_code: 'кодекси дигар', missing: 'дар база нест' },
+            board: '📌 Тахтаи далелҳо', present: '📎 Ба суд пешниҳод кардан', presented: 'пешниҳод шуд', admittedBadge: '✓ ҳамроҳ шуд', rejectedBadge: '✕ рад шуд',
+            admitted: 'Ҳамроҳ шуд', refused: 'Рад шуд', newBadge: 'НАВ', boardAdded: function (t) { return '📌 Ба тахта илова шуд: ' + t; },
+            exhibitHint: 'Ба суд фаҳмонед, ки ин далел чиро исбот мекунад ва чаро бояд ба парванда ҳамроҳ шавад.', removeExhibit: 'Далелро бардоштан',
+            custom: {
+                badge: 'Парвандаи худ', title: 'Вазъияти худро тавсиф кунед', lead: 'Зеҳни сунъӣ аз он парванда месозад: тарафҳо, шоҳид ва далелҳо. Номҳоро бо номҳои тахайюлӣ иваз мекунад.',
+                placeholder: 'Масалан: ман хонаро ба иҷора гирифта будам, баромадам, вале соҳибхона гарави 3000 сомониро барнамегардонад…',
+                role: 'Нақши шумо', roles: ['Зеҳни сунъӣ муайян мекунад', 'ҳимоятгари судшаванда', 'намояндаи даъвогар', 'намояндаи ҷавобгар', 'намояндаи корманд', 'намояндаи корфармо'],
+                build: '✨ Парванда сохтан', building: 'Суд маводҳои парвандаро омода мекунад…', again: '✎ Тағйир додани тавсиф', evidence: 'Далелҳо',
+                err: 'Парванда сохта нашуд. Тавсифро дақиқ карда, бори дигар кӯшиш кунед.', short: 'Муфассалтар нависед: иштирокчиён кистанд, чӣ шуд, баҳс дар бораи чист.',
+            },
             announce: 'Суд аз утоқи машварат баргашт. Қарор эълон карда мешавад.',
             outcomeBy: {
                 criminal: { won: 'Беайб дониста шуд', partial: 'Ҷавобгарӣ сабук карда шуд', lost: 'Гунаҳгор дониста шуд' },
@@ -85,6 +108,9 @@
             medals: { gold: 'Тилло · Ҳуқуқшиноси сол', silver: 'Нуқра · Ҳуқуқшиноси қавӣ', bronze: 'Биринҷӣ · Оғози боэътимод', novice: 'Таҷрибаомӯз · Ҷои рушд ҳаст' },
             stats: { rounds: ['давр'], cited: ['модда ба парванда'], objections: ['эътироз'], sustained: 'қабул шуд' },
             soundOn: 'Овоз ва садоро фаъол кардан', soundOff: 'Овоз ва садоро хомӯш кардан',
+            voiceFree: 'lama:3.1 — овози ройгони браузер (бе забони тоҷикӣ)',
+            voicePaid: 'legal — овози зиндаи OpenAI, тақрибан $0,015 барои як дақиқаи нутқ',
+            voiceOff: 'legal дастрас нест: дар сервер калиди OpenAI нест ё овози пулакӣ хомӯш аст (COURT_TTS=off)',
             protocol: 'Протоколи мурофиа', objection: 'Эътироз!', accepted: 'Қабул шуд', rejected: 'Рад шуд', skip: 'Гузаштан аз гуфтугӯ',
             opening: function (c) { return 'Маҷлиси суд кушода эълон мешавад. Парванда баррасӣ мешавад: «' + c.title + '». Суханро ба тараф медиҳам: ' + c.role + '.'; },
             youAre: function (c) { return 'Шумо — ' + c.role + '. ' + c.goal; },
@@ -105,7 +131,10 @@
     var CRIT = ['legal_basis', 'logic', 'evidence', 'procedure'];
     var CIRC = 2 * Math.PI * 70;
 
-    var st = { cases: [], c: null, history: [], scores: [], cited: [], action: 'argue', busy: false, turn: 0, max: 10, done: false, objections: 0, sustained: 0 };
+    var st = { cases: [], c: null, history: [], scores: [], cited: [], action: 'argue', busy: false, turn: 0, max: 10, done: false, objections: 0, sustained: 0,
+               board: [], exhibit: null, custom: null, customText: '' };
+    // Роль для своего дела уходит на сервер по-русски: промпты и корпус законов русские.
+    var ROLE_RU = ['', 'защитник подсудимого', 'представитель истца', 'представитель ответчика', 'представитель работника', 'представитель работодателя'];
     var $ = function (id) { return document.getElementById(id); };
 
     function el(tag, cls, text) {
@@ -132,13 +161,38 @@
         api('/api/court/cases?lang=' + encodeURIComponent(cfg.lang)).then(function (r) {
             if (!r.ok) throw new Error('cases');
             st.cases = r.data.cases;
-            // Сервер говорит, есть ли облачный голос; без него работает голос браузера.
-            window.CourtVoice.configure({ mode: r.data.voice, api: cfg.api, lang: cfg.lang });
+            initVoiceSwitch(!!r.data.voice_cloud, r.data.voice);
             renderCases();
         }).catch(function () {
             var box = $('cases');
             box.replaceChildren(el('div', 'err', T.errCases));
         });
+    }
+
+    // Переключатель голоса: «lama:3.1» — бесплатный голос браузера, «legal» — живой голос OpenAI.
+    // Выбор запоминается в браузере; если платный голос на сервере недоступен, кнопка выключена.
+    function initVoiceSwitch(cloud, fallback) {
+        var saved = null;
+        try { saved = localStorage.getItem('court-voice-mode'); } catch (e) { /* нет хранилища */ }
+        var mode = saved === 'openai' || saved === 'browser' ? saved : fallback;
+        if (mode === 'openai' && !cloud) mode = 'browser';
+        var seg = $('voiceSeg');
+        var apply = function (m) {
+            mode = m;
+            window.CourtVoice.configure({ mode: m, api: cfg.api, lang: cfg.lang });
+            seg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.mode === m)); });
+        };
+        seg.querySelectorAll('button').forEach(function (b) {
+            var paid = b.dataset.mode === 'openai';
+            b.title = paid ? (cloud ? T.voicePaid : T.voiceOff) : T.voiceFree;
+            b.disabled = paid && !cloud;
+            b.onclick = function () {
+                window.CourtVoice.stop();
+                apply(b.dataset.mode);
+                try { localStorage.setItem('court-voice-mode', b.dataset.mode); } catch (e) { /* ignore */ }
+            };
+        });
+        apply(mode);
     }
 
     function renderCases() {
@@ -157,6 +211,157 @@
             card.appendChild(btn);
             box.appendChild(card);
         });
+        box.appendChild(customCard());
+    }
+
+    // ------------------------------------------------------------------ своё дело
+
+    function customCard() {
+        var C = T.custom, card = el('article', 'case custom');
+        card.appendChild(el('span', 'kind custom', '✍️ ' + C.badge));
+        card.appendChild(el('h3', null, C.title));
+        card.appendChild(el('p', 'facts-lead', C.lead));
+        var area = el('textarea', 'custom-input');
+        area.rows = 5;
+        area.maxLength = 2000;
+        area.placeholder = C.placeholder;
+        area.value = st.customText;
+        var label = el('label', 'custom-role');
+        label.appendChild(el('span', null, C.role));
+        var select = el('select');
+        C.roles.forEach(function (r, i) { var o = el('option', null, r); o.value = String(i); select.appendChild(o); });
+        label.appendChild(select);
+        var err = el('div', 'err');
+        var btn = el('button', 'btn', C.build);
+        btn.type = 'button';
+        btn.addEventListener('click', function () {
+            var text = area.value.trim();
+            if (text.length < 30) { err.textContent = C.short; return; }
+            st.customText = text;
+            err.textContent = '';
+            btn.disabled = true;
+            area.disabled = true;
+            btn.textContent = '⏳ ' + C.building;
+            card.classList.add('building');
+            api('/api/court/custom', { situation: text, role: ROLE_RU[Number(select.value)] || '', lang: cfg.lang }).then(function (r) {
+                if (!r.ok) throw new Error(r.data.error || 'custom');
+                st.custom = r.data.source;
+                card.replaceWith(customPreview(r.data.case));
+            }).catch(function (e) {
+                card.classList.remove('building');
+                err.textContent = (e && e.message && e.message !== 'custom') ? e.message : C.err;
+                btn.disabled = false;
+                area.disabled = false;
+                btn.textContent = C.build;
+            });
+        });
+        card.append(area, label, err, btn);
+        return card;
+    }
+
+    // Собранное дело: та же карточка, что у готовых дел, плюс улики.
+    function customPreview(c) {
+        var C = T.custom, card = el('article', 'case custom ready');
+        card.appendChild(el('span', 'kind ' + c.kind, '✍️ ' + (T.kinds[c.kind] || c.kind)));
+        card.appendChild(el('h3', null, c.title));
+        card.appendChild(el('div', 'role', T.role + ': ' + c.role));
+        card.appendChild(el('p', 'facts', c.facts));
+        if (c.evidence && c.evidence.length) {
+            var ev = el('div', 'ev-mini');
+            c.evidence.forEach(function (e) { ev.appendChild(el('span', null, e.icon + ' ' + e.title)); });
+            card.appendChild(ev);
+        }
+        card.appendChild(el('p', 'goal', '🎯 ' + T.goal + ': ' + c.goal));
+        var go = el('button', 'btn', '⚖️ ' + T.start);
+        go.type = 'button';
+        go.addEventListener('click', function () { startCase(c); });
+        var edit = el('button', 'btn ghost', C.again);
+        edit.type = 'button';
+        edit.addEventListener('click', function () { card.replaceWith(customCard()); });
+        var row = el('div', 'case-actions');
+        row.append(go, edit);
+        card.appendChild(row);
+        return card;
+    }
+
+    function customPayload() { return st.c && st.c.id === 'custom' ? st.custom : undefined; }
+
+    // ------------------------------------------------------------------ доска доказательств
+
+    function renderBoard() {
+        var box = $('board');
+        box.replaceChildren();
+        box.hidden = !st.board.length;
+        var head = el('div', 'board-head');
+        head.appendChild(el('span', null, T.board));
+        box.appendChild(head);
+        var grid = el('div', 'board-grid');
+        st.board.forEach(function (item, i) {
+            var card = el('div', 'ev' + (item.state ? ' ' + item.state : '') + (st.exhibit === item ? ' picked' : '') + (item.new && !item.shown ? ' fresh' : ''));
+            item.shown = true;
+            card.style.setProperty('--tilt', (((i * 7) % 5) - 2) * 0.8 + 'deg');
+            card.appendChild(el('i', 'pin'));
+            if (item.new) card.appendChild(el('span', 'ev-new', T.newBadge));
+            var top = el('div', 'ev-top');
+            top.append(el('span', 'ev-icon', item.icon || '📎'), el('b', null, item.title));
+            card.append(top, el('p', 'ev-detail', item.detail));
+            var foot = el('div', 'ev-foot');
+            if (item.state === 'admitted') foot.appendChild(el('span', 'ev-state ok', T.admittedBadge));
+            else if (item.state === 'rejected') foot.appendChild(el('span', 'ev-state bad', T.rejectedBadge));
+            else if (item.state === 'presented') foot.appendChild(el('span', 'ev-state', T.presented));
+            else {
+                var b = el('button', 'ev-btn', st.exhibit === item ? '✓ ' + T.present.replace(/^\S+\s/, '') : T.present);
+                b.type = 'button';
+                b.addEventListener('click', function () { pickExhibit(item); });
+                foot.appendChild(b);
+            }
+            card.appendChild(foot);
+            item.node = card;
+            grid.appendChild(card);
+        });
+        box.appendChild(grid);
+    }
+
+    function pickExhibit(item) {
+        st.exhibit = st.exhibit === item ? null : item;
+        renderChip();
+        renderBoard();
+        if (st.exhibit) $('input').focus({ preventScroll: true });
+    }
+
+    function renderChip() {
+        var chip = $('exhibitChip');
+        chip.replaceChildren();
+        chip.hidden = !st.exhibit;
+        $('input').placeholder = st.exhibit ? T.exhibitHint : placeholderFor(st.action);
+        if (!st.exhibit) return;
+        chip.appendChild(el('span', null, '📎 ' + st.exhibit.icon + ' ' + st.exhibit.title));
+        var x = el('button', null, '✕');
+        x.type = 'button';
+        x.title = T.removeExhibit;
+        x.setAttribute('aria-label', T.removeExhibit);
+        x.addEventListener('click', function () { pickExhibit(st.exhibit); });
+        chip.appendChild(x);
+    }
+
+    // Предъявленная улика «летит» с доски к судье.
+    function flyToJudge(node) {
+        if (!node || !node.isConnected) return;
+        var from = node.getBoundingClientRect(), to = $('scene').getBoundingClientRect();
+        var ghost = node.cloneNode(true);
+        ghost.classList.add('ev-ghost');
+        ghost.style.left = from.left + 'px';
+        ghost.style.top = from.top + 'px';
+        ghost.style.width = from.width + 'px';
+        document.body.appendChild(ghost);
+        var dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height * 0.4 - (from.top + from.height / 2);
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                ghost.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(.3) rotate(-10deg)';
+                ghost.style.opacity = '0';
+            });
+        });
+        setTimeout(function () { ghost.remove(); }, 1000);
     }
 
     // ------------------------------------------------------------------ зал
@@ -169,6 +374,8 @@
     function startCase(c) {
         st.c = c; st.history = []; st.scores = []; st.cited = []; st.action = 'argue'; st.busy = false; st.turn = 0; st.done = false;
         st.objections = 0; st.sustained = 0;
+        st.exhibit = null;
+        st.board = (c.evidence || []).map(function (e) { return { id: e.id, icon: e.icon, title: e.title, detail: e.detail, state: '' }; });
         window.CourtVoice.prefetch([{ who: 'judge', gender: 'm', text: T.opening(c) }]);
         $('caseTitle').textContent = c.title;
         $('caseRole').textContent = T.role + ': ' + c.role;
@@ -180,6 +387,8 @@
         $('composeError').textContent = '';
         resetSide();
         buildActions();
+        renderBoard();
+        renderChip();
         show('screenRoom');
         scene.setCase(c, { judge: T.speakers.judge, witness: T.speakers.witness, me: T.speakers.me, role: T.role + ': ' + c.role });
         logLine('judge', T.opening(c));
@@ -252,13 +461,22 @@
     function send() {
         var text = $('input').value.trim();
         if (st.busy || st.done || text.length < 3 || st.turn >= st.max) return;
-        var action = st.action;
+        var action = st.action, exhibit = st.exhibit;
         $('composeError').textContent = '';
-        var mine = logLine('me', text, action === 'witness' ? T.tags.witness + ': ' + st.c.witness : T.tags[action]);
+        var tag = action === 'witness' ? T.tags.witness + ': ' + st.c.witness : T.tags[action];
+        if (exhibit) tag = (tag ? tag + ' · ' : '') + '📎 ' + exhibit.title;
+        var mine = logLine('me', text, tag);
         var before = st.history.slice();
         st.busy = true;
         $('input').value = '';
         updateControls();
+        if (exhibit) {
+            flyToJudge(exhibit.node);
+            exhibit.state = 'presented';
+            st.exhibit = null;
+            renderChip();
+            renderBoard();
+        }
 
         // Реплика звучит на сцене; возражение сопровождается штампом, пока суд думает.
         scene.resetFast();
@@ -267,10 +485,15 @@
         if (action === 'object') shown = shown.then(function () { return scene.stamp(T.objection, 'bad'); });
         shown.then(function () { if (waiting) scene.thinking(true, T.thinking); });
 
-        api('/api/court/turn', { case_id: st.c.id, history: before, message: text, action: action, lang: cfg.lang }).then(function (r) {
+        api('/api/court/turn', {
+            case_id: st.c.id, custom_case: customPayload(), history: before, message: text, action: action, lang: cfg.lang,
+            exhibit: exhibit ? { id: exhibit.id, title: exhibit.title, detail: exhibit.detail } : undefined,
+        }).then(function (r) {
             if (!r.ok) throw new Error(r.data.error || 'turn');
             waiting = false;
-            st.history = before.concat([{ speaker: 'user', text: text, action: action }], r.data.lines.map(function (l) { return { speaker: l.speaker, text: l.text }; }));
+            var mineEntry = { speaker: 'user', text: text, action: action };
+            if (exhibit) mineEntry.exhibit = exhibit.title;
+            st.history = before.concat([mineEntry], r.data.lines.map(function (l) { return { speaker: l.speaker, text: l.text }; }));
             st.turn = r.data.turn;
             st.max = r.data.max_turns || st.max;
             st.scores.push(r.data.score);
@@ -283,16 +506,28 @@
             if (action === 'object') st.objections += 1;
             return shown.then(function () {
                 scene.thinking(false);
-                return playLines(r.data.lines, action);
+                return playLines(r.data.lines, action, exhibit ? r.data.ruling : 'none', exhibit);
             }).then(function () {
                 scene.float(r.data.score);
                 renderSide(r.data);
+                // Новые факты из показаний прикалываются к доске.
+                (r.data.new_evidence || []).forEach(function (e) {
+                    st.board.push({ id: e.id, icon: e.icon, title: e.title, detail: e.detail, state: '', new: true });
+                    logLine('system', T.boardAdded(e.title));
+                });
+                if ((r.data.new_evidence || []).length) renderBoard();
             });
         }).catch(function (e) {
             waiting = false;
             scene.thinking(false);
             scene.clear();
             mine.remove();
+            if (exhibit) {
+                exhibit.state = '';
+                st.exhibit = exhibit;
+                renderChip();
+                renderBoard();
+            }
             $('input').value = text;
             $('composeError').textContent = (e && e.message && e.message !== 'turn') ? e.message : T.errTurn;
         }).then(function () {
@@ -320,8 +555,16 @@
 
     var OBJECTS = /^\s*[«"]?\s*(возража|протестую|эътироз)/i;
 
-    function playLines(lines, action) {
+    function playLines(lines, action, ruling, exhibit) {
         var stamped = false;
+        // Решение о приобщении улики ставится штампом после первой реплики судьи (или в конце).
+        var ruled = !(exhibit && (ruling === 'admitted' || ruling === 'rejected'));
+        function rule() {
+            ruled = true;
+            exhibit.state = ruling;
+            renderBoard();
+            return scene.stamp(ruling === 'admitted' ? T.admitted : T.refused, ruling === 'admitted' ? 'good' : 'bad');
+        }
         return lines.reduce(function (chain, line) {
             return chain.then(function () {
                 logLine(line.speaker, line.text);
@@ -336,12 +579,13 @@
                     if (verdict) {
                         stamped = true;
                         if (verdict === 'accepted') st.sustained += 1;
-                        return spoken.then(function () { return scene.stamp(T[verdict], verdict === 'accepted' ? 'good' : 'bad'); });
+                        spoken = spoken.then(function () { return scene.stamp(T[verdict], verdict === 'accepted' ? 'good' : 'bad'); });
                     }
                 }
+                if (!ruled && line.speaker === 'judge') spoken = spoken.then(rule);
                 return spoken;
             });
-        }, Promise.resolve());
+        }, Promise.resolve()).then(function () { if (!ruled) return rule(); });
     }
 
     // ------------------------------------------------------------------ боковая панель
@@ -428,7 +672,7 @@
         $('finish').textContent = '⏳ ' + T.deliberating;
         scene.resetFast();
         scene.thinking(true, T.deliberating);
-        api('/api/court/verdict', { case_id: st.c.id, history: st.history, scores: st.scores, cited: st.cited, lang: cfg.lang }).then(function (r) {
+        api('/api/court/verdict', { case_id: st.c.id, custom_case: customPayload(), history: st.history, scores: st.scores, cited: st.cited, lang: cfg.lang }).then(function (r) {
             if (!r.ok) throw new Error(r.data.error || 'verdict');
             st.done = true;
             var d = r.data;

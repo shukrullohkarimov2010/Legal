@@ -88,6 +88,46 @@ CASES = {
 }
 
 CARD_FIELDS = ("title", "role", "opponent", "witness", "goal", "facts")
+KINDS = ("criminal", "civil", "labor")
+RULINGS = ("admitted", "rejected", "none")
+MAX_EVIDENCE = 5
+
+# Улики на доске доказательств. Часть помогает пользователю, часть противной
+# стороне: выигрывает тот, кто сумеет ими распорядиться.
+_EVIDENCE = {
+    "theft": [
+        {"id": "video", "icon": "🎥", "title": "Видеозапись с камеры",
+         "detail": "Видно, как Рахимов берёт телефон с прилавка и уходит. Что было до этого, на записи не видно."},
+        {"id": "phone", "icon": "📱", "title": "Телефон потерпевшего",
+         "detail": "Возвращён на следующий день без повреждений, ущерба нет."},
+        {"id": "log", "icon": "📒", "title": "Журнал павильона",
+         "detail": "Запись за 14 июня, 13:10: «забытый чёрный телефон у кассы», владелец не указан."},
+        {"id": "ref", "icon": "🎓", "title": "Характеристика с учёбы",
+         "detail": "Положительная, ранее не судим, к ответственности не привлекался."},
+    ],
+    "debt": [
+        {"id": "receipt", "icon": "🧾", "title": "Расписка",
+         "detail": "40 000 сомони, возврат до 1 сентября 2025 года, неустойка 0,5% в день, подписи обеих сторон."},
+        {"id": "chat", "icon": "💬", "title": "Переписка в мессенджере",
+         "detail": "10 сентября Саидов пишет: «Верну всё до конца года, извини за задержку»."},
+        {"id": "bank", "icon": "🏦", "title": "Банковская выписка",
+         "detail": "Переводов от Саидова Каримову за 2025 год нет."},
+        {"id": "kholov", "icon": "🗣️", "title": "Показания Холова",
+         "detail": "В мае видел, как Саидов передал Каримову 15 000 сомони наличными; за что, не знает."},
+    ],
+    "dismissal": [
+        {"id": "order", "icon": "📄", "title": "Приказ об увольнении",
+         "detail": "От 10 октября, основание: систематическое неисполнение обязанностей; ознакомлена 12 октября."},
+        {"id": "memos", "icon": "📝", "title": "Служебные записки",
+         "detail": "Две записки о задержке квартальных отчётов на 2 и 3 дня; объяснения у работника не запрашивались."},
+        {"id": "file", "icon": "📁", "title": "Личное дело",
+         "detail": "Шесть лет стажа, взысканий нет, благодарность за 2024 год."},
+        {"id": "akhmedova", "icon": "🗣️", "title": "Показания Ахмедовой",
+         "detail": "Отчёты задерживались, потому что отдел продаж поздно передавал первичные документы."},
+    ],
+}
+for _cid, _items in _EVIDENCE.items():
+    CASES[_cid]["evidence"] = _items
 
 
 def case_ids() -> list:
@@ -98,16 +138,32 @@ def get_case(case_id) -> Optional[dict]:
     return CASES.get(str(case_id or ""))
 
 
-def public_case(case_id: str, translated: Optional[dict] = None) -> Optional[dict]:
-    """Карточка дела для интерфейса; `translated` подменяет текстовые поля."""
-    case = get_case(case_id)
-    if not case:
-        return None
+def card_of(case_id: str, case: dict, translated: Optional[dict] = None) -> dict:
+    """Карточка дела для интерфейса; `translated` подменяет текстовые поля и тексты улик."""
+    translated = translated or {}
     card = {"id": case_id, "kind": case["kind"],
             "opponent_gender": case["opponent_gender"], "witness_gender": case["witness_gender"]}
     for field in CARD_FIELDS:
-        card[field] = (translated or {}).get(field) or case[field]
+        card[field] = translated.get(field) or case[field]
+    shown = translated.get("evidence") or []
+    card["evidence"] = []
+    for i, item in enumerate(case.get("evidence") or []):
+        view = shown[i] if i < len(shown) and isinstance(shown[i], dict) else {}
+        card["evidence"].append({"id": item["id"], "icon": item["icon"],
+                                 "title": view.get("title") or item["title"], "detail": view.get("detail") or item["detail"]})
     return card
+
+
+def public_case(case_id: str, translated: Optional[dict] = None) -> Optional[dict]:
+    case = get_case(case_id)
+    return card_of(case_id, case, translated) if case else None
+
+
+def resolve_case(case_id, custom=None) -> Optional[dict]:
+    """Встроенное дело по id или своё дело, присланное страницей (проверяется каждый раз)."""
+    if str(case_id or "") == "custom":
+        return sanitize_custom(custom)
+    return get_case(case_id)
 
 
 # ------------------------------------------------------------------ вход
@@ -123,6 +179,8 @@ def sanitize_history(history) -> list:
             entry = {"speaker": speaker, "text": text[:MAX_TEXT]}
             if speaker == "user" and str(item.get("action") or "") in ACTIONS:
                 entry["action"] = str(item["action"])
+            if speaker == "user" and str(item.get("exhibit") or "").strip():
+                entry["exhibit"] = _text(item.get("exhibit"), 120)
             clean.append(entry)
     return clean[-MAX_HISTORY:]
 
@@ -154,12 +212,21 @@ def action_note(action: str, case: dict) -> str:
 
 
 def _user_label(entry: dict, case: dict) -> str:
-    action = entry.get("action")
+    action, label = entry.get("action"), _SPEAKER_NAMES["user"]
     if action == "object":
-        return "%s [возражение]" % _SPEAKER_NAMES["user"]
-    if action == "witness":
-        return "%s [вопрос свидетелю: %s]" % (_SPEAKER_NAMES["user"], case.get("witness", "свидетель"))
-    return _SPEAKER_NAMES["user"]
+        label = "%s [возражение]" % label
+    elif action == "witness":
+        label = "%s [вопрос свидетелю: %s]" % (label, case.get("witness", "свидетель"))
+    if entry.get("exhibit"):
+        label = "%s [предъявлено доказательство: %s]" % (label, entry["exhibit"])
+    return label
+
+
+def _materials(case: dict) -> str:
+    items = case.get("evidence") or []
+    if not items:
+        return "Отдельных доказательств нет."
+    return "\n".join("- %s: %s" % (e["title"], e["detail"]) for e in items)
 
 
 def _dialogue(history, case: dict) -> str:
@@ -172,13 +239,23 @@ def _dialogue(history, case: dict) -> str:
     return "\n".join(lines)
 
 
-def build_turn_prompt(case: dict, history: list, message: str, action: str, rag_context: str, turn_no: int) -> str:
+def build_turn_prompt(case: dict, history: list, message: str, action: str, rag_context: str, turn_no: int,
+                      exhibit: Optional[dict] = None) -> str:
+    shown = ""
+    if exhibit:
+        shown = (
+            "\nПОЛЬЗОВАТЕЛЬ ПРЕДЪЯВЛЯЕТ СУДУ ДОКАЗАТЕЛЬСТВО: «%s» — %s\n"
+            "Судья решает, приобщить ли его к делу (относимость и допустимость), и прямо говорит об этом в своей реплике; "
+            "противная сторона может его оспорить. Поле ruling: admitted — приобщено, rejected — отказано.\n"
+        ) % (exhibit["title"], exhibit["detail"])
     return f"""Ты — модератор учебного судебного заседания по законодательству Республики Таджикистан. Ты играешь СУДЬЮ,
 ПРОТИВНУЮ СТОРОНУ ({case['opponent']}) и СВИДЕТЕЛЯ ({case['witness']}). Пользователь — {case['role']}.
 
 ДЕЛО: {case['title']}
 ФАКТЫ: {case['facts']}
 ЦЕЛЬ ПОЛЬЗОВАТЕЛЯ: {case['goal']}
+МАТЕРИАЛЫ ДЕЛА (доказательства, известные суду и сторонам):
+{_materials(case)}
 
 ФРАГМЕНТЫ ЗАКОНОВ РТ (единственный допустимый источник статей):
 {rag_context or "Фрагменты не найдены."}
@@ -188,7 +265,7 @@ def build_turn_prompt(case: dict, history: list, message: str, action: str, rag_
 
 НОВАЯ РЕПЛИКА ПОЛЬЗОВАТЕЛЯ (раунд {turn_no}): {message}
 ТИП ДЕЙСТВИЯ: {action_note(action, case)}
-
+{shown}
 ЗАДАЧА: продолжи заседание и оцени реплику пользователя.
 Правила:
 - Верни от 1 до {MAX_LINES} коротких реплик (каждая 1–3 предложения) от судьи, противной стороны или свидетеля. Говори живо, как в зале суда.
@@ -198,9 +275,12 @@ def build_turn_prompt(case: dict, history: list, message: str, action: str, rag_
 - Оценка assessment: legal_basis (юридическое обоснование, ссылки на нормы), logic (логика и последовательность), evidence (работа с фактами и доказательствами), procedure (процессуальный порядок, уместность, тон): целые числа 0–10.
   Реплика без статей получает низкий legal_basis; пустая или не по делу — низкие оценки по всем критериям.
 - comment: одно предложение о том, что было сильным или слабым. hint: одно предложение о том, что сделать дальше.
+- ruling: admitted или rejected, только если пользователь предъявил доказательство; иначе none.
+- new_evidence: если в этом раунде установлен НОВЫЙ факт, которого нет в материалах (показания свидетеля, признание
+  стороны), верни его одной записью {{"title": "2–5 слов", "detail": "1–2 предложения"}}; иначе пустой список.
 
 Ответь ТОЛЬКО JSON без пояснений:
-{{"lines":[{{"speaker":"judge|opponent|witness","text":"..."}}],"assessment":{{"legal_basis":0,"logic":0,"evidence":0,"procedure":0,"comment":"...","hint":"..."}}}}"""
+{{"lines":[{{"speaker":"judge|opponent|witness","text":"..."}}],"assessment":{{"legal_basis":0,"logic":0,"evidence":0,"procedure":0,"comment":"...","hint":"..."}},"ruling":"none","new_evidence":[]}}"""
 
 
 def build_verdict_prompt(case: dict, history: list, mean_score: int, cited: list) -> str:
@@ -263,7 +343,88 @@ def parse_turn(data) -> Optional[dict]:
         return None
     raw = data.get("assessment") if isinstance(data.get("assessment"), dict) else {}
     parts = {name: _clip(raw.get(name), 0, 10) for name in CRITERIA}
-    return {"lines": lines, "parts": parts, "comment": _text(raw.get("comment"), 300), "hint": _text(raw.get("hint"), 300)}
+    ruling = str(data.get("ruling") or "").strip().lower()
+    found = []
+    for item in data.get("new_evidence") if isinstance(data.get("new_evidence"), list) else []:
+        if isinstance(item, dict) and _text(item.get("title")) and _text(item.get("detail")):
+            found.append({"title": _text(item.get("title"), 80), "detail": _text(item.get("detail"), 240)})
+            break
+    return {"lines": lines, "parts": parts, "comment": _text(raw.get("comment"), 300), "hint": _text(raw.get("hint"), 300),
+            "ruling": ruling if ruling in RULINGS else "none", "new_evidence": found}
+
+
+def sanitize_exhibit(value) -> Optional[dict]:
+    """Улика, которую предъявляет пользователь: название и суть, ограниченные по длине."""
+    if not isinstance(value, dict):
+        return None
+    title, detail = _text(value.get("title"), 80), _text(value.get("detail"), 240)
+    if not title:
+        return None
+    return {"id": _text(value.get("id"), 40), "title": title, "detail": detail or title}
+
+
+# ------------------------------------------------------------------ своё дело
+
+_OPPONENTS = {"criminal": "Прокурор", "civil": "Представитель ответчика", "labor": "Представитель работодателя"}
+
+
+def build_custom_prompt(situation: str, role_hint: str = "") -> str:
+    role_line = ("Пользователь хочет выступать как: %s." % role_hint) if role_hint else \
+        "Роль пользователя выбери сам: сторона, которой нужна юридическая защита в этой ситуации."
+    return f"""Ты — методист юридической клиники. По описанию ситуации составь учебное дело для судебного заседания по
+законодательству Республики Таджикистан. {role_line}
+
+ОПИСАНИЕ СИТУАЦИИ:
+{situation}
+
+Правила:
+- Имена реальных людей и названия организаций замени вымышленными таджикскими; город — Душанбе, если не указан другой город Таджикистана.
+- Факты излагай нейтрально, 4–7 предложений, с датами и суммами из описания; спорные моменты оставь спорными, чтобы обеим сторонам было что доказывать.
+- kind: criminal (уголовное), civil (гражданское) или labor (трудовое).
+- Доказательства: 3–4 штуки, часть в пользу пользователя, часть против; у каждого один эмодзи, название в 2–5 слов и суть в 1–2 предложениях.
+- query: 8–14 слов юридических терминов для поиска норм в кодексах РТ (как называются статьи), без названий кодексов.
+- Если описание не похоже на правовой спор, всё равно составь ближайшее учебное дело по его теме.
+
+Ответь ТОЛЬКО JSON:
+{{"kind":"civil","title":"до 6 слов","role":"например, представитель истца","opponent":"например, Представитель ответчика","opponent_gender":"m|f",
+"witness":"Имя Фамилия, кто это","witness_gender":"m|f","goal":"одно предложение","facts":"...","query":"...",
+"evidence":[{{"icon":"🧾","title":"...","detail":"..."}}]}}"""
+
+
+def sanitize_custom(data) -> Optional[dict]:
+    """Своё дело из ответа модели или из запроса страницы: всё проверяется и обрезается, иначе None."""
+    if not isinstance(data, dict):
+        return None
+    kind = str(data.get("kind") or "").strip().lower()
+    kind = kind if kind in KINDS else "civil"
+    case = {
+        "kind": kind,
+        "title": _text(data.get("title"), 80),
+        "role": _text(data.get("role"), 80),
+        "opponent": _text(data.get("opponent"), 60) or _OPPONENTS[kind],
+        "witness": _text(data.get("witness"), 90),
+        "goal": _text(data.get("goal"), 240),
+        "facts": _text(data.get("facts"), 1600),
+        "query": _text(data.get("query"), 240),
+        "opponent_gender": "f" if str(data.get("opponent_gender") or "") == "f" else "m",
+        "witness_gender": "f" if str(data.get("witness_gender") or "") == "f" else "m",
+    }
+    if not all(case[k] for k in ("title", "role", "witness", "goal", "facts")) or len(case["facts"]) < 60:
+        return None
+    if len(case["query"].split()) < 3:
+        case["query"] = _text(case["title"] + " " + case["goal"], 240)
+    evidence = []
+    for i, item in enumerate(data.get("evidence") if isinstance(data.get("evidence"), list) else []):
+        if not isinstance(item, dict):
+            continue
+        title, detail = _text(item.get("title"), 80), _text(item.get("detail"), 240)
+        if title and detail:
+            icon = _text(item.get("icon"), 4) or "📎"
+            evidence.append({"id": _text(item.get("id"), 40) or "e%d" % (i + 1), "icon": icon, "title": title, "detail": detail})
+        if len(evidence) >= MAX_EVIDENCE:
+            break
+    case["evidence"] = evidence
+    return case
 
 
 def turn_score(parts: dict, citations: list) -> int:
